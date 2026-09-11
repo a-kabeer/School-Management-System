@@ -131,17 +131,28 @@ python -m venv .venv
 # source .venv/bin/activate   # macOS/Linux
 pip install -r requirements.txt
 
-cp .env.example .env          # then edit it
-createdb school_management
+cp .env.example .env          # then set DB_NAME/DB_USER/DB_PASSWORD
 
-python manage.py migrate
-python manage.py seed_system
+python manage.py setup_database
 python manage.py bootstrap_organization \
     --name "Your Academy" \
     --branch "Main Campus" --branch-code MAIN \
     --admin-username admin
 python manage.py runserver
 ```
+
+`setup_database` connects to the server's `postgres` maintenance database,
+creates the one named in your `.env` if it is missing, applies all migrations,
+and seeds the plans and system settings. It is idempotent — running it again
+only applies whatever is outstanding. To get a working installation with demo
+data in a single step:
+
+```bash
+python manage.py setup_database --demo
+```
+
+Django can connect to a database but cannot create one, which is why the
+database is created through a separate connection rather than by `migrate`.
 
 `bootstrap_organization` creates the organization, a central-administration
 branch, the seeded roles, a chart of accounts, a fiscal period and an admin
