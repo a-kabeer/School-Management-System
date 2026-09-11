@@ -12,12 +12,13 @@ from .models import Student, StudentEnrollment, StudentGuardian
 def students_for(user, branch=None, *, with_enrollment=True):
     queryset = Student.objects.for_user(user, branch)
     if with_enrollment:
+        # No `to_attr`: Student.current_enrollment reads the standard prefetch
+        # cache, so filling that is what spares the list one query per row.
         queryset = queryset.prefetch_related(
             Prefetch(
                 "enrollments",
                 queryset=StudentEnrollment.objects.filter(is_current=True)
                 .select_related("school_class", "section", "academic_year"),
-                to_attr="current_enrollments",
             )
         )
     return queryset

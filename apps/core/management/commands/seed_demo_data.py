@@ -270,18 +270,22 @@ class Command(BaseCommand):
         self._expenses(branch)
 
     def _academics(self, branch):
-        year, _c = AcademicYear.objects.get_or_create(
-            branch=branch,
-            name=f"{self.today.year}-{self.today.year + 1}",
-            defaults={
-                "organization": branch.organization,
-                "start_date": dt.date(self.today.year, 1, 1),
-                "end_date": dt.date(self.today.year, 12, 31),
-                "is_current": not AcademicYear.objects.filter(
-                    branch=branch, is_current=True
-                ).exists(),
-            },
-        )
+        # Reuse the branch's current year if it has one. Creating a second year
+        # here would leave the seeded invoices and exams hanging off a year
+        # that nothing else treats as current, and the dashboard would then
+        # report zero billed against real collections.
+        year = AcademicYear.objects.filter(branch=branch, is_current=True).first()
+        if year is None:
+            year, _created = AcademicYear.objects.get_or_create(
+                branch=branch,
+                name=f"{self.today.year}-{self.today.year + 1}",
+                defaults={
+                    "organization": branch.organization,
+                    "start_date": dt.date(self.today.year, 1, 1),
+                    "end_date": dt.date(self.today.year, 12, 31),
+                    "is_current": True,
+                },
+            )
         terms = []
         spans = [("First Term", 1, 4), ("Second Term", 5, 8), ("Third Term", 9, 12)]
         for index, (name, start_month, end_month) in enumerate(spans, start=1):

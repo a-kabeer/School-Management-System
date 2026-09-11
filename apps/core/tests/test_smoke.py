@@ -149,6 +149,19 @@ class PageSmokeTests(TestCase):
                     response.status_code, 200, msg=f"{name} returned {response.status_code}"
                 )
 
+    def test_no_page_leaks_an_unclosed_template_comment(self):
+        # Django's {# #} comment is single-line only; a multi-line one renders
+        # as visible page text instead. That is invisible to a status-code
+        # check, so assert on the markup.
+        for name in INDEX_PAGES:
+            with self.subTest(page=name):
+                response = self.client.get(reverse(name))
+                self.assertNotIn(
+                    b"{#",
+                    response.content,
+                    msg=f"{name} rendered a raw template comment",
+                )
+
     def test_every_report_renders(self):
         from apps.reports.registry import REGISTRY
 

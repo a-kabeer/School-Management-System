@@ -3,11 +3,12 @@
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
 
+from .dashboard import build_dashboard
 from .permissions import PermissionRequiredMixin
-from .services import collection_trend, dashboard_summary, recent_activity
 
 
 def health(request):
@@ -34,12 +35,8 @@ class DashboardView(PermissionRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         branch = getattr(self.request, "active_branch", None)
         context["page_title"] = _("Dashboard")
-        context["summary"] = dashboard_summary(self.request.user, branch)
-        context["activity"] = recent_activity(self.request.user, branch)
-        context["trend"] = collection_trend(self.request.user, branch)
-        context["trend_max"] = max(
-            [row["total"] for row in context["trend"]] or [0]
-        ) or 1
+        context["board"] = build_dashboard(self.request.user, branch)
+        context["today"] = timezone.localdate()
         return context
 
 

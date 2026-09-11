@@ -1,124 +1,405 @@
 {% extends "base.html" %}
 {% load i18n core_extras humanize %}
 
+{% block page_heading %}
+    {% translate "Dashboard" %}
+{% endblock %}
+
+{% block page_actions %}
+    {% for action in board.quick_actions|slice:":3" %}
+        <a class="btn btn-sm {% if forloop.first %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+           href="{{ action.url }}">
+            <span aria-hidden="true">{{ action.icon }}</span> {{ action.label }}
+        </a>
+    {% endfor %}
+{% endblock %}
+
 {% block content %}
-<div class="row row-cols-1 row-cols-sm-2 row-cols-xl-4 g-3 mb-3">
-    <div class="col">
-        <div class="card h-100 border-start border-4 border-primary">
-            <div class="card-body">
-                <p class="text-uppercase small text-body-secondary mb-1">{% translate "Active students" %}</p>
-                <p class="fs-3 fw-semibold mb-0">{{ summary.students_active|intcomma }}</p>
-                <p class="small text-body-secondary mb-0">
-                    {% blocktranslate with total=summary.students_total %}{{ total }} on the register{% endblocktranslate %}
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card h-100 border-start border-4 border-secondary">
-            <div class="card-body">
-                <p class="text-uppercase small text-body-secondary mb-1">{% translate "Staff" %}</p>
-                <p class="fs-3 fw-semibold mb-0">{{ summary.staff_total|intcomma }}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card h-100 border-start border-4 border-success">
-            <div class="card-body">
-                <p class="text-uppercase small text-body-secondary mb-1">{% translate "Collected this month" %}</p>
-                <p class="fs-3 fw-semibold mb-0 text-break">{{ summary.collected_this_month|money }}</p>
-                <p class="small text-body-secondary mb-0">
-                    {% blocktranslate with today=summary.collected_today %}{{ today }} today{% endblocktranslate %}
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card h-100 border-start border-4 border-warning">
-            <div class="card-body">
-                <p class="text-uppercase small text-body-secondary mb-1">{% translate "Outstanding fees" %}</p>
-                <p class="fs-3 fw-semibold mb-0 text-break">{{ summary.fees_outstanding|money }}</p>
-                <p class="small text-body-secondary mb-0">
-                    {% blocktranslate with billed=summary.fees_billed %}{{ billed }} billed{% endblocktranslate %}
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row g-3">
-    <div class="col-12 col-lg-5">
-        <section class="card h-100">
-            <div class="card-body">
-                <h2 class="h6 card-title">{% translate "Attendance today" %}</h2>
-                {% if summary.attendance_marked %}
-                    <p class="display-6 fw-semibold mb-3">{{ summary.attendance_rate }}%</p>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between px-0">
-                            <span>{% translate "Present" %}</span><strong>{{ summary.attendance_present }}</strong>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0">
-                            <span>{% translate "Absent" %}</span><strong>{{ summary.attendance_absent }}</strong>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0">
-                            <span>{% translate "Late" %}</span><strong>{{ summary.attendance_late }}</strong>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between px-0">
-                            <span>{% translate "Leave" %}</span><strong>{{ summary.attendance_leave }}</strong>
-                        </li>
-                    </ul>
-                {% else %}
-                    <p class="text-body-secondary">{% translate "No attendance has been marked today." %}</p>
-                    {% has_perm "attendance.add_studentattendance" as can_mark %}
-                    {% if can_mark %}
-                        <a class="btn btn-primary" href="{% url 'attendance:mark' %}">{% translate "Mark attendance" %}</a>
-                    {% endif %}
-                {% endif %}
-            </div>
-        </section>
-    </div>
+{# Context strip: who and when, so every number below has a frame. #}
+<p class="text-body-secondary small mb-3">
+    {% if current_branch %}<span class="fw-semibold">{{ current_branch.name }}</span>{% endif %}
+    {% if board.academic_year %}
+        · {{ board.academic_year.name }}
+    {% endif %}
+    · {{ today|date:"l, j F Y" }}
+</p>
 
-    <div class="col-12 col-lg-7">
-        <section class="card h-100">
-            <div class="card-body">
-                <h2 class="h6 card-title">{% translate "Collections, last 14 days" %}</h2>
-                <div class="bar-chart d-flex align-items-end gap-1 mt-3"
-                     role="img" aria-label="{% translate 'Daily fee collection' %}">
-                    {% for point in trend %}
-                        <div class="flex-fill d-flex flex-column justify-content-end align-items-center h-100"
-                             title="{{ point.date|date:'Y-m-d' }}: {{ point.total|money }}">
-                            <div class="bar bg-primary rounded-top w-100"
-                                 style="height: {% widthratio point.total trend_max 100 %}%"></div>
-                            <span class="small text-body-secondary">{{ point.date|date:"j" }}</span>
-                        </div>
-                    {% endfor %}
+{% if board.is_personal %}
+    <div class="card card-body text-center py-5">
+        <p class="fs-5 mb-1">{% translate "Welcome" %}, {{ user.display_name }}.</p>
+        <p class="text-body-secondary mb-3">
+            {% translate "Your account does not have access to the operational modules." %}
+        </p>
+        <div>
+            <a class="btn btn-primary" href="{% url 'notifications:list' %}">
+                {% translate "Open notifications" %}
+            </a>
+        </div>
+    </div>
+{% else %}
+
+{# ---------------------------------------------------------------- KPIs #}
+{% if board.kpis %}
+<div class="row row-cols-2 row-cols-lg-3 row-cols-xxl-6 g-3 mb-3">
+    {% for kpi in board.kpis %}
+        <div class="col">
+            <div class="card h-100 border-start border-4 border-{{ kpi.tone }}">
+                {% if kpi.url %}<a href="{{ kpi.url }}" class="text-decoration-none text-body stretched-link"></a>{% endif %}
+                <div class="card-body py-3">
+                    {% comment %}The label wraps rather than truncating: a clipped
+                       "Outstanding fee..." tells the reader less than two short
+                       lines do on a narrow screen.{% endcomment %}
+                    <p class="text-uppercase small text-body-secondary mb-1 lh-sm">
+                        <span aria-hidden="true">{{ kpi.icon }}</span>
+                        {{ kpi.label }}
+                    </p>
+                    <p class="fs-4 fw-semibold mb-0 text-break">{{ kpi.value }}</p>
+                    {% if kpi.hint %}<p class="small text-body-secondary mb-0">{{ kpi.hint }}</p>{% endif %}
                 </div>
             </div>
-        </section>
-    </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
 
-    <div class="col-12">
-        <section class="card">
+{# ------------------------------------------------------ Needs attention #}
+<section class="card mb-3" aria-labelledby="needs-attention">
+    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+        <h2 class="h6 mb-0" id="needs-attention">{% translate "Needs attention" %}</h2>
+        {% if board.attention %}
+            <span class="badge text-bg-secondary">{{ board.attention|length }}</span>
+        {% endif %}
+    </div>
+    {% if board.attention %}
+        <ul class="list-group list-group-flush">
+            {% for item in board.attention %}
+                <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
+                    <span class="badge text-bg-{{ item.tone }} flex-shrink-0">{{ item.count }}</span>
+                    <span class="flex-grow-1 min-w-0">
+                        <span class="fw-medium d-block">{{ item.label }}</span>
+                        <span class="small text-body-secondary">{{ item.description }}</span>
+                    </span>
+                    {% if item.url %}
+                        <a class="btn btn-sm btn-outline-{{ item.tone }}" href="{{ item.url }}">
+                            {{ item.action }}
+                        </a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="card-body text-center text-body-secondary py-4">
+            <p class="mb-0">{% translate "Nothing needs attention right now." %}</p>
+        </div>
+    {% endif %}
+</section>
+
+<div class="row g-3">
+
+    {# ------------------------------------------------------- attendance #}
+    {% if board.attendance %}
+    <div class="col-12 col-xl-4">
+        <section class="card h-100" aria-labelledby="attendance-heading">
+            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                <h2 class="h6 mb-0" id="attendance-heading">{% translate "Attendance today" %}</h2>
+                {% if board.attendance.url %}
+                    <a class="small" href="{{ board.attendance.url }}">{% translate "View all" %}</a>
+                {% endif %}
+            </div>
             <div class="card-body">
-                <h2 class="h6 card-title">{% translate "Recent activity" %}</h2>
-                {% if activity %}
+                {% if board.attendance.marked %}
+                    <div class="d-flex align-items-baseline gap-2 mb-3">
+                        <span class="display-6 fw-semibold">{{ board.attendance.rate }}%</span>
+                        <span class="small text-body-secondary">
+                            {% blocktranslate with n=board.attendance.marked %}{{ n }} marked{% endblocktranslate %}
+                        </span>
+                    </div>
+                    <div class="progress mb-3" style="height: .5rem;"
+                         role="img" aria-label="{% translate 'Attendance rate' %}">
+                        <div class="progress-bar bg-success" style="width: {{ board.attendance.rate }}%"></div>
+                    </div>
                     <ul class="list-group list-group-flush">
-                        {% for entry in activity %}
-                            <li class="list-group-item px-0">
-                                <span class="badge text-bg-light border me-2">{{ entry.get_action_display }}</span>
-                                <span class="fw-medium">{{ entry.object_repr|default:entry.app_label }}</span>
-                                <span class="d-block small text-body-secondary">
-                                    {{ entry.username|default:_("system") }} · {{ entry.created_at|date:"Y-m-d H:i" }}
-                                    {% if entry.branch %}· {{ entry.branch.name }}{% endif %}
-                                </span>
-                            </li>
+                        {% for label, count, tone in board.attendance.rows %}
+                            {% if count %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                    <span class="d-flex align-items-center gap-2">
+                                        <span class="badge text-bg-{{ tone }}">&nbsp;</span>{{ label }}
+                                    </span>
+                                    <strong>{{ count }}</strong>
+                                </li>
+                            {% endif %}
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <p class="text-body-secondary mb-0">{% translate "No activity recorded yet." %}</p>
+                    <div class="text-center text-body-secondary py-4">
+                        <p class="mb-3">{% translate "No attendance has been marked today." %}</p>
+                        {% has_perm "attendance.add_studentattendance" as can_mark %}
+                        {% if can_mark and board.attendance.mark_url %}
+                            <a class="btn btn-sm btn-primary" href="{{ board.attendance.mark_url }}">
+                                {% translate "Mark attendance" %}
+                            </a>
+                        {% endif %}
+                    </div>
                 {% endif %}
             </div>
         </section>
     </div>
+    {% endif %}
+
+    {# -------------------------------------------------------- fees #}
+    {% if board.fees %}
+    <div class="col-12 col-xl-8">
+        <section class="card h-100" aria-labelledby="fees-heading">
+            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                <h2 class="h6 mb-0" id="fees-heading">{% translate "Fee collection" %}</h2>
+                <a class="small" href="{{ board.fees.invoice_url }}">{% translate "View invoices" %}</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-md-3">
+                        <p class="small text-body-secondary mb-0">{% translate "Today" %}</p>
+                        <p class="fs-5 fw-semibold mb-0 text-break">{{ board.fees.today|money }}</p>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <p class="small text-body-secondary mb-0">{% translate "This month" %}</p>
+                        <p class="fs-5 fw-semibold mb-0 text-break">{{ board.fees.month|money }}</p>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <p class="small text-body-secondary mb-0">{% translate "Collected" %}</p>
+                        <p class="fs-5 fw-semibold mb-0 text-break text-success">{{ board.fees.collected|money }}</p>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <p class="small text-body-secondary mb-0">{% translate "Outstanding" %}</p>
+                        <p class="fs-5 fw-semibold mb-0 text-break text-warning-emphasis">{{ board.fees.outstanding|money }}</p>
+                    </div>
+                </div>
+
+                {% if board.fees.rate is not None %}
+                    <div class="progress mb-1" style="height: .5rem;"
+                         role="img" aria-label="{% translate 'Share of billed fees collected' %}">
+                        <div class="progress-bar bg-success" style="width: {{ board.fees.rate }}%"></div>
+                    </div>
+                    <p class="small text-body-secondary">
+                        {% blocktranslate with rate=board.fees.rate billed=board.fees.billed %}{{ rate }}% of {{ billed }} billed{% endblocktranslate %}
+                    </p>
+                {% endif %}
+
+                {% if board.trend %}
+                    <h3 class="h6 small text-uppercase text-body-secondary mt-3 mb-2">
+                        {% translate "Last 14 days" %}
+                    </h3>
+                    <div class="bar-chart d-flex align-items-end gap-1"
+                         role="img" aria-label="{% translate 'Daily fee collection over the last 14 days' %}">
+                        {% for point in board.trend %}
+                            <div class="flex-fill d-flex flex-column justify-content-end align-items-center h-100"
+                                 title="{{ point.date|date:'Y-m-d' }}: {{ point.total|money }}">
+                                <div class="bar bg-primary rounded-top w-100"
+                                     style="height: {% widthratio point.total board.trend_max 100 %}%"></div>
+                                <span class="small text-body-secondary">{{ point.date|date:"j" }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+    {% endif %}
+
+    {# ---------------------------------------------------- academics #}
+    {% if board.academics %}
+    <div class="col-12 col-xl-6">
+        <section class="card h-100" aria-labelledby="academics-heading">
+            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                <h2 class="h6 mb-0" id="academics-heading">
+                    {% if board.academics.today_is_mine %}
+                        {% translate "My classes today" %}
+                    {% else %}
+                        {% translate "Academics" %}
+                    {% endif %}
+                </h2>
+                {% if board.academics.timetable_url %}
+                    <a class="small" href="{{ board.academics.timetable_url }}">{% translate "Timetable" %}</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if board.academics.today_slots %}
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-3">
+                            <caption class="visually-hidden">{% translate "Classes scheduled today" %}</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">{% translate "Period" %}</th>
+                                    <th scope="col">{% translate "Class" %}</th>
+                                    <th scope="col">{% translate "Subject" %}</th>
+                                    <th scope="col">{% translate "Time" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for slot in board.academics.today_slots %}
+                                    <tr>
+                                        <td>{{ slot.period }}</td>
+                                        <td>{{ slot.section }}</td>
+                                        <td>{{ slot.class_subject.subject.name }}</td>
+                                        <td class="text-nowrap">{{ slot.start_time|time:"H:i" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-body-secondary">{% translate "No classes are scheduled today." %}</p>
+                {% endif %}
+
+                {% if board.academics.upcoming_exams %}
+                    <h3 class="h6 small text-uppercase text-body-secondary mb-2">{% translate "Upcoming exams" %}</h3>
+                    <ul class="list-group list-group-flush mb-0">
+                        {% for exam in board.academics.upcoming_exams %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 gap-2">
+                                <span class="min-w-0">
+                                    <a href="{% url 'exams:exam_detail' exam.pk %}" class="d-block text-truncate">{{ exam.name }}</a>
+                                    <span class="small text-body-secondary">{{ exam.school_class.name }}</span>
+                                </span>
+                                <span class="badge text-bg-light border text-nowrap">{{ exam.start_date|date:"j M" }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% elif board.academics.exam_url %}
+                    <p class="text-body-secondary mb-0">{% translate "No upcoming exams." %}</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+    {% endif %}
+
+    {# ------------------------------------------------ student activity #}
+    {% if board.recent_students %}
+    <div class="col-12 col-xl-6">
+        <section class="card h-100" aria-labelledby="students-heading">
+            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                <h2 class="h6 mb-0" id="students-heading">{% translate "Recent admissions" %}</h2>
+                <a class="small" href="{% url 'students:student_list' %}">{% translate "View all" %}</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <caption class="visually-hidden">{% translate "Most recently admitted students" %}</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">{% translate "Admission #" %}</th>
+                            <th scope="col">{% translate "Name" %}</th>
+                            <th scope="col">{% translate "Class" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in board.recent_students %}
+                            <tr>
+                                <td class="text-nowrap">{{ student.admission_no }}</td>
+                                <td><a href="{% url 'students:student_detail' student.pk %}">{{ student.full_name }}</a></td>
+                                <td>{{ student.current_class_display }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    {% endif %}
+
+    {# ------------------------------------------------------------ hifz #}
+    {% if board.hifz %}
+    <div class="col-12 col-md-6 col-xl-4">
+        <section class="card h-100" aria-labelledby="hifz-heading">
+            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                <h2 class="h6 mb-0" id="hifz-heading">{% translate "Hifz" %}</h2>
+                <a class="small" href="{{ board.hifz.profile_url }}">{% translate "View all" %}</a>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{% translate "Active students" %}</span><strong>{{ board.hifz.students }}</strong>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{% translate "Sabaq heard today" %}</span>
+                    <strong class="text-success">{{ board.hifz.heard_today }}</strong>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{% translate "Not yet heard" %}</span>
+                    <strong{% if board.hifz.not_heard %} class="text-warning-emphasis"{% endif %}>{{ board.hifz.not_heard }}</strong>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{% translate "Revisions overdue" %}</span>
+                    <strong{% if board.hifz.overdue_revisions %} class="text-danger"{% endif %}>{{ board.hifz.overdue_revisions }}</strong>
+                </li>
+            </ul>
+        </section>
+    </div>
+    {% endif %}
+
+    {# ------------------------------------------------- recent payments #}
+    {% if board.recent_payments %}
+    <div class="col-12 col-md-6 col-xl-4">
+        <section class="card h-100" aria-labelledby="payments-heading">
+            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                <h2 class="h6 mb-0" id="payments-heading">{% translate "Recent payments" %}</h2>
+                <a class="small" href="{{ board.fees.payment_url }}">{% translate "View all" %}</a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for payment in board.recent_payments %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                        <span class="min-w-0">
+                            <a href="{% url 'fees:payment_detail' payment.pk %}" class="d-block text-truncate">
+                                {{ payment.student.full_name }}
+                            </a>
+                            <span class="small text-body-secondary">
+                                {{ payment.payment_date|date:"j M" }} · {{ payment.payment_method.name }}
+                            </span>
+                        </span>
+                        <strong class="font-monospace text-nowrap">{{ payment.amount|money }}</strong>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+    {% endif %}
+
+    {# ------------------------------------------------- recent activity #}
+    {% if board.activity %}
+    <div class="col-12 col-xl-4">
+        <section class="card h-100" aria-labelledby="activity-heading">
+            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                <h2 class="h6 mb-0" id="activity-heading">{% translate "Recent activity" %}</h2>
+                <a class="small" href="{% url 'audit:list' %}">{% translate "Audit log" %}</a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for entry in board.activity %}
+                    <li class="list-group-item">
+                        <span class="badge text-bg-light border me-1">{{ entry.get_action_display }}</span>
+                        <span class="fw-medium">{{ entry.object_repr|default:entry.app_label|truncatechars:40 }}</span>
+                        <span class="d-block small text-body-secondary">
+                            {{ entry.username|default:_("system") }} · {{ entry.created_at|date:"j M H:i" }}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+    {% endif %}
 </div>
+
+{# --------------------------------------------------------- quick actions #}
+{% if board.quick_actions %}
+<section class="card mt-3" aria-labelledby="actions-heading">
+    <div class="card-header bg-transparent">
+        <h2 class="h6 mb-0" id="actions-heading">{% translate "Quick actions" %}</h2>
+    </div>
+    <div class="card-body d-flex flex-wrap gap-2">
+        {% for action in board.quick_actions %}
+            <a class="btn btn-sm btn-outline-secondary" href="{{ action.url }}">
+                <span aria-hidden="true">{{ action.icon }}</span> {{ action.label }}
+            </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% endif %}
 {% endblock %}

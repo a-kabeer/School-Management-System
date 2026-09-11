@@ -128,9 +128,23 @@ class Student(BranchOwnedSoftDeleteModel):
 
     @property
     def current_enrollment(self):
-        return self.enrollments.filter(is_current=True).select_related(
-            "school_class", "section", "academic_year"
-        ).first()
+        """The live enrollment, reusing a prefetch when the caller set one up.
+
+        Filtering a prefetched related manager issues a fresh query, so a list
+        of students would cost one query per row. Scanning the cached rows
+        instead keeps a table of students to a single enrollment query.
+        """
+        cache = getattr(self, "_prefetched_objects_cache", None)
+        if cache and "enrollments" in cache:
+            for enrollment in cache["enrollments"]:
+                if enrollment.is_current:
+                    return enrollment
+            return None
+        return (
+            self.enrollments.filter(is_current=True)
+            .select_related("school_class", "section", "academic_year")
+            .first()
+        )
 
     @property
     def current_class_display(self):

@@ -26,6 +26,12 @@
     min-width: 0; /* lets flex children shrink instead of forcing a page scroll */
 }
 
+/* Bootstrap has no min-width utility, and a flex child needs min-width: 0
+   before `text-truncate` can do anything. */
+.min-w-0 {
+    min-width: 0;
+}
+
 .skip-link {
     position: absolute;
     z-index: 1080;
