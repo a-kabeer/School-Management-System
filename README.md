@@ -183,10 +183,31 @@ All six share the password **`Madrasah#2026`** (override with `--password`).
 The command also creates the staff, student and guardian records those logins
 need, all named "Demo …".
 
-This is the only command that invents business data, and it refuses to run with
-`DEBUG=False` unless you pass `--force` — the password above is published, so
-these accounts must never exist on an installation holding real data. Delete
-them, or change the password, before going live.
+It refuses to run with `DEBUG=False` unless you pass `--force` — the password
+above is published, so these accounts must never exist on an installation
+holding real data. Delete them, or change the password, before going live.
+
+### Demo dataset
+
+To fill the system at a realistic size — two campuses, 1,000 students each:
+
+```bash
+python manage.py seed_demo_data
+```
+
+Roughly 82,000 rows across every table: students, enrollments, guardians,
+staff, timetables, attendance registers, Hifz progress, invoices, payments,
+waivers, refunds, payroll runs, exams with marks and results, notifications and
+subscription history.
+
+High-volume rows are written with `bulk_create`, but money is not: fee
+payments, refunds, waivers and payroll all go through the real services, so
+both branches end up with a **balanced double-entry ledger** rather than merely
+populated tables.
+
+Useful flags: `--students`, `--staff`, `--classes`, `--attendance-days`,
+`--pay-ratio`, `--seed` (reproducible), `--flush` (clear business data first).
+Like the demo logins, it refuses to run with `DEBUG=False`.
 
 ### Environment
 
