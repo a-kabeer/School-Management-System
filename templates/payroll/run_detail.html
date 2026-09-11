@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block page_heading %}{{ object.reference }}{% endblock %}
+
+{% block page_actions %}
+    {% has_perm "core.run_payroll" as can_run %}
+    {% if can_run and object.status == 'draft' %}
+        <form method="post" action="{% url 'payroll:run_approve' object.pk %}" class="inline-form">
+            {% csrf_token %}
+            <button type="submit" class="button"
+                    data-confirm="{% translate 'Approve this run and post the salary expense to the ledger?' %}">
+                {% translate "Approve and post" %}
+            </button>
+        </form>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <dl class="definition-list inline">
+        <dt>{% translate "Period" %}</dt><dd>{{ object.period.name }}</dd>
+        <dt>{% translate "Run date" %}</dt><dd>{{ object.run_date|date:"Y-m-d" }}</dd>
+        <dt>{% translate "Employees" %}</dt><dd>{{ object.employee_count }}</dd>
+        <dt>{% translate "Gross" %}</dt><dd>{{ object.total_gross|money }}</dd>
+        <dt>{% translate "Deductions" %}</dt><dd>{{ object.total_deductions|money }}</dd>
+        <dt>{% translate "Net" %}</dt><dd><strong>{{ object.total_net|money }}</strong></dd>
+        <dt>{% translate "Status" %}</dt><dd><span class="pill">{{ object.get_status_display }}</span></dd>
+        {% if object.journal_entry %}
+            <dt>{% translate "Ledger entry" %}</dt>
+            <dd><a href="{% url 'finance:entry_detail' object.journal_entry.pk %}">{{ object.journal_entry.entry_number }}</a></dd>
+        {% endif %}
+    </dl>
+</div>
+
+<div class="table-wrap">
+    <table class="data-table">
+        <thead><tr>
+            <th>{% translate "Employee" %}</th>
+            <th class="numeric">{% translate "Basic" %}</th>
+            <th class="numeric">{% translate "Allowances" %}</th>
+            <th class="numeric">{% translate "Deductions" %}</th>
+            <th class="numeric">{% translate "Net" %}</th>
+            <th class="numeric">{% translate "Paid" %}</th>
+            <th class="actions-column">{% translate "Actions" %}</th>
+        </tr></thead>
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td data-label="{% translate 'Employee' %}">{{ item.staff.full_name }}<br><span class="muted">{{ item.staff.employee_no }}</span></td>
+                <td class="numeric" data-label="{% translate 'Basic' %}">{{ item.basic_salary|money }}</td>
+                <td class="numeric" data-label="{% translate 'Allowances' %}">{{ item.total_allowances|money }}</td>
+                <td class="numeric" data-label="{% translate 'Deductions' %}">{{ item.total_deductions|money }}</td>
+                <td class="numeric" data-label="{% translate 'Net' %}"><strong>{{ item.net_salary|money }}</strong></td>
+                <td class="numeric" data-label="{% translate 'Paid' %}">
+                    {% with paid=item.payments.all %}
+                        {% if paid %}{% for payment in paid %}{{ payment.amount|money }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}—{% endif %}
+                    {% endwith %}
+                </td>
+                <td class="actions-column">
+                    {% has_perm "core.run_payroll" as can_pay %}
+                    {% if can_pay and object.status == 'approved' %}
+                        <a class="button tiny" href="{% url 'payroll:item_pay' item.pk %}">{% translate "Pay" %}</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="7" class="muted">{% translate "No payslips in this run." %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

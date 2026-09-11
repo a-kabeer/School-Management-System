@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block content %}
+<div class="detail-grid">
+    <section class="panel">
+        <h2>{% translate "Profile" %}</h2>
+        <dl class="definition-list">
+            <dt>{% translate "Name" %}</dt><dd>{{ child.full_name }}</dd>
+            <dt>{% translate "Admission #" %}</dt><dd>{{ child.admission_no }}</dd>
+            <dt>{% translate "Class" %}</dt><dd>{{ child.current_class_display }}</dd>
+            <dt>{% translate "Status" %}</dt><dd>{{ child.get_status_display }}</dd>
+        </dl>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Attendance" %}</h2>
+        <table class="data-table compact">
+            <thead><tr><th>{% translate "Date" %}</th><th>{% translate "Status" %}</th><th>{% translate "Remarks" %}</th></tr></thead>
+            <tbody>
+            {% for record in attendance %}
+                <tr>
+                    <td>{{ record.date|date:"Y-m-d" }}</td>
+                    <td><span class="pill">{{ record.get_status_display }}</span></td>
+                    <td>{{ record.remarks|default:"—" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3" class="muted">{% translate "No attendance recorded." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Fees" %}</h2>
+        <table class="data-table compact">
+            <thead><tr>
+                <th>{% translate "Invoice #" %}</th><th>{% translate "Due" %}</th>
+                <th class="numeric">{% translate "Total" %}</th><th class="numeric">{% translate "Balance" %}</th>
+                <th>{% translate "Status" %}</th>
+            </tr></thead>
+            <tbody>
+            {% for invoice in invoices %}
+                <tr>
+                    <td>{{ invoice.invoice_number }}</td>
+                    <td>{{ invoice.due_date|date:"Y-m-d" }}</td>
+                    <td class="numeric">{{ invoice.total_amount|money }}</td>
+                    <td class="numeric">{{ invoice.balance|money }}</td>
+                    <td><span class="pill">{{ invoice.get_status_display }}</span></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="muted">{% translate "No invoices." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>{% translate "Recent payments" %}</h3>
+        <ul class="plain-list">
+            {% for payment in payments %}
+                <li>{{ payment.payment_date|date:"Y-m-d" }} — <strong>{{ payment.amount|money }}</strong> <span class="muted">{{ payment.receipt_number }}</span></li>
+            {% empty %}
+                <li class="muted">{% translate "No payments recorded." %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Results" %}</h2>
+        <table class="data-table compact">
+            <thead><tr>
+                <th>{% translate "Exam" %}</th><th class="numeric">{% translate "Percentage" %}</th>
+                <th>{% translate "Grade" %}</th><th>{% translate "Outcome" %}</th>
+            </tr></thead>
+            <tbody>
+            {% for summary in results %}
+                <tr>
+                    <td>{{ summary.student_exam.exam.name }}</td>
+                    <td class="numeric">{{ summary.percentage }}%</td>
+                    <td>{{ summary.grade.name|default:"—" }}</td>
+                    <td><span class="pill">{{ summary.get_outcome_display }}</span></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="muted">{% translate "No published results yet." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    {% if hifz_profile %}
+    <section class="panel">
+        <h2>{% translate "Hifz progress" %}</h2>
+        <dl class="definition-list inline">
+            <dt>{% translate "Stage" %}</dt><dd>{{ hifz_profile.get_stage_display }}</dd>
+            <dt>{% translate "Current para" %}</dt><dd>{{ hifz_profile.current_para }}</dd>
+            <dt>{% translate "Paras memorized" %}</dt><dd>{{ hifz_profile.paras_memorized }}</dd>
+        </dl>
+        <table class="data-table compact">
+            <thead><tr>
+                <th>{% translate "Date" %}</th><th>{% translate "Lesson" %}</th>
+                <th>{% translate "Pages" %}</th><th>{% translate "Mistakes" %}</th>
+            </tr></thead>
+            <tbody>
+            {% for entry in hifz_progress %}
+                <tr>
+                    <td>{{ entry.date|date:"Y-m-d" }}</td>
+                    <td>{{ entry.get_lesson_type_display }}</td>
+                    <td>{{ entry.pages }}</td>
+                    <td>{{ entry.mistakes }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="muted">{% translate "No Hifz progress recorded." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

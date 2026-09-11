@@ -1,0 +1,18 @@
+{% load i18n static %}<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% translate "Something went wrong" %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="unauthenticated">
+<main class="auth-shell">
+    <div class="auth-card">
+        <h1>{% translate "Something went wrong" %}</h1>
+        <p>{% translate "The error has been logged. Please try again." %}</p>
+        <a class="button" href="/">{% translate "Go home" %}</a>
+    </div>
+</main>
+</body>
+</html>

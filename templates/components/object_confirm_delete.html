@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="panel">
+    <p class="lead">
+        {% blocktranslate with name=object %}Delete “{{ name }}”? This can be restored later by an administrator.{% endblocktranslate %}
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="button danger">{% translate "Delete" %}</button>
+            <a href="{{ request.META.HTTP_REFERER|default:'..' }}" class="button ghost">{% translate "Cancel" %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "components/object_list.html" %}
+{% load i18n %}
+
+{% block extra_actions %}
+<a class="button ghost" href="{% url 'finance:trial_balance' %}">{% translate "Trial balance" %}</a>
+{% endblock %}

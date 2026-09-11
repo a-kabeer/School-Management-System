@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="panel">
+    <form method="post" enctype="multipart/form-data" class="object-form" novalidate>
+        {% csrf_token %}
+        {% include "components/form.html" %}
+        <div class="form-actions">
+            <button type="submit" class="button">{% translate "Save" %}</button>
+            <a href="{{ request.META.HTTP_REFERER|default:'..' }}" class="button ghost">{% translate "Cancel" %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

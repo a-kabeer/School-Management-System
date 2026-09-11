@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="panel">
+    <p class="muted">{% translate "Only unsettled invoices from your current branch are listed." %}</p>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "components/form.html" %}
+        <div class="form-actions">
+            <button type="submit" class="button">{% translate "Record payment" %}</button>
+            <a href="{% url 'fees:invoice_list' %}" class="button ghost">{% translate "Cancel" %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

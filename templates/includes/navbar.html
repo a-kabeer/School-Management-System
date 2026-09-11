@@ -1,0 +1,62 @@
+{% load i18n %}
+<header class="navbar">
+    <button type="button" class="icon-button sidebar-toggle" aria-label="{% translate 'Toggle menu' %}" aria-expanded="false" aria-controls="sidebar">
+        <span class="burger" aria-hidden="true"></span>
+    </button>
+
+    <a class="brand" href="{% url 'core:dashboard' %}">
+        {% if current_organization.logo %}
+            <img src="{{ current_organization.logo.url }}" alt="" class="brand-logo">
+        {% endif %}
+        <span class="brand-name">{{ current_organization.name|default:site_name }}</span>
+    </a>
+
+    <div class="navbar-spacer"></div>
+
+    {% if available_branches %}
+        <form method="post" action="{% url 'tenants:switch_branch' %}" class="branch-switcher" data-branch-switcher>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <label class="sr-only" for="branch-select">{% translate "Branch" %}</label>
+            <select name="branch" id="branch-select" class="form-select compact" onchange="this.form.requestSubmit()">
+                {% for branch in available_branches %}
+                    <option value="{{ branch.pk }}" {% if current_branch and branch.pk == current_branch.pk %}selected{% endif %}>{{ branch.name }}</option>
+                {% endfor %}
+            </select>
+            <noscript><button type="submit" class="button small">{% translate "Switch" %}</button></noscript>
+        </form>
+    {% endif %}
+
+    <form action="{% url 'set_language' %}" method="post" class="language-switcher">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+        <label class="sr-only" for="language-select">{% translate "Language" %}</label>
+        <select name="language" id="language-select" class="form-select compact" onchange="this.form.submit()">
+            {% for code, name in ui_languages %}
+                <option value="{{ code }}" {% if code == ui_language %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        <noscript><button type="submit" class="button small">{% translate "Go" %}</button></noscript>
+    </form>
+
+    <a class="icon-button notification-bell" href="{% url 'notifications:list' %}" aria-label="{% translate 'Notifications' %}">
+        <span aria-hidden="true">&#9993;</span>
+        {% if unread_notifications %}<span class="badge">{{ unread_notifications }}</span>{% endif %}
+    </a>
+
+    <details class="user-menu">
+        <summary>
+            <span class="avatar" aria-hidden="true">{{ user.display_name|slice:":1"|upper }}</span>
+            <span class="user-name">{{ user.display_name }}</span>
+        </summary>
+        <div class="user-menu-panel">
+            <p class="user-menu-meta">{{ current_branch.name|default:"—" }}</p>
+            <a href="{% url 'accounts:profile' %}">{% translate "My Profile" %}</a>
+            <a href="{% url 'accounts:change_password' %}">{% translate "Change Password" %}</a>
+            <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="link-button">{% translate "Sign out" %}</button>
+            </form>
+        </div>
+    </details>
+</header>

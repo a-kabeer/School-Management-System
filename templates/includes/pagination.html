@@ -1,0 +1,21 @@
+{% load i18n %}
+{% if is_paginated %}
+<nav class="pagination" aria-label="{% translate 'Pagination' %}">
+    <span class="pagination-summary">
+        {% blocktranslate with start=page_obj.start_index end=page_obj.end_index total=paginator.count %}{{ start }}–{{ end }} of {{ total }}{% endblocktranslate %}
+    </span>
+    <ul>
+        {% if page_obj.has_previous %}
+            <li><a href="?{{ querystring }}page=1" aria-label="{% translate 'First page' %}">&laquo;</a></li>
+            <li><a href="?{{ querystring }}page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a></li>
+        {% endif %}
+        <li class="current" aria-current="page">
+            {% blocktranslate with number=page_obj.number total=paginator.num_pages %}Page {{ number }} of {{ total }}{% endblocktranslate %}
+        </li>
+        {% if page_obj.has_next %}
+            <li><a href="?{{ querystring }}page={{ page_obj.next_page_number }}">{% translate "Next" %}</a></li>
+            <li><a href="?{{ querystring }}page={{ paginator.num_pages }}" aria-label="{% translate 'Last page' %}">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}

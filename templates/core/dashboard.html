@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load i18n core_extras humanize %}
+
+{% block content %}
+<div class="card-grid">
+    <div class="stat-card tone-primary">
+        <p class="stat-label">{% translate "Active students" %}</p>
+        <p class="stat-value">{{ summary.students_active|intcomma }}</p>
+        <p class="stat-hint">{% blocktranslate with total=summary.students_total %}{{ total }} on the register{% endblocktranslate %}</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-label">{% translate "Staff" %}</p>
+        <p class="stat-value">{{ summary.staff_total|intcomma }}</p>
+    </div>
+    <div class="stat-card tone-success">
+        <p class="stat-label">{% translate "Collected this month" %}</p>
+        <p class="stat-value">{{ summary.collected_this_month|money }}</p>
+        <p class="stat-hint">{% blocktranslate with today=summary.collected_today %}{{ today }} today{% endblocktranslate %}</p>
+    </div>
+    <div class="stat-card tone-warning">
+        <p class="stat-label">{% translate "Outstanding fees" %}</p>
+        <p class="stat-value">{{ summary.fees_outstanding|money }}</p>
+        <p class="stat-hint">{% blocktranslate with billed=summary.fees_billed %}{{ billed }} billed{% endblocktranslate %}</p>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <section class="panel">
+        <h2>{% translate "Attendance today" %}</h2>
+        {% if summary.attendance_marked %}
+            <p class="big-number">{{ summary.attendance_rate }}%</p>
+            <ul class="stat-list">
+                <li><span>{% translate "Present" %}</span><strong>{{ summary.attendance_present }}</strong></li>
+                <li><span>{% translate "Absent" %}</span><strong>{{ summary.attendance_absent }}</strong></li>
+                <li><span>{% translate "Late" %}</span><strong>{{ summary.attendance_late }}</strong></li>
+                <li><span>{% translate "Leave" %}</span><strong>{{ summary.attendance_leave }}</strong></li>
+            </ul>
+        {% else %}
+            <p class="muted">{% translate "No attendance has been marked today." %}</p>
+            {% has_perm "attendance.add_studentattendance" as can_mark %}
+            {% if can_mark %}
+                <a class="button" href="{% url 'attendance:mark' %}">{% translate "Mark attendance" %}</a>
+            {% endif %}
+        {% endif %}
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Collections, last 14 days" %}</h2>
+        <div class="bar-chart" role="img" aria-label="{% translate 'Daily fee collection' %}">
+            {% for point in trend %}
+                <div class="bar-column" title="{{ point.date|date:'Y-m-d' }}: {{ point.total|money }}">
+                    <div class="bar" style="height: {% widthratio point.total trend_max 100 %}%"></div>
+                    <span class="bar-label">{{ point.date|date:"j" }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel wide">
+        <h2>{% translate "Recent activity" %}</h2>
+        {% if activity %}
+            <ul class="activity-list">
+                {% for entry in activity %}
+                    <li>
+                        <span class="activity-action">{{ entry.get_action_display }}</span>
+                        <span class="activity-object">{{ entry.object_repr|default:entry.app_label }}</span>
+                        <span class="activity-meta">
+                            {{ entry.username|default:_("system") }} · {{ entry.created_at|date:"Y-m-d H:i" }}
+                            {% if entry.branch %}· {{ entry.branch.name }}{% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="muted">{% translate "No activity recorded yet." %}</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

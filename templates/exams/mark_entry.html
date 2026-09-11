@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="panel">
+    <dl class="definition-list inline">
+        <dt>{% translate "Exam" %}</dt><dd>{{ exam_subject.exam.name }}</dd>
+        <dt>{% translate "Subject" %}</dt><dd>{{ exam_subject.class_subject.subject.name }}</dd>
+        <dt>{% translate "Total marks" %}</dt><dd>{{ exam_subject.total_marks }}</dd>
+        <dt>{% translate "Passing marks" %}</dt><dd>{{ exam_subject.passing_marks }}</dd>
+    </dl>
+</div>
+
+<form method="post" class="register-form">
+    {% csrf_token %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr>
+                <th>{% translate "Roll #" %}</th><th>{% translate "Student" %}</th>
+                <th>{% translate "Marks" %}</th><th>{% translate "Absent" %}</th>
+            </tr></thead>
+            <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td data-label="{% translate 'Roll #' %}">{{ row.student_exam.roll_number|default:"—" }}</td>
+                    <td data-label="{% translate 'Student' %}">{{ row.student_exam.student.full_name }}</td>
+                    <td data-label="{% translate 'Marks' %}">
+                        <input type="number" step="0.01" min="0" max="{{ exam_subject.total_marks }}"
+                               name="marks-{{ row.student_exam.pk }}" class="form-control compact"
+                               value="{{ row.mark.obtained_marks|default_if_none:'' }}">
+                    </td>
+                    <td data-label="{% translate 'Absent' %}">
+                        <input type="checkbox" name="absent-{{ row.student_exam.pk }}"
+                               {% if row.mark.is_absent %}checked{% endif %}>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="muted">{% translate "No students are registered for this exam." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if rows %}
+    <div class="form-actions sticky">
+        <button type="submit" class="button">{% translate "Save marks" %}</button>
+    </div>
+    {% endif %}
+</form>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% load i18n %}
+<nav id="sidebar" class="sidebar" aria-label="{% translate 'Main navigation' %}">
+    <ul class="nav-list">
+        {% for item in navigation %}
+            {% if item.children %}
+                <li class="nav-group">
+                    <details {% if item.is_open %}open{% endif %}>
+                        <summary>
+                            <span class="nav-icon" aria-hidden="true" data-icon="{{ item.icon }}"></span>
+                            <span class="nav-label">{{ item.label }}</span>
+                        </summary>
+                        <ul class="nav-sublist">
+                            {% for child in item.children %}
+                                <li>
+                                    <a href="{{ child.url }}" {% if child.is_current %}aria-current="page"{% endif %}>{{ child.label }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                </li>
+            {% elif item.url %}
+                <li>
+                    <a class="nav-link" href="{{ item.url }}" {% if item.is_current %}aria-current="page"{% endif %}>
+                        <span class="nav-icon" aria-hidden="true" data-icon="{{ item.icon }}"></span>
+                        <span class="nav-label">{{ item.label }}</span>
+                    </a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</nav>
+<div class="sidebar-scrim" data-sidebar-scrim hidden></div>

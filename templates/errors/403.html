@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Access denied" %}{% endblock %}
+{% block page_heading %}{% translate "Access denied" %}{% endblock %}
+{% block content %}
+<div class="panel">
+    <p class="lead">{{ message|default:_("You do not have permission to view this page.") }}</p>
+    <a class="button" href="{% url 'core:dashboard' %}">{% translate "Back to dashboard" %}</a>
+</div>
+{% endblock %}
+{% block anon_content %}
+<div class="auth-card">
+    <h1>{% translate "Access denied" %}</h1>
+    <p>{{ message|default:_("You do not have permission to view this page.") }}</p>
+</div>
+{% endblock %}

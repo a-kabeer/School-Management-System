@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% translate "Sign in" %}{% endblock %}
+
+{% block anon_content %}
+<div class="auth-card">
+    <h1>{{ site_name }}</h1>
+    <p class="auth-subtitle">{% translate "Sign in to continue" %}</p>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="message message-error">
+                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+        {% endif %}
+        <div class="form-field">
+            <label for="{{ form.username.id_for_label }}">{% translate "Username" %}</label>
+            {{ form.username }}
+            {% for error in form.username.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="form-field">
+            <label for="{{ form.password.id_for_label }}">{% translate "Password" %}</label>
+            {{ form.password }}
+            {% for error in form.password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <button type="submit" class="button full">{% translate "Sign in" %}</button>
+    </form>
+
+    <form action="{% url 'set_language' %}" method="post" class="auth-language">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+        <label class="sr-only" for="auth-language">{% translate "Language" %}</label>
+        <select name="language" id="auth-language" class="form-select compact" onchange="this.form.submit()">
+            {% for code, name in ui_languages %}
+                <option value="{{ code }}" {% if code == ui_language %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        <noscript><button type="submit" class="button small">{% translate "Go" %}</button></noscript>
+    </form>
+</div>
+{% endblock %}

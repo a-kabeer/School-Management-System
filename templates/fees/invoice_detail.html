@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block page_heading %}{{ object.invoice_number }}{% endblock %}
+
+{% block page_actions %}
+    {% has_perm "core.waive_fee" as can_waive %}
+    {% if can_waive and not object.is_settled %}
+        <a class="button ghost" href="{% url 'fees:invoice_waive' object.pk %}">{% translate "Waive" %}</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+    <section class="panel">
+        <h2>{% translate "Invoice" %}</h2>
+        <dl class="definition-list">
+            <dt>{% translate "Student" %}</dt>
+            <dd><a href="{% url 'students:student_detail' object.student.pk %}">{{ object.student.full_name }}</a></dd>
+            <dt>{% translate "Academic year" %}</dt><dd>{{ object.academic_year.name }}</dd>
+            <dt>{% translate "Issued" %}</dt><dd>{{ object.issue_date|date:"Y-m-d" }}</dd>
+            <dt>{% translate "Due" %}</dt><dd>{{ object.due_date|date:"Y-m-d" }}</dd>
+            <dt>{% translate "Status" %}</dt><dd><span class="pill">{{ object.get_status_display }}</span></dd>
+        </dl>
+        <table class="data-table compact">
+            <thead><tr>
+                <th>{% translate "Item" %}</th><th class="numeric">{% translate "Amount" %}</th>
+                <th class="numeric">{% translate "Discount" %}</th><th class="numeric">{% translate "Total" %}</th>
+            </tr></thead>
+            <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ item.fee_type.name }}</td>
+                    <td class="numeric">{{ item.unit_amount|money }}</td>
+                    <td class="numeric">{{ item.discount_amount|money }}</td>
+                    <td class="numeric">{{ item.line_total|money }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr><th colspan="3">{% translate "Subtotal" %}</th><td class="numeric">{{ object.subtotal|money }}</td></tr>
+                <tr><th colspan="3">{% translate "Discount" %}</th><td class="numeric">−{{ object.discount_amount|money }}</td></tr>
+                <tr><th colspan="3">{% translate "Waived" %}</th><td class="numeric">−{{ object.waiver_amount|money }}</td></tr>
+                <tr><th colspan="3">{% translate "Total" %}</th><td class="numeric"><strong>{{ object.total_amount|money }}</strong></td></tr>
+                <tr><th colspan="3">{% translate "Paid" %}</th><td class="numeric">{{ object.paid_amount|money }}</td></tr>
+                <tr><th colspan="3">{% translate "Balance" %}</th><td class="numeric"><strong>{{ object.balance|money }}</strong></td></tr>
+            </tfoot>
+        </table>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Payments" %}</h2>
+        <ul class="plain-list">
+            {% for payment in payments %}
+                <li>
+                    <a href="{% url 'fees:payment_detail' payment.pk %}">{{ payment.receipt_number }}</a>
+                    <strong>{{ payment.amount|money }}</strong>
+                    <span class="muted">{{ payment.payment_date|date:"Y-m-d" }} · {{ payment.payment_method.name }}</span>
+                    {% if payment.is_void %}<span class="pill pill-no">{% translate "Void" %}</span>{% endif %}
+                </li>
+            {% empty %}
+                <li class="muted">{% translate "No payments yet." %}</li>
+            {% endfor %}
+        </ul>
+
+        {% has_perm "core.collect_fee_payment" as can_collect %}
+        {% if can_collect and not object.is_settled %}
+            <h3>{% translate "Collect payment" %}</h3>
+            <form method="post" action="{% url 'fees:payment_create' %}">
+                {% csrf_token %}
+                <input type="hidden" name="invoice" value="{{ object.pk }}">
+                {% with form=payment_form %}
+                    <div class="form-grid">
+                        {% for field in form %}
+                            {% if field.name != 'invoice' %}
+                                <div class="form-field">
+                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endwith %}
+                <div class="form-actions">
+                    <button type="submit" class="button">{% translate "Record payment" %}</button>
+                </div>
+            </form>
+        {% endif %}
+    </section>
+
+    {% if waivers %}
+    <section class="panel">
+        <h2>{% translate "Waivers" %}</h2>
+        <ul class="plain-list">
+            {% for waiver in waivers %}
+                <li>{{ waiver.waived_on|date:"Y-m-d" }} — <strong>{{ waiver.amount|money }}</strong> <span class="muted">{{ waiver.reason }}</span></li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

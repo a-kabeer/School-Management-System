@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block page_actions %}
+<a class="button" href="{% url 'parents:request_create' %}">{% translate "New request" %}</a>
+{% endblock %}
+
+{% block content %}
+<div class="card-grid">
+    {% for child in children %}
+        <a class="stat-card link-card" href="{% url 'parents:child_detail' child.pk %}">
+            <p class="stat-label">{{ child.current_class_display }}</p>
+            <p class="stat-value small">{{ child.full_name }}</p>
+            <p class="stat-hint">{{ child.admission_no }}</p>
+        </a>
+    {% empty %}
+        <div class="panel">
+            <p class="muted">{% translate "No children are linked to your account. Please contact the school office." %}</p>
+        </div>
+    {% endfor %}
+</div>
+
+<section class="panel">
+    <h2>{% translate "My requests" %}</h2>
+    <ul class="plain-list">
+        {% for request_item in guardian.requests.all|slice:":10" %}
+            <li>
+                {{ request_item.created_at|date:"Y-m-d" }} · {{ request_item.subject }}
+                <span class="pill">{{ request_item.get_status_display }}</span>
+                {% if request_item.response %}<p class="muted">{{ request_item.response }}</p>{% endif %}
+            </li>
+        {% empty %}
+            <li class="muted">{% translate "You have not raised any requests." %}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block page_actions %}
+    {% has_perm "students.change_student" as can_edit %}
+    {% if can_edit %}
+        <a class="button" href="{% url 'students:student_update' object.pk %}">{% translate "Edit" %}</a>
+        <a class="button ghost" href="{% url 'students:student_transfer' object.pk %}">{% translate "Transfer" %}</a>
+        <a class="button ghost" href="{% url 'students:student_status' object.pk %}">{% translate "Change status" %}</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+    <section class="panel">
+        <h2>{% translate "Profile" %}</h2>
+        <div class="profile-head">
+            {% if object.photo %}
+                <img src="{{ object.photo.url }}" alt="" class="profile-photo">
+            {% else %}
+                <span class="profile-photo placeholder" aria-hidden="true">{{ object.full_name|slice:":1"|upper }}</span>
+            {% endif %}
+            <div>
+                <p class="profile-name">{{ object.full_name }}</p>
+                <p class="muted">{{ object.admission_no }} · {{ object.current_class_display }}</p>
+                <span class="pill">{{ object.get_status_display }}</span>
+            </div>
+        </div>
+        <dl class="definition-list">
+            <dt>{% translate "Father" %}</dt><dd>{{ object.father_name|default:"—" }}</dd>
+            <dt>{% translate "Gender" %}</dt><dd>{{ object.get_gender_display|default:"—" }}</dd>
+            <dt>{% translate "Date of birth" %}</dt><dd>{{ object.date_of_birth|date:"Y-m-d"|default:"—" }}</dd>
+            <dt>{% translate "Phone" %}</dt><dd>{{ object.phone|default:"—" }}</dd>
+            <dt>{% translate "Address" %}</dt><dd>{{ object.address|default:"—" }}</dd>
+            <dt>{% translate "Admitted" %}</dt><dd>{{ object.admission_date|date:"Y-m-d"|default:"—" }}</dd>
+            <dt>{% translate "Branch" %}</dt><dd>{{ object.branch.name }}</dd>
+        </dl>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Guardians" %}</h2>
+        {% if guardians %}
+            <ul class="plain-list">
+                {% for link in guardians %}
+                    <li>
+                        <strong>{{ link.guardian.full_name }}</strong>
+                        <span class="muted">{{ link.guardian.get_relation_display }} · {{ link.guardian.phone|default:"—" }}</span>
+                        {% if link.is_primary %}<span class="pill pill-yes">{% translate "Primary" %}</span>{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="muted">{% translate "No guardians linked." %}</p>
+        {% endif %}
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Enrollment history" %}</h2>
+        <table class="data-table compact">
+            <thead><tr>
+                <th>{% translate "Year" %}</th><th>{% translate "Class" %}</th>
+                <th>{% translate "Section" %}</th><th>{% translate "Roll #" %}</th><th>{% translate "Current" %}</th>
+            </tr></thead>
+            <tbody>
+            {% for enrollment in enrollments %}
+                <tr>
+                    <td>{{ enrollment.academic_year.name }}</td>
+                    <td>{{ enrollment.school_class.name }}</td>
+                    <td>{{ enrollment.section.name|default:"—" }}</td>
+                    <td>{{ enrollment.roll_number|default:"—" }}</td>
+                    <td>{% if enrollment.is_current %}✓{% endif %}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="muted">{% translate "No enrollments." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Recent invoices" %}</h2>
+        <table class="data-table compact">
+            <thead><tr>
+                <th>{% translate "Invoice #" %}</th><th>{% translate "Due" %}</th>
+                <th class="numeric">{% translate "Total" %}</th><th class="numeric">{% translate "Balance" %}</th>
+                <th>{% translate "Status" %}</th>
+            </tr></thead>
+            <tbody>
+            {% for invoice in invoices %}
+                <tr>
+                    <td><a href="{% url 'fees:invoice_detail' invoice.pk %}">{{ invoice.invoice_number }}</a></td>
+                    <td>{{ invoice.due_date|date:"Y-m-d" }}</td>
+                    <td class="numeric">{{ invoice.total_amount|money }}</td>
+                    <td class="numeric">{{ invoice.balance|money }}</td>
+                    <td><span class="pill">{{ invoice.get_status_display }}</span></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="muted">{% translate "No invoices." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    {% if hifz_profile %}
+    <section class="panel">
+        <h2>{% translate "Hifz" %}</h2>
+        <dl class="definition-list">
+            <dt>{% translate "Stage" %}</dt><dd>{{ hifz_profile.get_stage_display }}</dd>
+            <dt>{% translate "Current para" %}</dt><dd>{{ hifz_profile.current_para }}</dd>
+            <dt>{% translate "Paras memorized" %}</dt><dd>{{ hifz_profile.paras_memorized }}</dd>
+        </dl>
+        <a class="button ghost" href="{% url 'hifz:profile_detail' hifz_profile.pk %}">{% translate "Open Hifz record" %}</a>
+    </section>
+    {% endif %}
+
+    <section class="panel">
+        <h2>{% translate "Documents" %}</h2>
+        {% if documents %}
+            <ul class="plain-list">
+                {% for doc in documents %}
+                    <li><a href="{{ doc.file.url }}">{{ doc.title }}</a> <span class="muted">{{ doc.get_document_type_display }}</span></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="muted">{% translate "No documents uploaded." %}</p>
+        {% endif %}
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Status history" %}</h2>
+        <ul class="plain-list">
+            {% for entry in status_history %}
+                <li>
+                    {{ entry.effective_date|date:"Y-m-d" }} — {{ entry.previous_status|default:"—" }} → <strong>{{ entry.new_status }}</strong>
+                    {% if entry.reason %}<span class="muted">{{ entry.reason }}</span>{% endif %}
+                </li>
+            {% empty %}
+                <li class="muted">{% translate "No status changes." %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+{% endblock %}

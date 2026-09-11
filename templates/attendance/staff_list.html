@@ -1,0 +1,45 @@
+{% extends "components/object_list.html" %}
+{% load i18n core_extras %}
+
+{% block list_intro %}
+{% has_perm "attendance.add_staffattendance" as can_mark %}
+{% if can_mark %}
+<details class="panel collapsible">
+    <summary><h2>{% translate "Mark staff attendance" %}</h2></summary>
+    <form method="post" class="register-form">
+        {% csrf_token %}
+        <input type="hidden" name="date" value="{{ mark_date|date:'Y-m-d' }}">
+        <p class="muted">{% blocktranslate with date=mark_date %}Marking for {{ date }}. Change the date filter above to mark another day.{% endblocktranslate %}</p>
+        <div class="table-wrap">
+            <table class="data-table compact">
+                <thead><tr><th>{% translate "Employee #" %}</th><th>{% translate "Name" %}</th><th>{% translate "Status" %}</th></tr></thead>
+                <tbody>
+                {% for row in mark_rows %}
+                    <tr>
+                        <td>{{ row.staff.employee_no }}</td>
+                        <td>{{ row.staff.full_name }}</td>
+                        <td>
+                            <div class="status-options">
+                                {% for value, label in statuses %}
+                                    <label class="status-option">
+                                        <input type="radio" name="status-{{ row.staff.pk }}" value="{{ value }}"
+                                               {% if row.record and row.record.status == value %}checked{% elif not row.record and value == 'present' %}checked{% endif %}>
+                                        <span>{{ label }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3" class="muted">{% translate "No active staff." %}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="button">{% translate "Save staff attendance" %}</button>
+        </div>
+    </form>
+</details>
+{% endif %}
+{% endblock %}

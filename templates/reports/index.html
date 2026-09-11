@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="card-grid">
+    {% for report in reports %}
+        <a class="stat-card link-card" href="{% url 'reports:detail' key=report.key %}">
+            <p class="stat-value small">{{ report.label }}</p>
+            <p class="stat-hint">{{ report.description }}</p>
+            {% if report.organization_wide %}
+                <span class="pill">{% translate "All branches" %}</span>
+            {% endif %}
+        </a>
+    {% empty %}
+        <div class="panel"><p class="muted">{% translate "No reports are available to your role." %}</p></div>
+    {% endfor %}
+</div>
+
+{% if saved %}
+<section class="panel">
+    <h2>{% translate "Saved reports" %}</h2>
+    <ul class="plain-list">
+        {% for item in saved %}
+            <li><a href="{% url 'reports:detail' key=item.report_key %}">{{ item.name }}</a> <span class="muted">{{ item.report_key }}</span></li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endblock %}

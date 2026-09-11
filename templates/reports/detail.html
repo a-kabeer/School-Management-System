@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block page_actions %}
+    {% if can_export %}
+        <a class="button ghost" href="{% query_replace export='xlsx' %}">{% translate "Export to Excel" %}</a>
+    {% endif %}
+    <a class="button ghost" href="{% url 'reports:index' %}">{% translate "All reports" %}</a>
+{% endblock %}
+
+{% block content %}
+<p class="muted">{{ definition.description }}</p>
+
+<form method="get" class="filter-bar">
+    {% if 'date_from' in definition.filters %}
+        <div class="filter-field">
+            <label class="sr-only" for="from">{% translate "From" %}</label>
+            <input type="date" id="from" name="date_from" value="{{ params.date_from|date:'Y-m-d' }}" class="form-control">
+        </div>
+        <div class="filter-field">
+            <label class="sr-only" for="to">{% translate "To" %}</label>
+            <input type="date" id="to" name="date_to" value="{{ params.date_to|date:'Y-m-d' }}" class="form-control">
+        </div>
+    {% endif %}
+    {% if 'status' in definition.filters %}
+        <div class="filter-field">
+            <label class="sr-only" for="status">{% translate "Status" %}</label>
+            <input type="text" id="status" name="status" value="{{ params.status }}" class="form-control"
+                   placeholder="{% translate 'Status' %}">
+        </div>
+    {% endif %}
+    <button type="submit" class="button">{% translate "Apply" %}</button>
+    <a href="{{ request.path }}" class="button ghost">{% translate "Reset" %}</a>
+</form>
+
+<p class="muted">{% blocktranslate with count=row_count %}{{ count }} rows{% endblocktranslate %}</p>
+
+<div class="table-wrap">
+    <table class="data-table compact">
+        <thead>
+        <tr>{% for header in headers %}<th>{{ header }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+            <tr>
+                {% for cell in row %}<td data-label="">{{ cell|default_if_none:"—" }}</td>{% endfor %}
+            </tr>
+        {% empty %}
+            <tr><td colspan="{{ headers|length }}" class="muted">{% translate "No data for these filters." %}</td></tr>
+        {% endfor %}
+        </tbody>
+        {% if total_row %}
+            <tfoot>
+            <tr>
+                {% for cell in total_row %}
+                    <th class="{% if cell is not None %}numeric{% endif %}">
+                        {% if cell is not None %}{{ cell|money }}{% endif %}
+                    </th>
+                {% endfor %}
+            </tr>
+            </tfoot>
+        {% endif %}
+    </table>
+</div>
+{% include "includes/pagination.html" %}
+{% endblock %}

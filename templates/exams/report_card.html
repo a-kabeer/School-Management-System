@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block page_actions %}
+<button type="button" class="button ghost" onclick="window.print()">{% translate "Print" %}</button>
+{% endblock %}
+
+{% block content %}
+<div class="panel report-card">
+    <header class="report-card-head">
+        <h2>{{ current_organization.name }}</h2>
+        <p class="muted">{{ current_branch.name }}</p>
+        <h3>{{ student_exam.exam.name }}</h3>
+    </header>
+
+    <dl class="definition-list inline">
+        <dt>{% translate "Student" %}</dt><dd>{{ student_exam.student.full_name }}</dd>
+        <dt>{% translate "Admission #" %}</dt><dd>{{ student_exam.student.admission_no }}</dd>
+        <dt>{% translate "Class" %}</dt><dd>{{ student_exam.exam.school_class.name }}</dd>
+        <dt>{% translate "Roll #" %}</dt><dd>{{ student_exam.roll_number|default:"—" }}</dd>
+    </dl>
+
+    <table class="data-table">
+        <thead><tr>
+            <th>{% translate "Subject" %}</th>
+            <th class="numeric">{% translate "Obtained" %}</th>
+            <th class="numeric">{% translate "Total" %}</th>
+            <th class="numeric">{% translate "Percentage" %}</th>
+            <th>{% translate "Grade" %}</th>
+            <th>{% translate "Result" %}</th>
+        </tr></thead>
+        <tbody>
+        {% for result in results %}
+            <tr>
+                <td>{{ result.exam_subject.class_subject.subject.name }}</td>
+                <td class="numeric">{{ result.obtained_marks }}</td>
+                <td class="numeric">{{ result.total_marks }}</td>
+                <td class="numeric">{{ result.percentage }}%</td>
+                <td>{{ result.grade.name|default:"—" }}</td>
+                <td>{% if result.is_pass %}{% translate "Pass" %}{% else %}{% translate "Fail" %}{% endif %}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="muted">{% translate "No results recorded." %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if summary %}
+    <div class="report-card-summary">
+        <p><strong>{% translate "Total" %}:</strong> {{ summary.obtained_marks }} / {{ summary.total_marks }}</p>
+        <p><strong>{% translate "Percentage" %}:</strong> {{ summary.percentage }}%</p>
+        <p><strong>{% translate "Grade" %}:</strong> {{ summary.grade.name|default:"—" }}</p>
+        <p><strong>{% translate "Position" %}:</strong> {{ summary.position|default:"—" }}</p>
+        <p><strong>{% translate "Outcome" %}:</strong> {{ summary.get_outcome_display }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

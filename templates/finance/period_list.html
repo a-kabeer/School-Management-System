@@ -1,0 +1,47 @@
+{% extends "components/object_list.html" %}
+{% load i18n core_extras %}
+
+{% block content %}
+    {% include "components/filters.html" %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr>
+                <th>{% translate "Name" %}</th><th>{% translate "Start" %}</th>
+                <th>{% translate "End" %}</th><th>{% translate "Closed" %}</th>
+                <th class="actions-column">{% translate "Actions" %}</th>
+            </tr></thead>
+            <tbody>
+            {% for period in objects %}
+                <tr>
+                    <td data-label="{% translate 'Name' %}">{{ period.name }}</td>
+                    <td data-label="{% translate 'Start' %}">{{ period.start_date|date:"Y-m-d" }}</td>
+                    <td data-label="{% translate 'End' %}">{{ period.end_date|date:"Y-m-d" }}</td>
+                    <td data-label="{% translate 'Closed' %}">
+                        {% if period.is_closed %}
+                            <span class="pill pill-no">{% translate "Closed" %}</span>
+                        {% else %}
+                            <span class="pill pill-yes">{% translate "Open" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions-column">
+                        <a class="button tiny ghost" href="{% url 'finance:period_update' period.pk %}">{% translate "Edit" %}</a>
+                        {% has_perm "finance.change_fiscalperiod" as can_close %}
+                        {% if can_close and not period.is_closed %}
+                            <form method="post" action="{% url 'finance:period_close' period.pk %}" class="inline-form">
+                                {% csrf_token %}
+                                <button type="submit" class="button tiny danger-ghost"
+                                        data-confirm="{% translate 'Close this period? No further entries can be posted into it.' %}">
+                                    {% translate "Close" %}
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">{% include "components/empty_state.html" %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include "includes/pagination.html" %}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block page_heading %}{{ object.entry_number }}{% endblock %}
+
+{% block page_actions %}
+    {% has_perm "core.post_journal_entry" as can_post %}
+    {% if can_post and object.status == 'posted' %}
+        <form method="post" action="{% url 'finance:entry_reverse' object.pk %}" class="inline-form">
+            {% csrf_token %}
+            <input type="text" name="reason" class="form-control compact" placeholder="{% translate 'Reason' %}" maxlength="255">
+            <button type="submit" class="button danger-ghost" data-confirm="{% translate 'Reverse this entry? A mirror entry will be posted.' %}">
+                {% translate "Reverse" %}
+            </button>
+        </form>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <dl class="definition-list inline">
+        <dt>{% translate "Date" %}</dt><dd>{{ object.date|date:"Y-m-d" }}</dd>
+        <dt>{% translate "Journal" %}</dt><dd>{{ object.journal.name }}</dd>
+        <dt>{% translate "Period" %}</dt><dd>{{ object.fiscal_period.name }}</dd>
+        <dt>{% translate "Status" %}</dt><dd><span class="pill">{{ object.get_status_display }}</span></dd>
+        <dt>{% translate "Reference" %}</dt><dd>{{ object.reference|default:"—" }}</dd>
+        <dt>{% translate "Source" %}</dt><dd>{{ object.source_module|default:"—" }}</dd>
+    </dl>
+    {% if object.description %}<p>{{ object.description }}</p>{% endif %}
+    {% if object.reversal_of %}
+        <p class="message message-info">
+            {% translate "This entry reverses" %}
+            <a href="{% url 'finance:entry_detail' object.reversal_of.pk %}">{{ object.reversal_of.entry_number }}</a>.
+        </p>
+    {% endif %}
+</div>
+
+<div class="table-wrap">
+    <table class="data-table">
+        <thead><tr>
+            <th>{% translate "Account" %}</th><th>{% translate "Description" %}</th>
+            <th class="numeric">{% translate "Debit" %}</th><th class="numeric">{% translate "Credit" %}</th>
+        </tr></thead>
+        <tbody>
+        {% for line in lines %}
+            <tr>
+                <td data-label="{% translate 'Account' %}">{{ line.account.code }} — {{ line.account.name }}</td>
+                <td data-label="{% translate 'Description' %}">{{ line.description|default:"—" }}</td>
+                <td class="numeric" data-label="{% translate 'Debit' %}">{% if line.debit %}{{ line.debit|money }}{% endif %}</td>
+                <td class="numeric" data-label="{% translate 'Credit' %}">{% if line.credit %}{{ line.credit|money }}{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="2">{% translate "Totals" %}</th>
+                <td class="numeric"><strong>{{ object.total_debit|money }}</strong></td>
+                <td class="numeric"><strong>{{ object.total_credit|money }}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{# Stat cards. Expects `cards` as a list of {label, value, hint, tone}. #}
+<div class="card-grid">
+    {% for card in cards %}
+        <div class="stat-card tone-{{ card.tone|default:'neutral' }}">
+            <p class="stat-label">{{ card.label }}</p>
+            <p class="stat-value">{{ card.value }}</p>
+            {% if card.hint %}<p class="stat-hint">{{ card.hint }}</p>{% endif %}
+        </div>
+    {% endfor %}
+</div>

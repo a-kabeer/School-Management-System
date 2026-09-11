@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<form method="get" class="filter-bar">
+    <div class="filter-field">
+        <label class="sr-only" for="class-select">{% translate "Class" %}</label>
+        <select name="school_class" id="class-select" class="form-select">
+            <option value="">{% translate "Select class" %}</option>
+            {% for item in classes %}
+                <option value="{{ item.pk }}" {% if selected_class and item.pk == selected_class.pk %}selected{% endif %}>{{ item.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-field">
+        <label class="sr-only" for="section-select">{% translate "Section" %}</label>
+        <select name="section" id="section-select" class="form-select">
+            <option value="">{% translate "All sections" %}</option>
+            {% for item in sections %}
+                <option value="{{ item.pk }}" data-class="{{ item.school_class_id }}"
+                        {% if selected_section and item.pk == selected_section.pk %}selected{% endif %}>{{ item }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-field">
+        <label class="sr-only" for="date-input">{% translate "Date" %}</label>
+        <input type="date" id="date-input" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control">
+    </div>
+    <button type="submit" class="button">{% translate "Load register" %}</button>
+</form>
+
+{% if rows %}
+<form method="post" class="register-form">
+    {% csrf_token %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>{% translate "Admission #" %}</th>
+                <th>{% translate "Student" %}</th>
+                <th>{% translate "Status" %}</th>
+                <th>{% translate "Remarks" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td data-label="{% translate 'Admission #' %}">{{ row.student.admission_no }}</td>
+                    <td data-label="{% translate 'Student' %}">{{ row.student.full_name }}</td>
+                    <td data-label="{% translate 'Status' %}">
+                        <div class="status-options">
+                            {% for value, label in statuses %}
+                                <label class="status-option">
+                                    <input type="radio" name="status-{{ row.student.pk }}" value="{{ value }}"
+                                           {% if row.record and row.record.status == value %}checked{% elif not row.record and value == 'present' %}checked{% endif %}>
+                                    <span>{{ label }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td data-label="{% translate 'Remarks' %}">
+                        <input type="text" name="remarks-{{ row.student.pk }}" class="form-control"
+                               value="{{ row.record.remarks|default:'' }}" maxlength="255">
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="form-actions sticky">
+        <button type="submit" class="button">{% translate "Save attendance" %}</button>
+        <span class="muted">{% blocktranslate count counter=rows|length %}{{ counter }} student{% plural %}{{ counter }} students{% endblocktranslate %}</span>
+    </div>
+</form>
+{% elif selected_class %}
+    <div class="panel"><p class="muted">{% translate "No students are enrolled in that class." %}</p></div>
+{% else %}
+    <div class="panel"><p class="muted">{% translate "Choose a class to load its register." %}</p></div>
+{% endif %}
+{% endblock %}

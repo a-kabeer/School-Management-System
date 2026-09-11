@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block page_actions %}
+    {% has_perm "notifications.add_notification" as can_send %}
+    {% if can_send %}<a class="button" href="{% url 'notifications:announce' %}">{% translate "Send announcement" %}</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<form method="get" class="filter-bar">
+    <label class="checkbox-inline">
+        <input type="checkbox" name="unread" value="1" {% if request.GET.unread == '1' %}checked{% endif %}
+               onchange="this.form.submit()">
+        <span>{% translate "Unread only" %}</span>
+    </label>
+</form>
+
+<form method="post" action="{% url 'notifications:mark_read' %}">
+    {% csrf_token %}
+    <ul class="notification-list">
+        {% for item in recipients %}
+            <li class="notification {% if not item.is_read %}unread{% endif %}">
+                <label class="notification-select">
+                    <input type="checkbox" name="recipient" value="{{ item.pk }}">
+                </label>
+                <div class="notification-body">
+                    <p class="notification-title">{{ item.notification.title }}</p>
+                    <p class="notification-text">{{ item.notification.body }}</p>
+                    <p class="notification-meta">
+                        {{ item.created_at|date:"Y-m-d H:i" }}
+                        {% if item.notification.link_url %}
+                            · <a href="{{ item.notification.link_url }}">{% translate "Open" %}</a>
+                        {% endif %}
+                    </p>
+                </div>
+            </li>
+        {% empty %}
+            <li>{% include "components/empty_state.html" with empty_message=_("You have no notifications.") %}</li>
+        {% endfor %}
+    </ul>
+    {% if recipients %}
+        <div class="form-actions">
+            <button type="submit" class="button">{% translate "Mark selected as read" %}</button>
+        </div>
+    {% endif %}
+</form>
+{% include "includes/pagination.html" %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% load i18n %}
+<div class="empty-state">
+    <p class="empty-title">{{ empty_message|default:_("Nothing here yet.") }}</p>
+    {% if can_create and create_url_name %}
+        {% load core_extras %}
+        {% url_or_blank create_url_name as create_url %}
+        {% if create_url %}
+            <a class="button" href="{{ create_url }}">{% translate "Add the first one" %}</a>
+        {% endif %}
+    {% endif %}
+</div>

@@ -1,0 +1,12 @@
+{% load i18n %}
+{# Shared confirmation dialog. Any element with data-confirm="message" opens it. #}
+<dialog id="confirm-dialog" class="modal">
+    <form method="dialog" class="modal-body">
+        <h2 class="modal-title">{% translate "Please confirm" %}</h2>
+        <p data-confirm-message></p>
+        <div class="modal-actions">
+            <button value="cancel" class="button ghost">{% translate "Cancel" %}</button>
+            <button value="confirm" class="button danger" data-confirm-accept>{% translate "Confirm" %}</button>
+        </div>
+    </form>
+</dialog>

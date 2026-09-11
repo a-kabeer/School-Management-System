@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="panel">
+    <dl class="definition-list">
+        <dt>{% translate "When" %}</dt><dd>{{ object.created_at|date:"Y-m-d H:i:s" }}</dd>
+        <dt>{% translate "User" %}</dt><dd>{{ object.username|default:"—" }}</dd>
+        <dt>{% translate "Role" %}</dt><dd>{{ object.role_name|default:"—" }}</dd>
+        <dt>{% translate "Action" %}</dt><dd>{{ object.get_action_display }}</dd>
+        <dt>{% translate "Organization" %}</dt><dd>{{ object.organization.name|default:"—" }}</dd>
+        <dt>{% translate "Branch" %}</dt><dd>{{ object.branch.name|default:"—" }}</dd>
+        <dt>{% translate "Resource" %}</dt><dd>{{ object.app_label }}.{{ object.model_name }}</dd>
+        <dt>{% translate "Object" %}</dt><dd>{{ object.object_repr|default:"—" }} <span class="muted">{{ object.object_id }}</span></dd>
+        <dt>{% translate "Path" %}</dt><dd>{{ object.request_method }} {{ object.request_path|default:"—" }}</dd>
+        <dt>{% translate "IP address" %}</dt><dd>{{ object.ip_address|default:"—" }}</dd>
+        <dt>{% translate "User agent" %}</dt><dd class="wrap">{{ object.user_agent|default:"—" }}</dd>
+    </dl>
+</div>
+
+<div class="two-column">
+    <div class="panel">
+        <h2>{% translate "Previous values" %}</h2>
+        <pre class="code-block">{{ object.previous_values|default:"—" }}</pre>
+    </div>
+    <div class="panel">
+        <h2>{% translate "New values" %}</h2>
+        <pre class="code-block">{{ object.new_values|default:"—" }}</pre>
+    </div>
+</div>
+
+{% if object.metadata %}
+<div class="panel">
+    <h2>{% translate "Metadata" %}</h2>
+    <pre class="code-block">{{ object.metadata }}</pre>
+</div>
+{% endif %}
+{% endblock %}

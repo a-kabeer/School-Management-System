@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block page_heading %}{{ object.receipt_number }}{% endblock %}
+
+{% block page_actions %}
+    {% has_perm "core.refund_fee_payment" as can_refund %}
+    {% if can_refund and not object.is_void %}
+        <a class="button ghost" href="{% url 'fees:payment_refund' object.pk %}">{% translate "Refund" %}</a>
+        <a class="button danger-ghost" href="{% url 'fees:payment_void' object.pk %}">{% translate "Void" %}</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+    <section class="panel receipt">
+        <h2>{% translate "Receipt" %}</h2>
+        <dl class="definition-list">
+            <dt>{% translate "Receipt #" %}</dt><dd>{{ object.receipt_number }}</dd>
+            <dt>{% translate "Student" %}</dt>
+            <dd><a href="{% url 'students:student_detail' object.student.pk %}">{{ object.student.full_name }}</a></dd>
+            <dt>{% translate "Invoice" %}</dt>
+            <dd><a href="{% url 'fees:invoice_detail' object.invoice.pk %}">{{ object.invoice.invoice_number }}</a></dd>
+            <dt>{% translate "Amount" %}</dt><dd><strong>{{ object.amount|money }}</strong></dd>
+            <dt>{% translate "Date" %}</dt><dd>{{ object.payment_date|date:"Y-m-d" }}</dd>
+            <dt>{% translate "Method" %}</dt><dd>{{ object.payment_method.name }}</dd>
+            <dt>{% translate "Reference" %}</dt><dd>{{ object.reference|default:"—" }}</dd>
+            <dt>{% translate "Received by" %}</dt><dd>{{ object.received_by.display_name|default:"—" }}</dd>
+            {% if object.journal_entry %}
+                <dt>{% translate "Ledger entry" %}</dt>
+                <dd><a href="{% url 'finance:entry_detail' object.journal_entry.pk %}">{{ object.journal_entry.entry_number }}</a></dd>
+            {% endif %}
+        </dl>
+        {% if object.is_void %}
+            <p class="message message-error">{% translate "This payment has been voided." %} {{ object.void_reason }}</p>
+        {% endif %}
+        <button type="button" class="button ghost" onclick="window.print()">{% translate "Print" %}</button>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Refunds" %}</h2>
+        <ul class="plain-list">
+            {% for refund in refunds %}
+                <li>{{ refund.refund_date|date:"Y-m-d" }} — <strong>{{ refund.amount|money }}</strong> <span class="muted">{{ refund.reason }}</span></li>
+            {% empty %}
+                <li class="muted">{% translate "No refunds against this payment." %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+{% endblock %}

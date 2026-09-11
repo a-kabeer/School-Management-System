@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block page_actions %}
+    {% has_perm "staff.change_staff" as can_edit %}
+    {% if can_edit %}
+        <a class="button" href="{% url 'staff:staff_update' object.pk %}">{% translate "Edit" %}</a>
+        <a class="button ghost" href="{% url 'staff:staff_status' object.pk %}">{% translate "Change status" %}</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+    <section class="panel">
+        <h2>{% translate "Profile" %}</h2>
+        <div class="profile-head">
+            {% if object.photo %}
+                <img src="{{ object.photo.url }}" alt="" class="profile-photo">
+            {% else %}
+                <span class="profile-photo placeholder" aria-hidden="true">{{ object.full_name|slice:":1"|upper }}</span>
+            {% endif %}
+            <div>
+                <p class="profile-name">{{ object.full_name }}</p>
+                <p class="muted">{{ object.employee_no }} · {{ object.designation.name|default:object.get_staff_type_display }}</p>
+                <span class="pill">{{ object.get_status_display }}</span>
+            </div>
+        </div>
+        <dl class="definition-list">
+            <dt>{% translate "Department" %}</dt><dd>{{ object.department.name|default:"—" }}</dd>
+            <dt>{% translate "Phone" %}</dt><dd>{{ object.phone|default:"—" }}</dd>
+            <dt>{% translate "Email" %}</dt><dd>{{ object.email|default:"—" }}</dd>
+            <dt>{% translate "Qualification" %}</dt><dd>{{ object.qualification|default:"—" }}</dd>
+            <dt>{% translate "Joined" %}</dt><dd>{{ object.joining_date|date:"Y-m-d"|default:"—" }}</dd>
+            <dt>{% translate "Basic salary" %}</dt><dd>{{ object.basic_salary|money }}</dd>
+            <dt>{% translate "Branch" %}</dt><dd>{{ object.branch.name }}</dd>
+        </dl>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Teaching assignments" %}</h2>
+        <ul class="plain-list">
+            {% for assignment in teaching %}
+                <li>
+                    {{ assignment.class_subject.school_class.name }} —
+                    {{ assignment.class_subject.subject.name }}
+                    {% if assignment.section %}<span class="muted">({{ assignment.section.name }})</span>{% endif %}
+                </li>
+            {% empty %}
+                <li class="muted">{% translate "No teaching assignments." %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Duties" %}</h2>
+        <ul class="plain-list">
+            {% for assignment in object.assignments.all %}
+                <li>{{ assignment.title }} <span class="muted">{{ assignment.start_date|date:"Y-m-d" }}</span></li>
+            {% empty %}
+                <li class="muted">{% translate "No additional duties." %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Documents" %}</h2>
+        <ul class="plain-list">
+            {% for doc in object.documents.all %}
+                <li><a href="{{ doc.file.url }}">{{ doc.title }}</a> <span class="muted">{{ doc.get_document_type_display }}</span></li>
+            {% empty %}
+                <li class="muted">{% translate "No documents uploaded." %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="panel">
+        <h2>{% translate "Status history" %}</h2>
+        <ul class="plain-list">
+            {% for entry in object.status_history.all %}
+                <li>{{ entry.effective_date|date:"Y-m-d" }} — {{ entry.previous_status|default:"—" }} → <strong>{{ entry.new_status }}</strong></li>
+            {% empty %}
+                <li class="muted">{% translate "No status changes." %}</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+{% endblock %}

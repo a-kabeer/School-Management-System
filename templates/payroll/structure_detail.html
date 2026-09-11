@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n core_extras %}
+
+{% block page_actions %}
+    <a class="button ghost" href="{% url 'payroll:structure_update' object.pk %}">{% translate "Edit" %}</a>
+    <a class="button" href="{% url 'payroll:structureline_create' %}">{% translate "Add line" %}</a>
+{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <dl class="definition-list inline">
+        <dt>{% translate "Name" %}</dt><dd>{{ object.name }}</dd>
+        <dt>{% translate "Basic salary" %}</dt><dd>{{ object.basic_salary|money }}</dd>
+        <dt>{% translate "Active" %}</dt><dd>{% if object.is_active %}✓{% else %}—{% endif %}</dd>
+    </dl>
+</div>
+
+<div class="table-wrap">
+    <table class="data-table">
+        <thead><tr>
+            <th>{% translate "Sequence" %}</th><th>{% translate "Component" %}</th>
+            <th>{% translate "Type" %}</th><th>{% translate "Calculation" %}</th>
+            <th class="numeric">{% translate "Value" %}</th>
+        </tr></thead>
+        <tbody>
+        {% for line in lines %}
+            <tr>
+                <td>{{ line.sequence }}</td>
+                <td>{{ line.component.name }}</td>
+                <td><span class="pill">{{ line.component.get_component_type_display }}</span></td>
+                <td>{{ line.component.get_calculation_type_display }}</td>
+                <td class="numeric">{{ line.value }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="muted">{% translate "No components on this structure." %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

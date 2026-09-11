@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="panel">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "components/form.html" %}
+
+        <h2>{% translate "Lines" %}</h2>
+        <p class="muted">{% translate "Debits must equal credits before the entry can post." %}</p>
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}
+            <div class="message message-error">
+                {% for error in formset.non_form_errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+        {% endif %}
+        <div class="table-wrap">
+            <table class="data-table compact journal-lines">
+                <thead><tr>
+                    <th>{% translate "Account" %}</th><th>{% translate "Description" %}</th>
+                    <th class="numeric">{% translate "Debit" %}</th><th class="numeric">{% translate "Credit" %}</th>
+                </tr></thead>
+                <tbody>
+                {% for line in formset %}
+                    <tr class="{% if line.errors %}has-error{% endif %}">
+                        <td>{{ line.account }}{% for error in line.errors.account %}<p class="field-error">{{ error }}</p>{% endfor %}</td>
+                        <td>{{ line.description }}</td>
+                        <td class="numeric">{{ line.debit }}</td>
+                        <td class="numeric">{{ line.credit }}</td>
+                    </tr>
+                    {% if line.non_field_errors %}
+                        <tr><td colspan="4">{% for error in line.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}</td></tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="2">{% translate "Totals" %}</th>
+                        <td class="numeric" data-debit-total>0.00</td>
+                        <td class="numeric" data-credit-total>0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="button">{% translate "Post entry" %}</button>
+            <a href="{% url 'finance:entry_list' %}" class="button ghost">{% translate "Cancel" %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
