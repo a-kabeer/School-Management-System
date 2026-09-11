@@ -6,14 +6,14 @@
 {% block page_actions %}
     {% has_perm "core.refund_fee_payment" as can_refund %}
     {% if can_refund and not object.is_void %}
-        <a class="button ghost" href="{% url 'fees:payment_refund' object.pk %}">{% translate "Refund" %}</a>
-        <a class="button danger-ghost" href="{% url 'fees:payment_void' object.pk %}">{% translate "Void" %}</a>
+        <a class="btn btn-outline-secondary" href="{% url 'fees:payment_refund' object.pk %}">{% translate "Refund" %}</a>
+        <a class="btn btn-outline-danger" href="{% url 'fees:payment_void' object.pk %}">{% translate "Void" %}</a>
     {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="detail-grid">
-    <section class="panel receipt">
+    <section class="card card-body mb-3">
         <h2>{% translate "Receipt" %}</h2>
         <dl class="definition-list">
             <dt>{% translate "Receipt #" %}</dt><dd>{{ object.receipt_number }}</dd>
@@ -32,18 +32,18 @@
             {% endif %}
         </dl>
         {% if object.is_void %}
-            <p class="message message-error">{% translate "This payment has been voided." %} {{ object.void_reason }}</p>
+            <p class="alert alert-danger">{% translate "This payment has been voided." %} {{ object.void_reason }}</p>
         {% endif %}
-        <button type="button" class="button ghost" onclick="window.print()">{% translate "Print" %}</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">{% translate "Print" %}</button>
     </section>
 
-    <section class="panel">
+    <section class="card card-body mb-3">
         <h2>{% translate "Refunds" %}</h2>
-        <ul class="plain-list">
+        <ul class="list-group list-group-flush">
             {% for refund in refunds %}
-                <li>{{ refund.refund_date|date:"Y-m-d" }} — <strong>{{ refund.amount|money }}</strong> <span class="muted">{{ refund.reason }}</span></li>
+                <li class="list-group-item px-0 bg-transparent">{{ refund.refund_date|date:"Y-m-d" }} — <strong>{{ refund.amount|money }}</strong> <span class="text-body-secondary">{{ refund.reason }}</span></li>
             {% empty %}
-                <li class="muted">{% translate "No refunds against this payment." %}</li>
+                <li class="list-group-item px-0 bg-transparent text-body-secondary">{% translate "No refunds against this payment." %}</li>
             {% endfor %}
         </ul>
     </section>

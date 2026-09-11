@@ -3,9 +3,9 @@
 
 {% block list_intro %}
 <div class="card-grid">
-    <div class="stat-card"><p class="stat-label">{% translate "Billed" %}</p><p class="stat-value">{{ summary.billed|money }}</p></div>
-    <div class="stat-card tone-success"><p class="stat-label">{% translate "Collected" %}</p><p class="stat-value">{{ summary.collected|money }}</p></div>
-    <div class="stat-card tone-warning"><p class="stat-label">{% translate "Outstanding" %}</p><p class="stat-value">{{ summary.outstanding|money }}</p></div>
-    <div class="stat-card"><p class="stat-label">{% translate "Waived" %}</p><p class="stat-value">{{ summary.waived|money }}</p></div>
+    <div class="card h-100 p-3 border-start border-4 border-secondary"><p class="text-uppercase small text-body-secondary mb-1">{% translate "Billed" %}</p><p class="fs-4 fw-semibold mb-0 text-break">{{ summary.billed|money }}</p></div>
+    <div class="card h-100 p-3 border-start border-4 border-success"><p class="text-uppercase small text-body-secondary mb-1">{% translate "Collected" %}</p><p class="fs-4 fw-semibold mb-0 text-break">{{ summary.collected|money }}</p></div>
+    <div class="card h-100 p-3 border-start border-4 border-warning"><p class="text-uppercase small text-body-secondary mb-1">{% translate "Outstanding" %}</p><p class="fs-4 fw-semibold mb-0 text-break">{{ summary.outstanding|money }}</p></div>
+    <div class="card h-100 p-3 border-start border-4 border-secondary"><p class="text-uppercase small text-body-secondary mb-1">{% translate "Waived" %}</p><p class="fs-4 fw-semibold mb-0 text-break">{{ summary.waived|money }}</p></div>
 </div>
 {% endblock %}

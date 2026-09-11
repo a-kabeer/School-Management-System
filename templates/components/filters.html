@@ -1,39 +1,47 @@
 {% load i18n %}
 {# Shared filter bar. Submits with GET so filters stay shareable in the URL. #}
 {% if filter_has_search or filter_selects or filter_has_dates %}
-<form method="get" class="filter-bar" data-filter-bar>
-    {% if filter_has_search %}
-        <div class="filter-field">
-            <label class="sr-only" for="filter-q">{% translate "Search" %}</label>
-            <input type="search" id="filter-q" name="q" value="{{ filter_search }}"
-                   placeholder="{% translate 'Search…' %}" class="form-control" autocomplete="off">
-        </div>
-    {% endif %}
+<form method="get" class="card card-body mb-3 py-2">
+    <div class="row g-2 align-items-center">
+        {% if filter_has_search %}
+            <div class="col-12 col-md-4 col-xl-3">
+                <label class="visually-hidden" for="filter-q">{% translate "Search" %}</label>
+                <input type="search" id="filter-q" name="q" value="{{ filter_search }}"
+                       placeholder="{% translate 'Search…' %}" class="form-control form-control-sm"
+                       autocomplete="off">
+            </div>
+        {% endif %}
 
-    {% for select in filter_selects %}
-        <div class="filter-field">
-            <label class="sr-only" for="filter-{{ select.param }}">{{ select.label }}</label>
-            <select name="{{ select.param }}" id="filter-{{ select.param }}" class="form-select">
-                <option value="">{{ select.label }}</option>
-                {% for value, label in select.options %}
-                    <option value="{{ value }}" {% if select.value == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    {% endfor %}
+        {% for select in filter_selects %}
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="visually-hidden" for="filter-{{ select.param }}">{{ select.label }}</label>
+                <select name="{{ select.param }}" id="filter-{{ select.param }}" class="form-select form-select-sm">
+                    <option value="">{{ select.label }}</option>
+                    {% for value, label in select.options %}
+                        <option value="{{ value }}"
+                                {% if select.value == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endfor %}
 
-    {% if filter_has_dates %}
-        <div class="filter-field">
-            <label class="sr-only" for="filter-from">{% translate "From" %}</label>
-            <input type="date" id="filter-from" name="date_from" value="{{ filter_date_from }}" class="form-control">
-        </div>
-        <div class="filter-field">
-            <label class="sr-only" for="filter-to">{% translate "To" %}</label>
-            <input type="date" id="filter-to" name="date_to" value="{{ filter_date_to }}" class="form-control">
-        </div>
-    {% endif %}
+        {% if filter_has_dates %}
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="visually-hidden" for="filter-from">{% translate "From" %}</label>
+                <input type="date" id="filter-from" name="date_from" value="{{ filter_date_from }}"
+                       class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="visually-hidden" for="filter-to">{% translate "To" %}</label>
+                <input type="date" id="filter-to" name="date_to" value="{{ filter_date_to }}"
+                       class="form-control form-control-sm">
+            </div>
+        {% endif %}
 
-    <button type="submit" class="button">{% translate "Filter" %}</button>
-    <a href="{{ request.path }}" class="button ghost">{% translate "Reset" %}</a>
+        <div class="col-12 col-md-auto d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-primary flex-fill">{% translate "Filter" %}</button>
+            <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary flex-fill">{% translate "Reset" %}</a>
+        </div>
+    </div>
 </form>
 {% endif %}

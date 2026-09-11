@@ -2,12 +2,12 @@
 {% load i18n core_extras %}
 
 {% block page_actions %}
-    <a class="button ghost" href="{% url 'payroll:structure_update' object.pk %}">{% translate "Edit" %}</a>
-    <a class="button" href="{% url 'payroll:structureline_create' %}">{% translate "Add line" %}</a>
+    <a class="btn btn-outline-secondary" href="{% url 'payroll:structure_update' object.pk %}">{% translate "Edit" %}</a>
+    <a class="btn btn-primary" href="{% url 'payroll:structureline_create' %}">{% translate "Add line" %}</a>
 {% endblock %}
 
 {% block content %}
-<div class="panel">
+<div class="card card-body mb-3">
     <dl class="definition-list inline">
         <dt>{% translate "Name" %}</dt><dd>{{ object.name }}</dd>
         <dt>{% translate "Basic salary" %}</dt><dd>{{ object.basic_salary|money }}</dd>
@@ -15,24 +15,24 @@
     </dl>
 </div>
 
-<div class="table-wrap">
-    <table class="data-table">
+<div class="table-responsive mb-3">
+    <table class="table table-hover align-middle mb-0">
         <thead><tr>
             <th>{% translate "Sequence" %}</th><th>{% translate "Component" %}</th>
             <th>{% translate "Type" %}</th><th>{% translate "Calculation" %}</th>
-            <th class="numeric">{% translate "Value" %}</th>
+            <th class="text-end font-monospace">{% translate "Value" %}</th>
         </tr></thead>
         <tbody>
         {% for line in lines %}
             <tr>
                 <td>{{ line.sequence }}</td>
                 <td>{{ line.component.name }}</td>
-                <td><span class="pill">{{ line.component.get_component_type_display }}</span></td>
+                <td><span class="badge text-bg-light border">{{ line.component.get_component_type_display }}</span></td>
                 <td>{{ line.component.get_calculation_type_display }}</td>
-                <td class="numeric">{{ line.value }}</td>
+                <td class="text-end font-monospace">{{ line.value }}</td>
             </tr>
         {% empty %}
-            <tr><td colspan="5" class="muted">{% translate "No components on this structure." %}</td></tr>
+            <tr><td colspan="5" class="text-body-secondary">{% translate "No components on this structure." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>

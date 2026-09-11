@@ -4,27 +4,27 @@
 {% block page_actions %}
     {% has_perm "exams.add_studentexam" as can_register %}
     {% if can_register %}
-        <form method="post" action="{% url 'exams:exam_register' object.pk %}" class="inline-form">
+        <form method="post" action="{% url 'exams:exam_register' object.pk %}" class="d-inline-flex align-items-center gap-1 m-0">
             {% csrf_token %}
-            <button type="submit" class="button ghost">{% translate "Register class" %}</button>
+            <button type="submit" class="btn btn-outline-secondary">{% translate "Register class" %}</button>
         </form>
     {% endif %}
     {% has_perm "exams.change_exam" as can_generate %}
     {% if can_generate %}
-        <form method="post" action="{% url 'exams:exam_generate' object.pk %}" class="inline-form">
+        <form method="post" action="{% url 'exams:exam_generate' object.pk %}" class="d-inline-flex align-items-center gap-1 m-0">
             {% csrf_token %}
-            <button type="submit" class="button ghost">{% translate "Generate results" %}</button>
+            <button type="submit" class="btn btn-outline-secondary">{% translate "Generate results" %}</button>
         </form>
     {% endif %}
     {% has_perm "core.publish_exam_result" as can_publish %}
     {% if can_publish %}
-        <form method="post" action="{% url 'exams:exam_publish' object.pk %}" class="inline-form">
+        <form method="post" action="{% url 'exams:exam_publish' object.pk %}" class="d-inline-flex align-items-center gap-1 m-0">
             {% csrf_token %}
             {% if object.is_published %}
                 <input type="hidden" name="action" value="unpublish">
-                <button type="submit" class="button danger-ghost">{% translate "Unpublish" %}</button>
+                <button type="submit" class="btn btn-outline-danger">{% translate "Unpublish" %}</button>
             {% else %}
-                <button type="submit" class="button"
+                <button type="submit" class="btn btn-primary"
                         data-confirm="{% translate 'Publish results? Parents will be notified.' %}">
                     {% translate "Publish results" %}
                 </button>
@@ -34,68 +34,72 @@
 {% endblock %}
 
 {% block content %}
-<div class="panel">
+<div class="card card-body mb-3">
     <dl class="definition-list inline">
         <dt>{% translate "Class" %}</dt><dd>{{ object.school_class.name }}</dd>
         <dt>{% translate "Term" %}</dt><dd>{{ object.exam_term.name }}</dd>
         <dt>{% translate "Dates" %}</dt><dd>{{ object.start_date|date:"Y-m-d" }} – {{ object.end_date|date:"Y-m-d"|default:"—" }}</dd>
-        <dt>{% translate "Status" %}</dt><dd><span class="pill">{{ object.get_status_display }}</span></dd>
+        <dt>{% translate "Status" %}</dt><dd><span class="badge text-bg-light border">{{ object.get_status_display }}</span></dd>
         <dt>{% translate "Registered" %}</dt><dd>{{ registered }}</dd>
     </dl>
     {% if object.instructions %}<p>{{ object.instructions|linebreaks }}</p>{% endif %}
 </div>
 
 <div class="detail-grid">
-    <section class="panel">
+    <section class="card card-body mb-3">
         <h2>{% translate "Papers" %}</h2>
-        <table class="data-table compact">
-            <thead><tr>
-                <th>{% translate "Subject" %}</th><th class="numeric">{% translate "Total" %}</th>
-                <th class="numeric">{% translate "Passing" %}</th><th></th>
-            </tr></thead>
-            <tbody>
-            {% for subject in subjects %}
-                <tr>
-                    <td>{{ subject.class_subject.subject.name }}</td>
-                    <td class="numeric">{{ subject.total_marks }}</td>
-                    <td class="numeric">{{ subject.passing_marks }}</td>
-                    <td>
-                        {% has_perm "exams.add_mark" as can_mark %}
-                        {% if can_mark %}
-                            <a class="button tiny" href="{% url 'exams:mark_entry' subject.pk %}">{% translate "Enter marks" %}</a>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="4" class="muted">{% translate "No papers added yet." %}</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        <a class="button ghost" href="{% url 'exams:subject_create' %}">{% translate "Add paper" %}</a>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead><tr>
+                    <th>{% translate "Subject" %}</th><th class="text-end font-monospace">{% translate "Total" %}</th>
+                    <th class="text-end font-monospace">{% translate "Passing" %}</th><th></th>
+                </tr></thead>
+                <tbody>
+                {% for subject in subjects %}
+                    <tr>
+                        <td>{{ subject.class_subject.subject.name }}</td>
+                        <td class="text-end font-monospace">{{ subject.total_marks }}</td>
+                        <td class="text-end font-monospace">{{ subject.passing_marks }}</td>
+                        <td>
+                            {% has_perm "exams.add_mark" as can_mark %}
+                            {% if can_mark %}
+                                <a class="btn btn-sm btn-primary" href="{% url 'exams:mark_entry' subject.pk %}">{% translate "Enter marks" %}</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4" class="text-body-secondary">{% translate "No papers added yet." %}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'exams:subject_create' %}">{% translate "Add paper" %}</a>
     </section>
 
-    <section class="panel">
+    <section class="card card-body mb-3">
         <h2>{% translate "Result summary" %}</h2>
-        <table class="data-table compact">
-            <thead><tr>
-                <th>{% translate "Position" %}</th><th>{% translate "Student" %}</th>
-                <th class="numeric">{% translate "Percentage" %}</th><th>{% translate "Grade" %}</th>
-                <th>{% translate "Outcome" %}</th>
-            </tr></thead>
-            <tbody>
-            {% for summary in summaries %}
-                <tr>
-                    <td>{{ summary.position|default:"—" }}</td>
-                    <td><a href="{% url 'exams:report_card' summary.pk %}">{{ summary.student_exam.student.full_name }}</a></td>
-                    <td class="numeric">{{ summary.percentage }}%</td>
-                    <td>{{ summary.grade.name|default:"—" }}</td>
-                    <td><span class="pill">{{ summary.get_outcome_display }}</span></td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="5" class="muted">{% translate "Results have not been generated." %}</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead><tr>
+                    <th>{% translate "Position" %}</th><th>{% translate "Student" %}</th>
+                    <th class="text-end font-monospace">{% translate "Percentage" %}</th><th>{% translate "Grade" %}</th>
+                    <th>{% translate "Outcome" %}</th>
+                </tr></thead>
+                <tbody>
+                {% for summary in summaries %}
+                    <tr>
+                        <td>{{ summary.position|default:"—" }}</td>
+                        <td><a href="{% url 'exams:report_card' summary.pk %}">{{ summary.student_exam.student.full_name }}</a></td>
+                        <td class="text-end font-monospace">{{ summary.percentage }}%</td>
+                        <td>{{ summary.grade.name|default:"—" }}</td>
+                        <td><span class="badge text-bg-light border">{{ summary.get_outcome_display }}</span></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="text-body-secondary">{% translate "Results have not been generated." %}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </section>
 </div>
 {% endblock %}

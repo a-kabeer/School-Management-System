@@ -674,12 +674,17 @@ def defaulters(user, branch=None, *, as_of=None, minimum=ZERO):
     as_of = as_of or timezone.localdate()
     from django.db.models import F
 
+    # Named `outstanding_balance`, not `balance`: FeeInvoice already exposes a
+    # `balance` property, and an annotation of the same name cannot be set on
+    # the instance.
     return (
         FeeInvoice.objects.for_user(user, branch)
         .exclude(status__in=[FeeInvoice.Status.CANCELLED, FeeInvoice.Status.PAID])
         .filter(due_date__lte=as_of)
-        .annotate(balance=F("total_amount") - F("paid_amount") - F("waiver_amount"))
-        .filter(balance__gt=minimum)
+        .annotate(
+            outstanding_balance=F("total_amount") - F("paid_amount") - F("waiver_amount")
+        )
+        .filter(outstanding_balance__gt=minimum)
         .select_related("student", "academic_year")
-        .order_by("-balance")
+        .order_by("-outstanding_balance")
     )

@@ -6,9 +6,9 @@
 {% block page_actions %}
     {% has_perm "core.run_payroll" as can_run %}
     {% if can_run and object.status == 'draft' %}
-        <form method="post" action="{% url 'payroll:run_approve' object.pk %}" class="inline-form">
+        <form method="post" action="{% url 'payroll:run_approve' object.pk %}" class="d-inline-flex align-items-center gap-1 m-0">
             {% csrf_token %}
-            <button type="submit" class="button"
+            <button type="submit" class="btn btn-primary"
                     data-confirm="{% translate 'Approve this run and post the salary expense to the ledger?' %}">
                 {% translate "Approve and post" %}
             </button>
@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="panel">
+<div class="card card-body mb-3">
     <dl class="definition-list inline">
         <dt>{% translate "Period" %}</dt><dd>{{ object.period.name }}</dd>
         <dt>{% translate "Run date" %}</dt><dd>{{ object.run_date|date:"Y-m-d" }}</dd>
@@ -25,7 +25,7 @@
         <dt>{% translate "Gross" %}</dt><dd>{{ object.total_gross|money }}</dd>
         <dt>{% translate "Deductions" %}</dt><dd>{{ object.total_deductions|money }}</dd>
         <dt>{% translate "Net" %}</dt><dd><strong>{{ object.total_net|money }}</strong></dd>
-        <dt>{% translate "Status" %}</dt><dd><span class="pill">{{ object.get_status_display }}</span></dd>
+        <dt>{% translate "Status" %}</dt><dd><span class="badge text-bg-light border">{{ object.get_status_display }}</span></dd>
         {% if object.journal_entry %}
             <dt>{% translate "Ledger entry" %}</dt>
             <dd><a href="{% url 'finance:entry_detail' object.journal_entry.pk %}">{{ object.journal_entry.entry_number }}</a></dd>
@@ -33,39 +33,39 @@
     </dl>
 </div>
 
-<div class="table-wrap">
-    <table class="data-table">
+<div class="table-responsive mb-3">
+    <table class="table table-hover align-middle mb-0">
         <thead><tr>
             <th>{% translate "Employee" %}</th>
-            <th class="numeric">{% translate "Basic" %}</th>
-            <th class="numeric">{% translate "Allowances" %}</th>
-            <th class="numeric">{% translate "Deductions" %}</th>
-            <th class="numeric">{% translate "Net" %}</th>
-            <th class="numeric">{% translate "Paid" %}</th>
-            <th class="actions-column">{% translate "Actions" %}</th>
+            <th class="text-end font-monospace">{% translate "Basic" %}</th>
+            <th class="text-end font-monospace">{% translate "Allowances" %}</th>
+            <th class="text-end font-monospace">{% translate "Deductions" %}</th>
+            <th class="text-end font-monospace">{% translate "Net" %}</th>
+            <th class="text-end font-monospace">{% translate "Paid" %}</th>
+            <th class="text-end text-nowrap">{% translate "Actions" %}</th>
         </tr></thead>
         <tbody>
         {% for item in items %}
             <tr>
-                <td data-label="{% translate 'Employee' %}">{{ item.staff.full_name }}<br><span class="muted">{{ item.staff.employee_no }}</span></td>
-                <td class="numeric" data-label="{% translate 'Basic' %}">{{ item.basic_salary|money }}</td>
-                <td class="numeric" data-label="{% translate 'Allowances' %}">{{ item.total_allowances|money }}</td>
-                <td class="numeric" data-label="{% translate 'Deductions' %}">{{ item.total_deductions|money }}</td>
-                <td class="numeric" data-label="{% translate 'Net' %}"><strong>{{ item.net_salary|money }}</strong></td>
-                <td class="numeric" data-label="{% translate 'Paid' %}">
+                <td data-label="{% translate 'Employee' %}">{{ item.staff.full_name }}<br><span class="text-body-secondary">{{ item.staff.employee_no }}</span></td>
+                <td class="text-end font-monospace" data-label="{% translate 'Basic' %}">{{ item.basic_salary|money }}</td>
+                <td class="text-end font-monospace" data-label="{% translate 'Allowances' %}">{{ item.total_allowances|money }}</td>
+                <td class="text-end font-monospace" data-label="{% translate 'Deductions' %}">{{ item.total_deductions|money }}</td>
+                <td class="text-end font-monospace" data-label="{% translate 'Net' %}"><strong>{{ item.net_salary|money }}</strong></td>
+                <td class="text-end font-monospace" data-label="{% translate 'Paid' %}">
                     {% with paid=item.payments.all %}
                         {% if paid %}{% for payment in paid %}{{ payment.amount|money }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}—{% endif %}
                     {% endwith %}
                 </td>
-                <td class="actions-column">
+                <td class="text-end text-nowrap">
                     {% has_perm "core.run_payroll" as can_pay %}
                     {% if can_pay and object.status == 'approved' %}
-                        <a class="button tiny" href="{% url 'payroll:item_pay' item.pk %}">{% translate "Pay" %}</a>
+                        <a class="btn btn-sm btn-primary" href="{% url 'payroll:item_pay' item.pk %}">{% translate "Pay" %}</a>
                     {% endif %}
                 </td>
             </tr>
         {% empty %}
-            <tr><td colspan="7" class="muted">{% translate "No payslips in this run." %}</td></tr>
+            <tr><td colspan="7" class="text-body-secondary">{% translate "No payslips in this run." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>

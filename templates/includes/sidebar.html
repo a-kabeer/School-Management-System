@@ -1,32 +1,52 @@
 {% load i18n %}
-<nav id="sidebar" class="sidebar" aria-label="{% translate 'Main navigation' %}">
-    <ul class="nav-list">
-        {% for item in navigation %}
-            {% if item.children %}
-                <li class="nav-group">
-                    <details {% if item.is_open %}open{% endif %}>
-                        <summary>
-                            <span class="nav-icon" aria-hidden="true" data-icon="{{ item.icon }}"></span>
-                            <span class="nav-label">{{ item.label }}</span>
-                        </summary>
-                        <ul class="nav-sublist">
-                            {% for child in item.children %}
-                                <li>
-                                    <a href="{{ child.url }}" {% if child.is_current %}aria-current="page"{% endif %}>{{ child.label }}</a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </details>
-                </li>
-            {% elif item.url %}
-                <li>
-                    <a class="nav-link" href="{{ item.url }}" {% if item.is_current %}aria-current="page"{% endif %}>
-                        <span class="nav-icon" aria-hidden="true" data-icon="{{ item.icon }}"></span>
-                        <span class="nav-label">{{ item.label }}</span>
-                    </a>
-                </li>
-            {% endif %}
-        {% endfor %}
-    </ul>
-</nav>
-<div class="sidebar-scrim" data-sidebar-scrim hidden></div>
+{# Offcanvas below lg, a static column above it - one markup, both behaviours. #}
+<div class="offcanvas-lg offcanvas-start bg-body-tertiary border-end app-sidebar col-lg-3 col-xl-2 p-0"
+     tabindex="-1" id="sidebar" aria-labelledby="sidebar-label">
+
+    <div class="offcanvas-header border-bottom d-lg-none">
+        <h2 class="offcanvas-title h6 mb-0" id="sidebar-label">{% translate "Menu" %}</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
+                aria-label="{% translate 'Close' %}"></button>
+    </div>
+
+    <nav class="offcanvas-body d-block p-2 app-sidebar-nav" aria-label="{% translate 'Main navigation' %}">
+        <ul class="nav nav-pills flex-column gap-1 mb-0">
+            {% for item in navigation %}
+                {% if item.children %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2 text-body
+                                  {% if not item.is_open %}collapsed{% endif %}"
+                           data-bs-toggle="collapse" href="#nav-group-{{ forloop.counter }}"
+                           role="button" aria-expanded="{{ item.is_open|yesno:'true,false' }}"
+                           aria-controls="nav-group-{{ forloop.counter }}">
+                            <span class="nav-dot" aria-hidden="true"></span>
+                            <span class="flex-grow-1">{{ item.label }}</span>
+                            <span class="nav-caret small" aria-hidden="true">▾</span>
+                        </a>
+                        <div class="collapse {% if item.is_open %}show{% endif %}" id="nav-group-{{ forloop.counter }}">
+                            <ul class="nav flex-column ms-4 mt-1 gap-1 border-start ps-2">
+                                {% for child in item.children %}
+                                    <li class="nav-item">
+                                        <a class="nav-link py-1 small {% if child.is_current %}active{% else %}text-body-secondary{% endif %}"
+                                           href="{{ child.url }}"
+                                           {% if child.is_current %}aria-current="page"{% endif %}>
+                                            {{ child.label }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </li>
+                {% elif item.url %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2 {% if item.is_current %}active{% else %}text-body{% endif %}"
+                           href="{{ item.url }}" {% if item.is_current %}aria-current="page"{% endif %}>
+                            <span class="nav-dot" aria-hidden="true"></span>
+                            <span>{{ item.label }}</span>
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+</div>

@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block content %}
-<div class="panel">
+<div class="card card-body mb-3">
     <dl class="definition-list inline">
         <dt>{% translate "Class" %}</dt><dd>{{ object.school_class.name }}</dd>
         <dt>{% translate "Section" %}</dt><dd>{{ object.section.name|default:"—" }}</dd>
@@ -11,8 +11,8 @@
     </dl>
 </div>
 
-<div class="table-wrap">
-    <table class="data-table">
+<div class="table-responsive mb-3">
+    <table class="table table-hover align-middle mb-0">
         <thead><tr>
             <th>{% translate "Admission #" %}</th><th>{% translate "Student" %}</th>
             <th>{% translate "Status" %}</th><th>{% translate "Remarks" %}</th>
@@ -22,11 +22,11 @@
             <tr>
                 <td data-label="{% translate 'Admission #' %}">{{ record.student.admission_no }}</td>
                 <td data-label="{% translate 'Student' %}">{{ record.student.full_name }}</td>
-                <td data-label="{% translate 'Status' %}"><span class="pill">{{ record.get_status_display }}</span></td>
+                <td data-label="{% translate 'Status' %}"><span class="badge text-bg-light border">{{ record.get_status_display }}</span></td>
                 <td data-label="{% translate 'Remarks' %}">{{ record.remarks|default:"—" }}</td>
             </tr>
         {% empty %}
-            <tr><td colspan="4" class="muted">{% translate "No records in this session." %}</td></tr>
+            <tr><td colspan="4" class="text-body-secondary">{% translate "No records in this session." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>

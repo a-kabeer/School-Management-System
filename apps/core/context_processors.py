@@ -21,5 +21,5 @@ def ui_chrome(request):
             getattr(request, "active_branch", None),
             current_path=getattr(request, "path", "") or "",
         ),
-        "site_name": "School Management System",
+        "site_name": settings.SITE_NAME,
     }

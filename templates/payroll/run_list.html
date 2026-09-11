@@ -3,9 +3,9 @@
 
 {% block list_intro %}
 <div class="card-grid">
-    <div class="stat-card"><p class="stat-label">{% translate "Gross" %}</p><p class="stat-value">{{ summary.gross|money }}</p></div>
-    <div class="stat-card"><p class="stat-label">{% translate "Deductions" %}</p><p class="stat-value">{{ summary.deductions|money }}</p></div>
-    <div class="stat-card tone-primary"><p class="stat-label">{% translate "Net" %}</p><p class="stat-value">{{ summary.net|money }}</p></div>
-    <div class="stat-card"><p class="stat-label">{% translate "Payslips" %}</p><p class="stat-value">{{ summary.employees }}</p></div>
+    <div class="card h-100 p-3 border-start border-4 border-secondary"><p class="text-uppercase small text-body-secondary mb-1">{% translate "Gross" %}</p><p class="fs-4 fw-semibold mb-0 text-break">{{ summary.gross|money }}</p></div>
+    <div class="card h-100 p-3 border-start border-4 border-secondary"><p class="text-uppercase small text-body-secondary mb-1">{% translate "Deductions" %}</p><p class="fs-4 fw-semibold mb-0 text-break">{{ summary.deductions|money }}</p></div>
+    <div class="card h-100 p-3 border-start border-4 border-primary"><p class="text-uppercase small text-body-secondary mb-1">{% translate "Net" %}</p><p class="fs-4 fw-semibold mb-0 text-break">{{ summary.net|money }}</p></div>
+    <div class="card h-100 p-3 border-start border-4 border-secondary"><p class="text-uppercase small text-body-secondary mb-1">{% translate "Payslips" %}</p><p class="fs-4 fw-semibold mb-0 text-break">{{ summary.employees }}</p></div>
 </div>
 {% endblock %}

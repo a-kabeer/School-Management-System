@@ -3,38 +3,38 @@
 
 {% block page_actions %}
     {% has_perm "hifz.change_hifzstudentprofile" as can_edit %}
-    {% if can_edit %}<a class="button" href="{% url 'hifz:profile_update' object.pk %}">{% translate "Edit" %}</a>{% endif %}
+    {% if can_edit %}<a class="btn btn-primary" href="{% url 'hifz:profile_update' object.pk %}">{% translate "Edit" %}</a>{% endif %}
     {% has_perm "hifz.add_dailyprogress" as can_record %}
-    {% if can_record %}<a class="button ghost" href="{% url 'hifz:progress_create' %}">{% translate "Record progress" %}</a>{% endif %}
+    {% if can_record %}<a class="btn btn-outline-secondary" href="{% url 'hifz:progress_create' %}">{% translate "Record progress" %}</a>{% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="card-grid">
-    <div class="stat-card tone-primary">
-        <p class="stat-label">{% translate "Paras memorized" %}</p>
-        <p class="stat-value">{{ object.paras_memorized }}</p>
-        <p class="stat-hint">{{ object.completion_percent }}% {% translate "of the Quran" %}</p>
+    <div class="card h-100 p-3 border-start border-4 border-primary">
+        <p class="text-uppercase small text-body-secondary mb-1">{% translate "Paras memorized" %}</p>
+        <p class="fs-4 fw-semibold mb-0 text-break">{{ object.paras_memorized }}</p>
+        <p class="small text-body-secondary mb-0">{{ object.completion_percent }}% {% translate "of the Quran" %}</p>
     </div>
-    <div class="stat-card">
-        <p class="stat-label">{% translate "Current para" %}</p>
-        <p class="stat-value">{{ object.current_para }}</p>
+    <div class="card h-100 p-3 border-start border-4 border-secondary">
+        <p class="text-uppercase small text-body-secondary mb-1">{% translate "Current para" %}</p>
+        <p class="fs-4 fw-semibold mb-0 text-break">{{ object.current_para }}</p>
     </div>
-    <div class="stat-card">
-        <p class="stat-label">{% translate "Lessons heard" %}</p>
-        <p class="stat-value">{{ summary.entries|default:0 }}</p>
-        <p class="stat-hint">{% blocktranslate with mistakes=summary.total_mistakes|default:0 %}{{ mistakes }} mistakes{% endblocktranslate %}</p>
+    <div class="card h-100 p-3 border-start border-4 border-secondary">
+        <p class="text-uppercase small text-body-secondary mb-1">{% translate "Lessons heard" %}</p>
+        <p class="fs-4 fw-semibold mb-0 text-break">{{ summary.entries|default:0 }}</p>
+        <p class="small text-body-secondary mb-0">{% blocktranslate with mistakes=summary.total_mistakes|default:0 %}{{ mistakes }} mistakes{% endblocktranslate %}</p>
     </div>
-    <div class="stat-card">
-        <p class="stat-label">{% translate "Stage" %}</p>
-        <p class="stat-value small">{{ object.get_stage_display }}</p>
+    <div class="card h-100 p-3 border-start border-4 border-secondary">
+        <p class="text-uppercase small text-body-secondary mb-1">{% translate "Stage" %}</p>
+        <p class="fs-6 fw-semibold mb-0 text-break">{{ object.get_stage_display }}</p>
     </div>
 </div>
 
 <div class="detail-grid">
-    <section class="panel wide">
+    <section class="card card-body mb-3 wide">
         <h2>{% translate "Recent daily progress" %}</h2>
-        <div class="table-wrap">
-            <table class="data-table compact">
+        <div class="table-responsive mb-3">
+            <table class="table table-sm table-hover align-middle mb-0">
                 <thead><tr>
                     <th>{% translate "Date" %}</th><th>{% translate "Lesson" %}</th>
                     <th>{% translate "Para" %}</th><th>{% translate "Pages" %}</th>
@@ -45,7 +45,7 @@
                 {% for entry in progress %}
                     <tr>
                         <td>{{ entry.date|date:"Y-m-d" }}</td>
-                        <td><span class="pill">{{ entry.get_lesson_type_display }}</span></td>
+                        <td><span class="badge text-bg-light border">{{ entry.get_lesson_type_display }}</span></td>
                         <td>{{ entry.from_para|default:"—" }}{% if entry.to_para and entry.to_para != entry.from_para %}–{{ entry.to_para }}{% endif %}</td>
                         <td>{{ entry.pages }}</td>
                         <td>{{ entry.mistakes }}</td>
@@ -53,38 +53,38 @@
                         <td>{{ entry.teacher.full_name|default:"—" }}</td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="7" class="muted">{% translate "No progress recorded yet." %}</td></tr>
+                    <tr><td colspan="7" class="text-body-secondary">{% translate "No progress recorded yet." %}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
     </section>
 
-    <section class="panel">
+    <section class="card card-body mb-3">
         <h2>{% translate "Revisions" %}</h2>
-        <ul class="plain-list">
+        <ul class="list-group list-group-flush">
             {% for revision in revisions %}
-                <li>
+                <li class="list-group-item px-0 bg-transparent">
                     {{ revision.scheduled_date|date:"Y-m-d" }} · {% translate "Para" %} {{ revision.from_para }}–{{ revision.to_para }}
-                    <span class="pill">{{ revision.get_status_display }}</span>
+                    <span class="badge text-bg-light border">{{ revision.get_status_display }}</span>
                 </li>
             {% empty %}
-                <li class="muted">{% translate "No revisions scheduled." %}</li>
+                <li class="list-group-item px-0 bg-transparent text-body-secondary">{% translate "No revisions scheduled." %}</li>
             {% endfor %}
         </ul>
     </section>
 
-    <section class="panel">
+    <section class="card card-body mb-3">
         <h2>{% translate "Assessments" %}</h2>
-        <ul class="plain-list">
+        <ul class="list-group list-group-flush">
             {% for assessment in assessments %}
-                <li>
+                <li class="list-group-item px-0 bg-transparent">
                     {{ assessment.date|date:"Y-m-d" }} · {{ assessment.title }}
                     <strong>{{ assessment.obtained_marks }}/{{ assessment.total_marks }}</strong>
-                    <span class="pill">{{ assessment.get_result_display }}</span>
+                    <span class="badge text-bg-light border">{{ assessment.get_result_display }}</span>
                 </li>
             {% empty %}
-                <li class="muted">{% translate "No assessments recorded." %}</li>
+                <li class="list-group-item px-0 bg-transparent text-body-secondary">{% translate "No assessments recorded." %}</li>
             {% endfor %}
         </ul>
     </section>

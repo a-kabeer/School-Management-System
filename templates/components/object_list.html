@@ -4,7 +4,7 @@
 {% block page_actions %}
     {% if can_create and create_url_name %}
         {% url_or_blank create_url_name as create_url %}
-        {% if create_url %}<a class="button" href="{{ create_url }}">{% translate "Add new" %}</a>{% endif %}
+        {% if create_url %}<a class="btn btn-primary" href="{{ create_url }}">{% translate "Add new" %}</a>{% endif %}
     {% endif %}
     {% block extra_actions %}{% endblock %}
 {% endblock %}

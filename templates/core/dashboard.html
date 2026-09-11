@@ -2,78 +2,123 @@
 {% load i18n core_extras humanize %}
 
 {% block content %}
-<div class="card-grid">
-    <div class="stat-card tone-primary">
-        <p class="stat-label">{% translate "Active students" %}</p>
-        <p class="stat-value">{{ summary.students_active|intcomma }}</p>
-        <p class="stat-hint">{% blocktranslate with total=summary.students_total %}{{ total }} on the register{% endblocktranslate %}</p>
+<div class="row row-cols-1 row-cols-sm-2 row-cols-xl-4 g-3 mb-3">
+    <div class="col">
+        <div class="card h-100 border-start border-4 border-primary">
+            <div class="card-body">
+                <p class="text-uppercase small text-body-secondary mb-1">{% translate "Active students" %}</p>
+                <p class="fs-3 fw-semibold mb-0">{{ summary.students_active|intcomma }}</p>
+                <p class="small text-body-secondary mb-0">
+                    {% blocktranslate with total=summary.students_total %}{{ total }} on the register{% endblocktranslate %}
+                </p>
+            </div>
+        </div>
     </div>
-    <div class="stat-card">
-        <p class="stat-label">{% translate "Staff" %}</p>
-        <p class="stat-value">{{ summary.staff_total|intcomma }}</p>
+    <div class="col">
+        <div class="card h-100 border-start border-4 border-secondary">
+            <div class="card-body">
+                <p class="text-uppercase small text-body-secondary mb-1">{% translate "Staff" %}</p>
+                <p class="fs-3 fw-semibold mb-0">{{ summary.staff_total|intcomma }}</p>
+            </div>
+        </div>
     </div>
-    <div class="stat-card tone-success">
-        <p class="stat-label">{% translate "Collected this month" %}</p>
-        <p class="stat-value">{{ summary.collected_this_month|money }}</p>
-        <p class="stat-hint">{% blocktranslate with today=summary.collected_today %}{{ today }} today{% endblocktranslate %}</p>
+    <div class="col">
+        <div class="card h-100 border-start border-4 border-success">
+            <div class="card-body">
+                <p class="text-uppercase small text-body-secondary mb-1">{% translate "Collected this month" %}</p>
+                <p class="fs-3 fw-semibold mb-0 text-break">{{ summary.collected_this_month|money }}</p>
+                <p class="small text-body-secondary mb-0">
+                    {% blocktranslate with today=summary.collected_today %}{{ today }} today{% endblocktranslate %}
+                </p>
+            </div>
+        </div>
     </div>
-    <div class="stat-card tone-warning">
-        <p class="stat-label">{% translate "Outstanding fees" %}</p>
-        <p class="stat-value">{{ summary.fees_outstanding|money }}</p>
-        <p class="stat-hint">{% blocktranslate with billed=summary.fees_billed %}{{ billed }} billed{% endblocktranslate %}</p>
+    <div class="col">
+        <div class="card h-100 border-start border-4 border-warning">
+            <div class="card-body">
+                <p class="text-uppercase small text-body-secondary mb-1">{% translate "Outstanding fees" %}</p>
+                <p class="fs-3 fw-semibold mb-0 text-break">{{ summary.fees_outstanding|money }}</p>
+                <p class="small text-body-secondary mb-0">
+                    {% blocktranslate with billed=summary.fees_billed %}{{ billed }} billed{% endblocktranslate %}
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="dashboard-grid">
-    <section class="panel">
-        <h2>{% translate "Attendance today" %}</h2>
-        {% if summary.attendance_marked %}
-            <p class="big-number">{{ summary.attendance_rate }}%</p>
-            <ul class="stat-list">
-                <li><span>{% translate "Present" %}</span><strong>{{ summary.attendance_present }}</strong></li>
-                <li><span>{% translate "Absent" %}</span><strong>{{ summary.attendance_absent }}</strong></li>
-                <li><span>{% translate "Late" %}</span><strong>{{ summary.attendance_late }}</strong></li>
-                <li><span>{% translate "Leave" %}</span><strong>{{ summary.attendance_leave }}</strong></li>
-            </ul>
-        {% else %}
-            <p class="muted">{% translate "No attendance has been marked today." %}</p>
-            {% has_perm "attendance.add_studentattendance" as can_mark %}
-            {% if can_mark %}
-                <a class="button" href="{% url 'attendance:mark' %}">{% translate "Mark attendance" %}</a>
-            {% endif %}
-        {% endif %}
-    </section>
+<div class="row g-3">
+    <div class="col-12 col-lg-5">
+        <section class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 card-title">{% translate "Attendance today" %}</h2>
+                {% if summary.attendance_marked %}
+                    <p class="display-6 fw-semibold mb-3">{{ summary.attendance_rate }}%</p>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span>{% translate "Present" %}</span><strong>{{ summary.attendance_present }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span>{% translate "Absent" %}</span><strong>{{ summary.attendance_absent }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span>{% translate "Late" %}</span><strong>{{ summary.attendance_late }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span>{% translate "Leave" %}</span><strong>{{ summary.attendance_leave }}</strong>
+                        </li>
+                    </ul>
+                {% else %}
+                    <p class="text-body-secondary">{% translate "No attendance has been marked today." %}</p>
+                    {% has_perm "attendance.add_studentattendance" as can_mark %}
+                    {% if can_mark %}
+                        <a class="btn btn-primary" href="{% url 'attendance:mark' %}">{% translate "Mark attendance" %}</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </section>
+    </div>
 
-    <section class="panel">
-        <h2>{% translate "Collections, last 14 days" %}</h2>
-        <div class="bar-chart" role="img" aria-label="{% translate 'Daily fee collection' %}">
-            {% for point in trend %}
-                <div class="bar-column" title="{{ point.date|date:'Y-m-d' }}: {{ point.total|money }}">
-                    <div class="bar" style="height: {% widthratio point.total trend_max 100 %}%"></div>
-                    <span class="bar-label">{{ point.date|date:"j" }}</span>
+    <div class="col-12 col-lg-7">
+        <section class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 card-title">{% translate "Collections, last 14 days" %}</h2>
+                <div class="bar-chart d-flex align-items-end gap-1 mt-3"
+                     role="img" aria-label="{% translate 'Daily fee collection' %}">
+                    {% for point in trend %}
+                        <div class="flex-fill d-flex flex-column justify-content-end align-items-center h-100"
+                             title="{{ point.date|date:'Y-m-d' }}: {{ point.total|money }}">
+                            <div class="bar bg-primary rounded-top w-100"
+                                 style="height: {% widthratio point.total trend_max 100 %}%"></div>
+                            <span class="small text-body-secondary">{{ point.date|date:"j" }}</span>
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
-    </section>
+            </div>
+        </section>
+    </div>
 
-    <section class="panel wide">
-        <h2>{% translate "Recent activity" %}</h2>
-        {% if activity %}
-            <ul class="activity-list">
-                {% for entry in activity %}
-                    <li>
-                        <span class="activity-action">{{ entry.get_action_display }}</span>
-                        <span class="activity-object">{{ entry.object_repr|default:entry.app_label }}</span>
-                        <span class="activity-meta">
-                            {{ entry.username|default:_("system") }} · {{ entry.created_at|date:"Y-m-d H:i" }}
-                            {% if entry.branch %}· {{ entry.branch.name }}{% endif %}
-                        </span>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="muted">{% translate "No activity recorded yet." %}</p>
-        {% endif %}
-    </section>
+    <div class="col-12">
+        <section class="card">
+            <div class="card-body">
+                <h2 class="h6 card-title">{% translate "Recent activity" %}</h2>
+                {% if activity %}
+                    <ul class="list-group list-group-flush">
+                        {% for entry in activity %}
+                            <li class="list-group-item px-0">
+                                <span class="badge text-bg-light border me-2">{{ entry.get_action_display }}</span>
+                                <span class="fw-medium">{{ entry.object_repr|default:entry.app_label }}</span>
+                                <span class="d-block small text-body-secondary">
+                                    {{ entry.username|default:_("system") }} · {{ entry.created_at|date:"Y-m-d H:i" }}
+                                    {% if entry.branch %}· {{ entry.branch.name }}{% endif %}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-body-secondary mb-0">{% translate "No activity recorded yet." %}</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
 </div>
 {% endblock %}

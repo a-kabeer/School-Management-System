@@ -3,12 +3,12 @@
 
 {% block page_actions %}
     {% has_perm "notifications.add_notification" as can_send %}
-    {% if can_send %}<a class="button" href="{% url 'notifications:announce' %}">{% translate "Send announcement" %}</a>{% endif %}
+    {% if can_send %}<a class="btn btn-primary" href="{% url 'notifications:announce' %}">{% translate "Send announcement" %}</a>{% endif %}
 {% endblock %}
 
 {% block content %}
-<form method="get" class="filter-bar">
-    <label class="checkbox-inline">
+<form method="get" class="card card-body mb-3 d-flex flex-row flex-wrap align-items-center gap-2">
+    <label class="form-check form-check-inline">
         <input type="checkbox" name="unread" value="1" {% if request.GET.unread == '1' %}checked{% endif %}
                onchange="this.form.submit()">
         <span>{% translate "Unread only" %}</span>
@@ -17,16 +17,16 @@
 
 <form method="post" action="{% url 'notifications:mark_read' %}">
     {% csrf_token %}
-    <ul class="notification-list">
+    <ul class="list-unstyled d-grid gap-2 mb-3">
         {% for item in recipients %}
             <li class="notification {% if not item.is_read %}unread{% endif %}">
-                <label class="notification-select">
+                <label class="form-check m-0">
                     <input type="checkbox" name="recipient" value="{{ item.pk }}">
                 </label>
-                <div class="notification-body">
-                    <p class="notification-title">{{ item.notification.title }}</p>
-                    <p class="notification-text">{{ item.notification.body }}</p>
-                    <p class="notification-meta">
+                <div class="flex-grow-1">
+                    <p class="fw-semibold mb-1">{{ item.notification.title }}</p>
+                    <p class="mb-1">{{ item.notification.body }}</p>
+                    <p class="small text-body-secondary mb-0">
                         {{ item.created_at|date:"Y-m-d H:i" }}
                         {% if item.notification.link_url %}
                             · <a href="{{ item.notification.link_url }}">{% translate "Open" %}</a>
@@ -39,8 +39,8 @@
         {% endfor %}
     </ul>
     {% if recipients %}
-        <div class="form-actions">
-            <button type="submit" class="button">{% translate "Mark selected as read" %}</button>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">{% translate "Mark selected as read" %}</button>
         </div>
     {% endif %}
 </form>

@@ -1,10 +1,16 @@
 {# Stat cards. Expects `cards` as a list of {label, value, hint, tone}. #}
-<div class="card-grid">
+<div class="row row-cols-2 row-cols-lg-4 g-3 mb-3">
     {% for card in cards %}
-        <div class="stat-card tone-{{ card.tone|default:'neutral' }}">
-            <p class="stat-label">{{ card.label }}</p>
-            <p class="stat-value">{{ card.value }}</p>
-            {% if card.hint %}<p class="stat-hint">{{ card.hint }}</p>{% endif %}
+        <div class="col">
+            <div class="card h-100 border-start border-4 border-{{ card.tone|default:'secondary' }}">
+                <div class="card-body">
+                    <p class="text-uppercase small text-body-secondary mb-1">{{ card.label }}</p>
+                    <p class="fs-4 fw-semibold mb-0 text-break">{{ card.value }}</p>
+                    {% if card.hint %}
+                        <p class="small text-body-secondary mb-0">{{ card.hint }}</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     {% endfor %}
 </div>

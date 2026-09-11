@@ -4,32 +4,64 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ page_title|default:site_name }}{% endblock %} · {{ site_name }}</title>
+
+    {% comment %}Resolve the theme before the first paint, so the page never flashes
+       the wrong colour scheme on load or on a Back navigation.{% endcomment %}
+    <script>
+        (function () {
+            try {
+                var choice = localStorage.getItem("sms-theme") || "system";
+                var dark = choice === "dark" || (choice === "system" &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches);
+                document.documentElement.setAttribute("data-bs-theme", dark ? "dark" : "light");
+                document.documentElement.setAttribute("data-sms-theme", choice);
+            } catch (e) {
+                document.documentElement.setAttribute("data-bs-theme", "light");
+            }
+        })();
+    </script>
+
+    {% if ui_is_rtl %}
+        <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.rtl.min.css' %}">
+    {% else %}
+        <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+    {% endif %}
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
-<body class="{% if ui_is_rtl %}rtl{% endif %}{% if not user.is_authenticated %} unauthenticated{% endif %}">
+<body class="{% if user.is_authenticated %}app-shell{% else %}auth-shell d-flex align-items-center justify-content-center min-vh-100 bg-body-tertiary{% endif %}">
+
 {% if user.is_authenticated %}
-    <a class="skip-link" href="#main">{% translate "Skip to content" %}</a>
+    <a class="visually-hidden-focusable skip-link" href="#main">{% translate "Skip to content" %}</a>
+
     {% include "includes/navbar.html" %}
-    <div class="layout">
-        {% include "includes/sidebar.html" %}
-        <main id="main" class="content" tabindex="-1">
-            {% include "includes/breadcrumbs.html" %}
-            <div class="page-header">
-                <h1>{% block page_heading %}{{ page_title }}{% endblock %}</h1>
-                <div class="page-actions">{% block page_actions %}{% endblock %}</div>
-            </div>
-            {% include "includes/messages.html" %}
-            {% block content %}{% endblock %}
-        </main>
+
+    <div class="container-fluid px-0">
+        <div class="row g-0">
+            {% include "includes/sidebar.html" %}
+
+            <main id="main" class="col app-main px-3 px-lg-4 py-3" tabindex="-1">
+                {% include "includes/breadcrumbs.html" %}
+
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <h1 class="h4 mb-0 text-break">{% block page_heading %}{{ page_title }}{% endblock %}</h1>
+                    <div class="d-flex flex-wrap gap-2">{% block page_actions %}{% endblock %}</div>
+                </div>
+
+                {% include "includes/messages.html" %}
+                {% block content %}{% endblock %}
+            </main>
+        </div>
     </div>
 {% else %}
-    <main id="main" class="auth-shell">
+    <main id="main" class="w-100 px-3 py-4">
         {% include "includes/messages.html" %}
         {% block auth_content %}{% block anon_content %}{% endblock %}{% endblock %}
     </main>
 {% endif %}
+
 {% include "includes/modals.html" %}
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'js/app.js' %}" defer></script>
 {% block extra_scripts %}{% endblock %}
 </body>

@@ -2,51 +2,51 @@
 {% load i18n core_extras %}
 
 {% block content %}
-<form method="get" class="filter-bar">
-    <div class="filter-field">
-        <label class="sr-only" for="from">{% translate "From" %}</label>
+<form method="get" class="card card-body mb-3 d-flex flex-row flex-wrap align-items-center gap-2">
+    <div class="flex-grow-1">
+        <label class="visually-hidden" for="from">{% translate "From" %}</label>
         <input type="date" id="from" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="form-control">
     </div>
-    <div class="filter-field">
-        <label class="sr-only" for="to">{% translate "To" %}</label>
+    <div class="flex-grow-1">
+        <label class="visually-hidden" for="to">{% translate "To" %}</label>
         <input type="date" id="to" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="form-control">
     </div>
-    <button type="submit" class="button">{% translate "Apply" %}</button>
+    <button type="submit" class="btn btn-primary">{% translate "Apply" %}</button>
 </form>
 
-<div class="panel">
+<div class="card card-body mb-3">
     <h2>{% translate "Trial balance" %}</h2>
     {% if report.is_balanced %}
-        <p class="message message-success">{% translate "Debits and credits agree." %}</p>
+        <p class="alert alert-success">{% translate "Debits and credits agree." %}</p>
     {% else %}
-        <p class="message message-error">{% translate "The ledger does not balance. Review recent entries." %}</p>
+        <p class="alert alert-danger">{% translate "The ledger does not balance. Review recent entries." %}</p>
     {% endif %}
-    <div class="table-wrap">
-        <table class="data-table compact">
+    <div class="table-responsive mb-3">
+        <table class="table table-sm table-hover align-middle mb-0">
             <thead><tr>
                 <th>{% translate "Code" %}</th><th>{% translate "Account" %}</th>
-                <th class="numeric">{% translate "Debit" %}</th>
-                <th class="numeric">{% translate "Credit" %}</th>
-                <th class="numeric">{% translate "Balance" %}</th>
+                <th class="text-end font-monospace">{% translate "Debit" %}</th>
+                <th class="text-end font-monospace">{% translate "Credit" %}</th>
+                <th class="text-end font-monospace">{% translate "Balance" %}</th>
             </tr></thead>
             <tbody>
             {% for row in report.rows %}
                 <tr>
                     <td>{{ row.code }}</td>
                     <td>{{ row.name }}</td>
-                    <td class="numeric">{{ row.debit|money }}</td>
-                    <td class="numeric">{{ row.credit|money }}</td>
-                    <td class="numeric">{{ row.balance|money }}</td>
+                    <td class="text-end font-monospace">{{ row.debit|money }}</td>
+                    <td class="text-end font-monospace">{{ row.credit|money }}</td>
+                    <td class="text-end font-monospace">{{ row.balance|money }}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="5" class="muted">{% translate "No posted entries in this range." %}</td></tr>
+                <tr><td colspan="5" class="text-body-secondary">{% translate "No posted entries in this range." %}</td></tr>
             {% endfor %}
             </tbody>
             <tfoot>
                 <tr>
                     <th colspan="2">{% translate "Totals" %}</th>
-                    <td class="numeric"><strong>{{ report.total_debit|money }}</strong></td>
-                    <td class="numeric"><strong>{{ report.total_credit|money }}</strong></td>
+                    <td class="text-end font-monospace"><strong>{{ report.total_debit|money }}</strong></td>
+                    <td class="text-end font-monospace"><strong>{{ report.total_credit|money }}</strong></td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -54,32 +54,32 @@
     </div>
 </div>
 
-<div class="panel">
+<div class="card card-body mb-3">
     <h2>{% translate "Income and expenditure" %}</h2>
     <div class="two-column">
         <div>
             <h3>{% translate "Income" %}</h3>
-            <ul class="stat-list">
+            <ul class="list-group list-group-flush">
                 {% for row in income_statement.income %}
-                    <li><span>{{ row.name }}</span><strong>{{ row.amount|money }}</strong></li>
+                    <li class="list-group-item px-0 bg-transparent"><span>{{ row.name }}</span><strong>{{ row.amount|money }}</strong></li>
                 {% empty %}
-                    <li class="muted">{% translate "None." %}</li>
+                    <li class="list-group-item px-0 bg-transparent text-body-secondary">{% translate "None." %}</li>
                 {% endfor %}
             </ul>
-            <p class="total-line">{% translate "Total income" %}: <strong>{{ income_statement.income_total|money }}</strong></p>
+            <p class="border-top pt-2 mt-2">{% translate "Total income" %}: <strong>{{ income_statement.income_total|money }}</strong></p>
         </div>
         <div>
             <h3>{% translate "Expenses" %}</h3>
-            <ul class="stat-list">
+            <ul class="list-group list-group-flush">
                 {% for row in income_statement.expenses %}
-                    <li><span>{{ row.name }}</span><strong>{{ row.amount|money }}</strong></li>
+                    <li class="list-group-item px-0 bg-transparent"><span>{{ row.name }}</span><strong>{{ row.amount|money }}</strong></li>
                 {% empty %}
-                    <li class="muted">{% translate "None." %}</li>
+                    <li class="list-group-item px-0 bg-transparent text-body-secondary">{% translate "None." %}</li>
                 {% endfor %}
             </ul>
-            <p class="total-line">{% translate "Total expenses" %}: <strong>{{ income_statement.expense_total|money }}</strong></p>
+            <p class="border-top pt-2 mt-2">{% translate "Total expenses" %}: <strong>{{ income_statement.expense_total|money }}</strong></p>
         </div>
     </div>
-    <p class="big-number">{% translate "Surplus" %}: {{ income_statement.surplus|money }}</p>
+    <p class="display-6 fw-semibold">{% translate "Surplus" %}: {{ income_statement.surplus|money }}</p>
 </div>
 {% endblock %}

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.views import LoginView, LogoutView
@@ -24,6 +25,14 @@ class SmsLoginView(LoginView):
     template_name = "accounts/login.html"
     authentication_form = LoginForm
     redirect_authenticated_user = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # LoginView injects its own `site_name` from django.contrib.sites,
+        # which is the bare HTTP host when that app is not installed. Restore
+        # the application's name so the login page matches every other page.
+        context["site_name"] = settings.SITE_NAME
+        return context
 
     def form_valid(self, form):
         response = super().form_valid(form)

@@ -6,13 +6,13 @@
 {% block page_actions %}
     {% has_perm "core.waive_fee" as can_waive %}
     {% if can_waive and not object.is_settled %}
-        <a class="button ghost" href="{% url 'fees:invoice_waive' object.pk %}">{% translate "Waive" %}</a>
+        <a class="btn btn-outline-secondary" href="{% url 'fees:invoice_waive' object.pk %}">{% translate "Waive" %}</a>
     {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="detail-grid">
-    <section class="panel">
+    <section class="card card-body mb-3">
         <h2>{% translate "Invoice" %}</h2>
         <dl class="definition-list">
             <dt>{% translate "Student" %}</dt>
@@ -20,46 +20,48 @@
             <dt>{% translate "Academic year" %}</dt><dd>{{ object.academic_year.name }}</dd>
             <dt>{% translate "Issued" %}</dt><dd>{{ object.issue_date|date:"Y-m-d" }}</dd>
             <dt>{% translate "Due" %}</dt><dd>{{ object.due_date|date:"Y-m-d" }}</dd>
-            <dt>{% translate "Status" %}</dt><dd><span class="pill">{{ object.get_status_display }}</span></dd>
+            <dt>{% translate "Status" %}</dt><dd><span class="badge text-bg-light border">{{ object.get_status_display }}</span></dd>
         </dl>
-        <table class="data-table compact">
-            <thead><tr>
-                <th>{% translate "Item" %}</th><th class="numeric">{% translate "Amount" %}</th>
-                <th class="numeric">{% translate "Discount" %}</th><th class="numeric">{% translate "Total" %}</th>
-            </tr></thead>
-            <tbody>
-            {% for item in items %}
-                <tr>
-                    <td>{{ item.fee_type.name }}</td>
-                    <td class="numeric">{{ item.unit_amount|money }}</td>
-                    <td class="numeric">{{ item.discount_amount|money }}</td>
-                    <td class="numeric">{{ item.line_total|money }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr><th colspan="3">{% translate "Subtotal" %}</th><td class="numeric">{{ object.subtotal|money }}</td></tr>
-                <tr><th colspan="3">{% translate "Discount" %}</th><td class="numeric">−{{ object.discount_amount|money }}</td></tr>
-                <tr><th colspan="3">{% translate "Waived" %}</th><td class="numeric">−{{ object.waiver_amount|money }}</td></tr>
-                <tr><th colspan="3">{% translate "Total" %}</th><td class="numeric"><strong>{{ object.total_amount|money }}</strong></td></tr>
-                <tr><th colspan="3">{% translate "Paid" %}</th><td class="numeric">{{ object.paid_amount|money }}</td></tr>
-                <tr><th colspan="3">{% translate "Balance" %}</th><td class="numeric"><strong>{{ object.balance|money }}</strong></td></tr>
-            </tfoot>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead><tr>
+                    <th>{% translate "Item" %}</th><th class="text-end font-monospace">{% translate "Amount" %}</th>
+                    <th class="text-end font-monospace">{% translate "Discount" %}</th><th class="text-end font-monospace">{% translate "Total" %}</th>
+                </tr></thead>
+                <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td>{{ item.fee_type.name }}</td>
+                        <td class="text-end font-monospace">{{ item.unit_amount|money }}</td>
+                        <td class="text-end font-monospace">{{ item.discount_amount|money }}</td>
+                        <td class="text-end font-monospace">{{ item.line_total|money }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr><th colspan="3">{% translate "Subtotal" %}</th><td class="text-end font-monospace">{{ object.subtotal|money }}</td></tr>
+                    <tr><th colspan="3">{% translate "Discount" %}</th><td class="text-end font-monospace">−{{ object.discount_amount|money }}</td></tr>
+                    <tr><th colspan="3">{% translate "Waived" %}</th><td class="text-end font-monospace">−{{ object.waiver_amount|money }}</td></tr>
+                    <tr><th colspan="3">{% translate "Total" %}</th><td class="text-end font-monospace"><strong>{{ object.total_amount|money }}</strong></td></tr>
+                    <tr><th colspan="3">{% translate "Paid" %}</th><td class="text-end font-monospace">{{ object.paid_amount|money }}</td></tr>
+                    <tr><th colspan="3">{% translate "Balance" %}</th><td class="text-end font-monospace"><strong>{{ object.balance|money }}</strong></td></tr>
+                </tfoot>
+            </table>
+        </div>
     </section>
 
-    <section class="panel">
+    <section class="card card-body mb-3">
         <h2>{% translate "Payments" %}</h2>
-        <ul class="plain-list">
+        <ul class="list-group list-group-flush">
             {% for payment in payments %}
-                <li>
+                <li class="list-group-item px-0 bg-transparent">
                     <a href="{% url 'fees:payment_detail' payment.pk %}">{{ payment.receipt_number }}</a>
                     <strong>{{ payment.amount|money }}</strong>
-                    <span class="muted">{{ payment.payment_date|date:"Y-m-d" }} · {{ payment.payment_method.name }}</span>
-                    {% if payment.is_void %}<span class="pill pill-no">{% translate "Void" %}</span>{% endif %}
+                    <span class="text-body-secondary">{{ payment.payment_date|date:"Y-m-d" }} · {{ payment.payment_method.name }}</span>
+                    {% if payment.is_void %}<span class="badge text-bg-danger">{% translate "Void" %}</span>{% endif %}
                 </li>
             {% empty %}
-                <li class="muted">{% translate "No payments yet." %}</li>
+                <li class="list-group-item px-0 bg-transparent text-body-secondary">{% translate "No payments yet." %}</li>
             {% endfor %}
         </ul>
 
@@ -70,10 +72,10 @@
                 {% csrf_token %}
                 <input type="hidden" name="invoice" value="{{ object.pk }}">
                 {% with form=payment_form %}
-                    <div class="form-grid">
+                    <div class="row g-3">
                         {% for field in form %}
                             {% if field.name != 'invoice' %}
-                                <div class="form-field">
+                                <div class="col-12 col-md-6 col-xl-4">
                                     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                                     {{ field }}
                                 </div>
@@ -81,19 +83,19 @@
                         {% endfor %}
                     </div>
                 {% endwith %}
-                <div class="form-actions">
-                    <button type="submit" class="button">{% translate "Record payment" %}</button>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary">{% translate "Record payment" %}</button>
                 </div>
             </form>
         {% endif %}
     </section>
 
     {% if waivers %}
-    <section class="panel">
+    <section class="card card-body mb-3">
         <h2>{% translate "Waivers" %}</h2>
-        <ul class="plain-list">
+        <ul class="list-group list-group-flush">
             {% for waiver in waivers %}
-                <li>{{ waiver.waived_on|date:"Y-m-d" }} — <strong>{{ waiver.amount|money }}</strong> <span class="muted">{{ waiver.reason }}</span></li>
+                <li class="list-group-item px-0 bg-transparent">{{ waiver.waived_on|date:"Y-m-d" }} — <strong>{{ waiver.amount|money }}</strong> <span class="text-body-secondary">{{ waiver.reason }}</span></li>
             {% endfor %}
         </ul>
     </section>

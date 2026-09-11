@@ -242,6 +242,7 @@ X_FRAME_OPTIONS = "DENY"
 # --------------------------------------------------------------------------
 # Application defaults
 # --------------------------------------------------------------------------
+SITE_NAME = config("SITE_NAME", default="School Management System")
 PAGE_SIZE = config("PAGE_SIZE", default=25, cast=int)
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 

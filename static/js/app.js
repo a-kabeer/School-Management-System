@@ -1,82 +1,159 @@
 /* School Management System — progressive enhancement.
-   Every feature here is optional: the pages work without JavaScript.
-   Nothing in this file scrolls the window; the browser's own scroll
-   restoration is left alone. */
+ *
+ * Bootstrap's bundle handles the offcanvas sidebar, dropdowns, modals,
+ * collapses and alerts. What is here is the theme switcher plus a few
+ * small conveniences. Every page works without any of it.
+ *
+ * Nothing in this file scrolls the window; the browser's own scroll
+ * restoration is left alone.
+ */
 
 (function () {
     "use strict";
 
-    /* ---------------------------------------------------------- sidebar */
-    function initSidebar() {
-        var toggle = document.querySelector(".sidebar-toggle");
-        var sidebar = document.getElementById("sidebar");
-        var scrim = document.querySelector("[data-sidebar-scrim]");
-        if (!toggle || !sidebar) return;
+    var STORAGE_KEY = "sms-theme";
+    var root = document.documentElement;
 
-        function setOpen(open) {
-            sidebar.classList.toggle("open", open);
-            toggle.setAttribute("aria-expanded", String(open));
-            if (scrim) scrim.hidden = !open;
+    /* ------------------------------------------------------------ theme */
+
+    function storedChoice() {
+        try {
+            return localStorage.getItem(STORAGE_KEY) || "system";
+        } catch (e) {
+            return "system";
+        }
+    }
+
+    function systemPrefersDark() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+
+    function resolve(choice) {
+        if (choice === "dark") return "dark";
+        if (choice === "light") return "light";
+        return systemPrefersDark() ? "dark" : "light";
+    }
+
+    function applyTheme(choice) {
+        root.setAttribute("data-bs-theme", resolve(choice));
+        root.setAttribute("data-sms-theme", choice);
+        paintControls(choice);
+    }
+
+    function paintControls(choice) {
+        var icons = { light: "☀️", dark: "🌙", system: "🖥️" };
+        document.querySelectorAll("[data-theme-icon]").forEach(function (node) {
+            node.textContent = icons[choice] || icons.system;
+        });
+        document.querySelectorAll("[data-theme-value]").forEach(function (button) {
+            var active = button.getAttribute("data-theme-value") === choice;
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-pressed", String(active));
+            var tick = button.querySelector("[data-theme-check]");
+            if (tick) tick.classList.toggle("d-none", !active);
+        });
+    }
+
+    function initTheme() {
+        var choice = storedChoice();
+        applyTheme(choice);
+
+        document.addEventListener("click", function (event) {
+            var button = event.target.closest("[data-theme-value]");
+            if (!button) return;
+            event.preventDefault();
+            var next = button.getAttribute("data-theme-value");
+            try {
+                localStorage.setItem(STORAGE_KEY, next);
+            } catch (e) {
+                /* Private browsing: the choice still applies for this page. */
+            }
+            applyTheme(next);
+        });
+
+        // In system mode, follow the OS while the page is open - no reload.
+        var query = window.matchMedia("(prefers-color-scheme: dark)");
+        var onChange = function () {
+            if (storedChoice() === "system") applyTheme("system");
+        };
+        if (query.addEventListener) {
+            query.addEventListener("change", onChange);
+        } else if (query.addListener) {
+            query.addListener(onChange);
         }
 
-        toggle.addEventListener("click", function () {
-            setOpen(!sidebar.classList.contains("open"));
-        });
-        if (scrim) scrim.addEventListener("click", function () { setOpen(false); });
-        document.addEventListener("keydown", function (event) {
-            if (event.key === "Escape") setOpen(false);
+        // A Back navigation can restore a cached page; re-read the choice.
+        window.addEventListener("pageshow", function () {
+            applyTheme(storedChoice());
         });
 
-        // Closing on navigation keeps the menu from covering the new page on
-        // small screens, including when the user arrives via the Back button.
+        // Belt and braces: some browsers do not deliver the media-query
+        // change event to a background tab, so re-resolve whenever the page
+        // becomes visible or regains focus. Re-applying is idempotent.
+        var recheck = function () {
+            if (storedChoice() === "system") applyTheme("system");
+        };
+        document.addEventListener("visibilitychange", function () {
+            if (!document.hidden) recheck();
+        });
+        window.addEventListener("focus", recheck);
+    }
+
+    /* ---------------------------------------------------------- sidebar */
+
+    function initSidebar() {
+        var sidebar = document.getElementById("sidebar");
+        if (!sidebar || !window.bootstrap) return;
+
+        // Close the offcanvas when navigating, so it does not cover the new
+        // page on a phone - including when arriving via the Back button.
         sidebar.addEventListener("click", function (event) {
-            if (event.target.closest("a") && window.matchMedia("(max-width: 860px)").matches) {
-                setOpen(false);
-            }
+            if (!event.target.closest("a[href]")) return;
+            if (!window.matchMedia("(max-width: 991.98px)").matches) return;
+            var instance = window.bootstrap.Offcanvas.getInstance(sidebar);
+            if (instance) instance.hide();
         });
-        window.addEventListener("pageshow", function () { setOpen(false); });
-    }
 
-    /* --------------------------------------------------------- messages */
-    function initMessages() {
-        document.querySelectorAll("[data-dismiss]").forEach(function (button) {
-            button.addEventListener("click", function () {
-                var message = button.closest(".message");
-                if (message) message.remove();
-            });
+        window.addEventListener("pageshow", function () {
+            var instance = window.bootstrap.Offcanvas.getInstance(sidebar);
+            if (instance) instance.hide();
         });
     }
 
-    /* -------------------------------------------------- confirm dialogs */
+    /* ------------------------------------------------- confirm dialogs */
+
     function initConfirmations() {
-        var dialog = document.getElementById("confirm-dialog");
-        if (!dialog || typeof dialog.showModal !== "function") return;
+        var element = document.getElementById("confirm-modal");
+        if (!element || !window.bootstrap) return;
+
+        var modal = new window.bootstrap.Modal(element);
+        var pending = null;
 
         document.addEventListener("click", function (event) {
             var trigger = event.target.closest("[data-confirm]");
             if (!trigger) return;
-
             event.preventDefault();
-            dialog.querySelector("[data-confirm-message]").textContent =
+            pending = trigger;
+            element.querySelector("[data-confirm-message]").textContent =
                 trigger.getAttribute("data-confirm");
+            modal.show();
+        });
 
-            dialog.returnValue = "cancel";
-            dialog.showModal();
-
-            dialog.addEventListener("close", function onClose() {
-                dialog.removeEventListener("close", onClose);
-                if (dialog.returnValue !== "confirm") return;
-
-                if (trigger.form) {
-                    trigger.form.requestSubmit(trigger);
-                } else if (trigger.tagName === "A") {
-                    window.location.href = trigger.href;
-                }
-            });
+        element.querySelector("[data-confirm-accept]").addEventListener("click", function () {
+            modal.hide();
+            if (!pending) return;
+            var trigger = pending;
+            pending = null;
+            if (trigger.form) {
+                trigger.form.requestSubmit(trigger.type === "submit" ? trigger : undefined);
+            } else if (trigger.tagName === "A") {
+                window.location.href = trigger.href;
+            }
         });
     }
 
-    /* -------------------------------------- section list, filtered by class */
+    /* ------------------------------ section list, filtered by its class */
+
     function initSectionFilter() {
         var classSelect = document.getElementById("class-select");
         var sectionSelect = document.getElementById("section-select");
@@ -104,7 +181,8 @@
         apply();
     }
 
-    /* --------------------------------------- journal entry running totals */
+    /* ------------------------------------ journal entry running totals */
+
     function initJournalTotals() {
         var table = document.querySelector(".journal-lines");
         if (!table) return;
@@ -128,20 +206,21 @@
             debitCell.textContent = debit.toFixed(2);
             creditCell.textContent = credit.toFixed(2);
             var balanced = Math.abs(debit - credit) < 0.005 && debit > 0;
-            debitCell.style.color = balanced ? "" : "var(--danger)";
-            creditCell.style.color = balanced ? "" : "var(--danger)";
+            debitCell.classList.toggle("text-danger", !balanced);
+            creditCell.classList.toggle("text-danger", !balanced);
         }
 
         table.addEventListener("input", update);
         update();
     }
 
-    /* ------------------------------------------ register keyboard shortcut */
+    /* --------------------------------------- register keyboard handling */
+
     function initRegisterShortcuts() {
         var form = document.querySelector(".register-form");
         if (!form) return;
 
-        // Enter inside a register row moves to the next row instead of
+        // Enter inside a register row moves to the next row rather than
         // submitting half a register by accident.
         form.addEventListener("keydown", function (event) {
             if (event.key !== "Enter") return;
@@ -157,14 +236,29 @@
         });
     }
 
+    /* ---------------------------------------------- navbar height var */
+
+    function trackNavbarHeight() {
+        var navbar = document.querySelector(".app-navbar");
+        if (!navbar) return;
+        var set = function () {
+            root.style.setProperty("--app-navbar-height", navbar.offsetHeight + "px");
+        };
+        set();
+        window.addEventListener("resize", set);
+    }
+
     function ready(fn) {
         if (document.readyState !== "loading") fn();
         else document.addEventListener("DOMContentLoaded", fn);
     }
 
+    // The theme must settle before anything else paints.
+    initTheme();
+
     ready(function () {
+        trackNavbarHeight();
         initSidebar();
-        initMessages();
         initConfirmations();
         initSectionFilter();
         initJournalTotals();

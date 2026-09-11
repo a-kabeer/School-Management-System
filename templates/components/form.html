@@ -1,22 +1,45 @@
 {% load i18n %}
-{# Renders any bound form with errors and help text. #}
+{% comment %}Renders any bound form using Bootstrap form markup.
+   Widget classes (form-control / form-select) are applied by TenantModelForm,
+   so this only has to lay the fields out and surface errors.{% endcomment %}
 {% if form.non_field_errors %}
-    <div class="message message-error">
-        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    <div class="alert alert-danger" role="alert">
+        {% for error in form.non_field_errors %}
+            <p class="mb-0">{{ error }}</p>
+        {% endfor %}
     </div>
 {% endif %}
 
-<div class="form-grid">
+<div class="row g-3">
     {% for field in form.hidden_fields %}{{ field }}{% endfor %}
     {% for field in form.visible_fields %}
-        <div class="form-field {% if field.errors %}has-error{% endif %} {% if field.field.widget.input_type == 'checkbox' %}is-checkbox{% endif %}">
-            <label for="{{ field.id_for_label }}">
-                {{ field.label }}
-                {% if field.field.required %}<span class="required" aria-hidden="true">*</span>{% endif %}
-            </label>
-            {{ field }}
-            {% if field.help_text %}<p class="help-text">{{ field.help_text }}</p>{% endif %}
-            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-        </div>
+        {% if field.field.widget.input_type == 'checkbox' %}
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="form-check mt-md-4">
+                    {{ field }}
+                    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 col-md-6 col-xl-4">
+                <label class="form-label" for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="text-danger" aria-hidden="true">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+                {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
     {% endfor %}
 </div>

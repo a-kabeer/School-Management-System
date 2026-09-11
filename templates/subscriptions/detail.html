@@ -3,10 +3,10 @@
 
 {% block content %}
 {% if usage %}
-<div class="panel">
+<div class="card card-body mb-3">
     <h2>{{ usage.subscription.plan.name }}</h2>
     <dl class="definition-list inline">
-        <dt>{% translate "Status" %}</dt><dd><span class="pill">{{ usage.subscription.get_status_display }}</span></dd>
+        <dt>{% translate "Status" %}</dt><dd><span class="badge text-bg-light border">{{ usage.subscription.get_status_display }}</span></dd>
         <dt>{% translate "Billing" %}</dt><dd>{{ usage.subscription.get_billing_cycle_display }}</dd>
         <dt>{% translate "Started" %}</dt><dd>{{ usage.subscription.start_date|date:"Y-m-d" }}</dd>
         <dt>{% translate "Renews" %}</dt><dd>{{ usage.subscription.end_date|date:"Y-m-d" }}</dd>
@@ -16,47 +16,49 @@
 
 <div class="card-grid">
     {% for row in usage.rows %}
-        <div class="stat-card {% if row.exceeded %}tone-warning{% endif %}">
-            <p class="stat-label">{{ row.metric }}</p>
-            <p class="stat-value">{{ row.used }}{% if row.limit %} / {{ row.limit }}{% endif %}</p>
-            {% if row.percent %}<p class="stat-hint">{{ row.percent }}%</p>{% endif %}
+        <div class="card h-100 p-3 border-start border-4 {% if row.exceeded %}border-warning{% else %}border-secondary{% endif %}">
+            <p class="text-uppercase small text-body-secondary mb-1">{{ row.metric }}</p>
+            <p class="fs-4 fw-semibold mb-0 text-break">{{ row.used }}{% if row.limit %} / {{ row.limit }}{% endif %}</p>
+            {% if row.percent %}<p class="small text-body-secondary mb-0">{{ row.percent }}%</p>{% endif %}
         </div>
     {% endfor %}
 </div>
 {% else %}
-<div class="panel"><p class="muted">{% translate "No active subscription for this organization." %}</p></div>
+<div class="card card-body mb-3"><p class="text-body-secondary">{% translate "No active subscription for this organization." %}</p></div>
 {% endif %}
 
-<section class="panel">
+<section class="card card-body mb-3">
     <h2>{% translate "Invoices" %}</h2>
-    <table class="data-table compact">
-        <thead><tr>
-            <th>{% translate "Invoice #" %}</th><th>{% translate "Period" %}</th>
-            <th class="numeric">{% translate "Total" %}</th><th>{% translate "Status" %}</th>
-        </tr></thead>
-        <tbody>
-        {% for invoice in invoices %}
-            <tr>
-                <td>{{ invoice.invoice_number }}</td>
-                <td>{{ invoice.period_start|date:"Y-m-d" }} – {{ invoice.period_end|date:"Y-m-d" }}</td>
-                <td class="numeric">{{ invoice.total_amount|money }}</td>
-                <td><span class="pill">{{ invoice.get_status_display }}</span></td>
-            </tr>
-        {% empty %}
-            <tr><td colspan="4" class="muted">{% translate "No subscription invoices." %}</td></tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead><tr>
+                <th>{% translate "Invoice #" %}</th><th>{% translate "Period" %}</th>
+                <th class="text-end font-monospace">{% translate "Total" %}</th><th>{% translate "Status" %}</th>
+            </tr></thead>
+            <tbody>
+            {% for invoice in invoices %}
+                <tr>
+                    <td>{{ invoice.invoice_number }}</td>
+                    <td>{{ invoice.period_start|date:"Y-m-d" }} – {{ invoice.period_end|date:"Y-m-d" }}</td>
+                    <td class="text-end font-monospace">{{ invoice.total_amount|money }}</td>
+                    <td><span class="badge text-bg-light border">{{ invoice.get_status_display }}</span></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="text-body-secondary">{% translate "No subscription invoices." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 
-<section class="panel">
+<section class="card card-body mb-3">
     <h2>{% translate "Available plans" %}</h2>
     <div class="card-grid">
         {% for plan in plans %}
-            <div class="stat-card">
-                <p class="stat-value small">{{ plan.name }}</p>
-                <p class="stat-label">{{ plan.monthly_price|money }} {{ plan.currency }} / {% translate "month" %}</p>
-                <p class="stat-hint">{{ plan.description }}</p>
+            <div class="card h-100 p-3 border-start border-4 border-secondary">
+                <p class="fs-6 fw-semibold mb-0 text-break">{{ plan.name }}</p>
+                <p class="text-uppercase small text-body-secondary mb-1">{{ plan.monthly_price|money }} {{ plan.currency }} / {% translate "month" %}</p>
+                <p class="small text-body-secondary mb-0">{{ plan.description }}</p>
             </div>
         {% endfor %}
     </div>

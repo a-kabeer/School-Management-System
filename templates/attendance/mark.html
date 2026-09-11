@@ -2,9 +2,9 @@
 {% load i18n %}
 
 {% block content %}
-<form method="get" class="filter-bar">
-    <div class="filter-field">
-        <label class="sr-only" for="class-select">{% translate "Class" %}</label>
+<form method="get" class="card card-body mb-3 d-flex flex-row flex-wrap align-items-center gap-2">
+    <div class="flex-grow-1">
+        <label class="visually-hidden" for="class-select">{% translate "Class" %}</label>
         <select name="school_class" id="class-select" class="form-select">
             <option value="">{% translate "Select class" %}</option>
             {% for item in classes %}
@@ -12,8 +12,8 @@
             {% endfor %}
         </select>
     </div>
-    <div class="filter-field">
-        <label class="sr-only" for="section-select">{% translate "Section" %}</label>
+    <div class="flex-grow-1">
+        <label class="visually-hidden" for="section-select">{% translate "Section" %}</label>
         <select name="section" id="section-select" class="form-select">
             <option value="">{% translate "All sections" %}</option>
             {% for item in sections %}
@@ -22,18 +22,18 @@
             {% endfor %}
         </select>
     </div>
-    <div class="filter-field">
-        <label class="sr-only" for="date-input">{% translate "Date" %}</label>
+    <div class="flex-grow-1">
+        <label class="visually-hidden" for="date-input">{% translate "Date" %}</label>
         <input type="date" id="date-input" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control">
     </div>
-    <button type="submit" class="button">{% translate "Load register" %}</button>
+    <button type="submit" class="btn btn-primary">{% translate "Load register" %}</button>
 </form>
 
 {% if rows %}
 <form method="post" class="register-form">
     {% csrf_token %}
-    <div class="table-wrap">
-        <table class="data-table">
+    <div class="table-responsive mb-3">
+        <table class="table table-hover align-middle mb-0">
             <thead>
             <tr>
                 <th>{% translate "Admission #" %}</th>
@@ -48,9 +48,9 @@
                     <td data-label="{% translate 'Admission #' %}">{{ row.student.admission_no }}</td>
                     <td data-label="{% translate 'Student' %}">{{ row.student.full_name }}</td>
                     <td data-label="{% translate 'Status' %}">
-                        <div class="status-options">
+                        <div class="d-flex flex-wrap gap-2">
                             {% for value, label in statuses %}
-                                <label class="status-option">
+                                <label class="form-check form-check-inline m-0">
                                     <input type="radio" name="status-{{ row.student.pk }}" value="{{ value }}"
                                            {% if row.record and row.record.status == value %}checked{% elif not row.record and value == 'present' %}checked{% endif %}>
                                     <span>{{ label }}</span>
@@ -67,14 +67,14 @@
             </tbody>
         </table>
     </div>
-    <div class="form-actions sticky">
-        <button type="submit" class="button">{% translate "Save attendance" %}</button>
-        <span class="muted">{% blocktranslate count counter=rows|length %}{{ counter }} student{% plural %}{{ counter }} students{% endblocktranslate %}</span>
+    <div class="d-flex flex-wrap gap-2 align-items-center py-2 position-sticky bottom-0 bg-body border-top">
+        <button type="submit" class="btn btn-primary">{% translate "Save attendance" %}</button>
+        <span class="text-body-secondary">{% blocktranslate count counter=rows|length %}{{ counter }} student{% plural %}{{ counter }} students{% endblocktranslate %}</span>
     </div>
 </form>
 {% elif selected_class %}
-    <div class="panel"><p class="muted">{% translate "No students are enrolled in that class." %}</p></div>
+    <div class="card card-body mb-3"><p class="text-body-secondary">{% translate "No students are enrolled in that class." %}</p></div>
 {% else %}
-    <div class="panel"><p class="muted">{% translate "Choose a class to load its register." %}</p></div>
+    <div class="card card-body mb-3"><p class="text-body-secondary">{% translate "Choose a class to load its register." %}</p></div>
 {% endif %}
 {% endblock %}

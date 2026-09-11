@@ -1,70 +1,85 @@
 {% load i18n core_extras %}
-{# Reusable data table.
-   Expects: table_columns, objects, and optional detail/update/delete url names. #}
-<div class="table-wrap">
-    <table class="data-table">
-        <thead>
-        <tr>
-            {% for column in table_columns %}
-                <th scope="col" class="{% if column.type == 'money' %}numeric{% endif %}">{{ column.label }}</th>
-            {% endfor %}
-            {% if detail_url_name or update_url_name or delete_url_name %}
-                <th scope="col" class="actions-column">{% translate "Actions" %}</th>
-            {% endif %}
-        </tr>
-        </thead>
-        <tbody>
-        {% for object in objects %}
+{% comment %}Reusable data table.
+   Expects: table_columns, objects, and optional detail/update/delete url names.
+   `table-responsive` keeps wide tables inside their own scroller so the page
+   body never scrolls sideways on a phone.{% endcomment %}
+<div class="card mb-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
             <tr>
                 {% for column in table_columns %}
-                    <td class="{% if column.type == 'money' %}numeric{% endif %}" data-label="{{ column.label }}">
-                        {% if column.type == 'bool' %}
-                            {% if object|attr:column.field %}
-                                <span class="pill pill-yes">{% translate "Yes" %}</span>
-                            {% else %}
-                                <span class="pill pill-no">{% translate "No" %}</span>
-                            {% endif %}
-                        {% elif column.type == 'choice' %}
-                            <span class="pill">{{ object|display:column.field }}</span>
-                        {% elif column.type == 'money' %}
-                            {{ object|attr:column.field|money }}
-                        {% elif column.type == 'date' %}
-                            {{ object|attr:column.field|date:"Y-m-d"|default:"—" }}
-                        {% elif column.type == 'datetime' %}
-                            {{ object|attr:column.field|date:"Y-m-d H:i"|default:"—" }}
-                        {% elif column.type == 'time' %}
-                            {{ object|attr:column.field|time:"H:i"|default:"—" }}
-                        {% elif column.type == 'list' %}
-                            {{ object|attr:column.field|join:", "|default:"—" }}
-                        {% else %}
-                            {{ object|attr:column.field|default:"—" }}
-                        {% endif %}
-                    </td>
+                    <th scope="col" class="text-nowrap {% if column.type == 'money' %}text-end{% endif %}">
+                        {{ column.label }}
+                    </th>
                 {% endfor %}
                 {% if detail_url_name or update_url_name or delete_url_name %}
-                    <td class="actions-column">
-                        {% if detail_url_name %}
-                            {% url_or_blank detail_url_name object.pk as detail_url %}
-                            {% if detail_url %}<a class="button tiny" href="{{ detail_url }}">{% translate "View" %}</a>{% endif %}
-                        {% endif %}
-                        {% if update_url_name %}
-                            {% url_or_blank update_url_name object.pk as update_url %}
-                            {% if update_url %}<a class="button tiny ghost" href="{{ update_url }}">{% translate "Edit" %}</a>{% endif %}
-                        {% endif %}
-                        {% if delete_url_name %}
-                            {% url_or_blank delete_url_name object.pk as delete_url %}
-                            {% if delete_url %}<a class="button tiny danger-ghost" href="{{ delete_url }}">{% translate "Delete" %}</a>{% endif %}
-                        {% endif %}
-                    </td>
+                    <th scope="col" class="text-end text-nowrap">{% translate "Actions" %}</th>
                 {% endif %}
             </tr>
-        {% empty %}
-            <tr class="empty-row">
-                <td colspan="{{ table_columns|length|add:1 }}">
-                    {% include "components/empty_state.html" %}
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for object in objects %}
+                <tr>
+                    {% for column in table_columns %}
+                        <td class="{% if column.type == 'money' %}text-end font-monospace{% endif %}"
+                            data-label="{{ column.label }}">
+                            {% if column.type == 'bool' %}
+                                {% if object|attr:column.field %}
+                                    <span class="badge text-bg-success">{% translate "Yes" %}</span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">{% translate "No" %}</span>
+                                {% endif %}
+                            {% elif column.type == 'choice' %}
+                                <span class="badge text-bg-light border">{{ object|display:column.field }}</span>
+                            {% elif column.type == 'money' %}
+                                {{ object|attr:column.field|money }}
+                            {% elif column.type == 'date' %}
+                                {{ object|attr:column.field|date:"Y-m-d"|default:"—" }}
+                            {% elif column.type == 'datetime' %}
+                                {{ object|attr:column.field|date:"Y-m-d H:i"|default:"—" }}
+                            {% elif column.type == 'time' %}
+                                {{ object|attr:column.field|time:"H:i"|default:"—" }}
+                            {% elif column.type == 'list' %}
+                                {{ object|attr:column.field|join:", "|default:"—" }}
+                            {% else %}
+                                {{ object|attr:column.field|default:"—" }}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                    {% if detail_url_name or update_url_name or delete_url_name %}
+                        <td class="text-end text-nowrap">
+                            <div class="btn-group btn-group-sm" role="group">
+                                {% if detail_url_name %}
+                                    {% url_or_blank detail_url_name object.pk as detail_url %}
+                                    {% if detail_url %}
+                                        <a class="btn btn-outline-primary" href="{{ detail_url }}">{% translate "View" %}</a>
+                                    {% endif %}
+                                {% endif %}
+                                {% if update_url_name %}
+                                    {% url_or_blank update_url_name object.pk as update_url %}
+                                    {% if update_url %}
+                                        <a class="btn btn-outline-secondary" href="{{ update_url }}">{% translate "Edit" %}</a>
+                                    {% endif %}
+                                {% endif %}
+                                {% if delete_url_name %}
+                                    {% url_or_blank delete_url_name object.pk as delete_url %}
+                                    {% if delete_url %}
+                                        <a class="btn btn-outline-danger" href="{{ delete_url }}">{% translate "Delete" %}</a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="{{ table_columns|length|add:1 }}" class="p-0">
+                        {% include "components/empty_state.html" %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>

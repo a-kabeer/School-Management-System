@@ -3,12 +3,12 @@
 
 {% block content %}
     {% include "components/filters.html" %}
-    <div class="table-wrap">
-        <table class="data-table">
+    <div class="table-responsive mb-3">
+        <table class="table table-hover align-middle mb-0">
             <thead><tr>
                 <th>{% translate "Name" %}</th><th>{% translate "Start" %}</th>
                 <th>{% translate "End" %}</th><th>{% translate "Closed" %}</th>
-                <th class="actions-column">{% translate "Actions" %}</th>
+                <th class="text-end text-nowrap">{% translate "Actions" %}</th>
             </tr></thead>
             <tbody>
             {% for period in objects %}
@@ -18,18 +18,18 @@
                     <td data-label="{% translate 'End' %}">{{ period.end_date|date:"Y-m-d" }}</td>
                     <td data-label="{% translate 'Closed' %}">
                         {% if period.is_closed %}
-                            <span class="pill pill-no">{% translate "Closed" %}</span>
+                            <span class="badge text-bg-danger">{% translate "Closed" %}</span>
                         {% else %}
-                            <span class="pill pill-yes">{% translate "Open" %}</span>
+                            <span class="badge text-bg-success">{% translate "Open" %}</span>
                         {% endif %}
                     </td>
-                    <td class="actions-column">
-                        <a class="button tiny ghost" href="{% url 'finance:period_update' period.pk %}">{% translate "Edit" %}</a>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'finance:period_update' period.pk %}">{% translate "Edit" %}</a>
                         {% has_perm "finance.change_fiscalperiod" as can_close %}
                         {% if can_close and not period.is_closed %}
-                            <form method="post" action="{% url 'finance:period_close' period.pk %}" class="inline-form">
+                            <form method="post" action="{% url 'finance:period_close' period.pk %}" class="d-inline-flex align-items-center gap-1 m-0">
                                 {% csrf_token %}
-                                <button type="submit" class="button tiny danger-ghost"
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
                                         data-confirm="{% translate 'Close this period? No further entries can be posted into it.' %}">
                                     {% translate "Close" %}
                                 </button>

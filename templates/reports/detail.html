@@ -3,40 +3,40 @@
 
 {% block page_actions %}
     {% if can_export %}
-        <a class="button ghost" href="{% query_replace export='xlsx' %}">{% translate "Export to Excel" %}</a>
+        <a class="btn btn-outline-secondary" href="{% query_replace export='xlsx' %}">{% translate "Export to Excel" %}</a>
     {% endif %}
-    <a class="button ghost" href="{% url 'reports:index' %}">{% translate "All reports" %}</a>
+    <a class="btn btn-outline-secondary" href="{% url 'reports:index' %}">{% translate "All reports" %}</a>
 {% endblock %}
 
 {% block content %}
-<p class="muted">{{ definition.description }}</p>
+<p class="text-body-secondary">{{ definition.description }}</p>
 
-<form method="get" class="filter-bar">
+<form method="get" class="card card-body mb-3 d-flex flex-row flex-wrap align-items-center gap-2">
     {% if 'date_from' in definition.filters %}
-        <div class="filter-field">
-            <label class="sr-only" for="from">{% translate "From" %}</label>
+        <div class="flex-grow-1">
+            <label class="visually-hidden" for="from">{% translate "From" %}</label>
             <input type="date" id="from" name="date_from" value="{{ params.date_from|date:'Y-m-d' }}" class="form-control">
         </div>
-        <div class="filter-field">
-            <label class="sr-only" for="to">{% translate "To" %}</label>
+        <div class="flex-grow-1">
+            <label class="visually-hidden" for="to">{% translate "To" %}</label>
             <input type="date" id="to" name="date_to" value="{{ params.date_to|date:'Y-m-d' }}" class="form-control">
         </div>
     {% endif %}
     {% if 'status' in definition.filters %}
-        <div class="filter-field">
-            <label class="sr-only" for="status">{% translate "Status" %}</label>
+        <div class="flex-grow-1">
+            <label class="visually-hidden" for="status">{% translate "Status" %}</label>
             <input type="text" id="status" name="status" value="{{ params.status }}" class="form-control"
                    placeholder="{% translate 'Status' %}">
         </div>
     {% endif %}
-    <button type="submit" class="button">{% translate "Apply" %}</button>
-    <a href="{{ request.path }}" class="button ghost">{% translate "Reset" %}</a>
+    <button type="submit" class="btn btn-primary">{% translate "Apply" %}</button>
+    <a href="{{ request.path }}" class="btn btn-outline-secondary">{% translate "Reset" %}</a>
 </form>
 
-<p class="muted">{% blocktranslate with count=row_count %}{{ count }} rows{% endblocktranslate %}</p>
+<p class="text-body-secondary">{% blocktranslate with count=row_count %}{{ count }} rows{% endblocktranslate %}</p>
 
-<div class="table-wrap">
-    <table class="data-table compact">
+<div class="table-responsive mb-3">
+    <table class="table table-sm table-hover align-middle mb-0">
         <thead>
         <tr>{% for header in headers %}<th>{{ header }}</th>{% endfor %}</tr>
         </thead>
@@ -46,7 +46,7 @@
                 {% for cell in row %}<td data-label="">{{ cell|default_if_none:"—" }}</td>{% endfor %}
             </tr>
         {% empty %}
-            <tr><td colspan="{{ headers|length }}" class="muted">{% translate "No data for these filters." %}</td></tr>
+            <tr><td colspan="{{ headers|length }}" class="text-body-secondary">{% translate "No data for these filters." %}</td></tr>
         {% endfor %}
         </tbody>
         {% if total_row %}

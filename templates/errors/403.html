@@ -2,15 +2,23 @@
 {% load i18n %}
 {% block title %}{% translate "Access denied" %}{% endblock %}
 {% block page_heading %}{% translate "Access denied" %}{% endblock %}
+
 {% block content %}
-<div class="panel">
+<div class="card card-body">
     <p class="lead">{{ message|default:_("You do not have permission to view this page.") }}</p>
-    <a class="button" href="{% url 'core:dashboard' %}">{% translate "Back to dashboard" %}</a>
+    <div>
+        <a class="btn btn-primary" href="{% url 'core:dashboard' %}">{% translate "Back to dashboard" %}</a>
+    </div>
 </div>
 {% endblock %}
+
 {% block anon_content %}
-<div class="auth-card">
-    <h1>{% translate "Access denied" %}</h1>
-    <p>{{ message|default:_("You do not have permission to view this page.") }}</p>
+<div class="card shadow-sm mx-auto text-center" style="max-width: 26rem;">
+    <div class="card-body p-4">
+        <h1 class="h5">{% translate "Access denied" %}</h1>
+        <p class="mb-0 text-body-secondary">
+            {{ message|default:_("You do not have permission to view this page.") }}
+        </p>
+    </div>
 </div>
 {% endblock %}

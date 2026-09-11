@@ -4,6 +4,6 @@
 {% block extra_actions %}
     {% has_perm "core.export_report" as can_export %}
     {% if can_export %}
-        <a class="button ghost" href="{% url 'reports:detail' key='students' %}?export=xlsx">{% translate "Export" %}</a>
+        <a class="btn btn-outline-secondary" href="{% url 'reports:detail' key='students' %}?export=xlsx">{% translate "Export" %}</a>
     {% endif %}
 {% endblock %}

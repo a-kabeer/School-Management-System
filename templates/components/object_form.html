@@ -2,14 +2,17 @@
 {% load i18n %}
 
 {% block content %}
-<div class="panel">
-    <form method="post" enctype="multipart/form-data" class="object-form" novalidate>
-        {% csrf_token %}
-        {% include "components/form.html" %}
-        <div class="form-actions">
-            <button type="submit" class="button">{% translate "Save" %}</button>
-            <a href="{{ request.META.HTTP_REFERER|default:'..' }}" class="button ghost">{% translate "Cancel" %}</a>
-        </div>
-    </form>
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {% include "components/form.html" %}
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+                <a href="{{ request.META.HTTP_REFERER|default:'..' }}"
+                   class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

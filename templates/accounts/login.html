@@ -4,40 +4,61 @@
 {% block title %}{% translate "Sign in" %}{% endblock %}
 
 {% block anon_content %}
-<div class="auth-card">
-    <h1>{{ site_name }}</h1>
-    <p class="auth-subtitle">{% translate "Sign in to continue" %}</p>
+<div class="card shadow-sm mx-auto" style="max-width: 26rem;">
+    <div class="card-body p-4">
+        <h1 class="h5 text-center mb-1">{{ site_name }}</h1>
+        <p class="text-center text-body-secondary mb-4">{% translate "Sign in to continue" %}</p>
 
-    <form method="post" novalidate>
-        {% csrf_token %}
-        {% if form.non_field_errors %}
-            <div class="message message-error">
-                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {% for error in form.non_field_errors %}<p class="mb-0">{{ error }}</p>{% endfor %}
+                </div>
+            {% endif %}
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.username.id_for_label }}">{% translate "Username" %}</label>
+                {{ form.username }}
+                {% for error in form.username.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
             </div>
-        {% endif %}
-        <div class="form-field">
-            <label for="{{ form.username.id_for_label }}">{% translate "Username" %}</label>
-            {{ form.username }}
-            {% for error in form.username.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-        </div>
-        <div class="form-field">
-            <label for="{{ form.password.id_for_label }}">{% translate "Password" %}</label>
-            {{ form.password }}
-            {% for error in form.password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-        </div>
-        <button type="submit" class="button full">{% translate "Sign in" %}</button>
-    </form>
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.password.id_for_label }}">{% translate "Password" %}</label>
+                {{ form.password }}
+                {% for error in form.password.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary w-100">{% translate "Sign in" %}</button>
+        </form>
 
-    <form action="{% url 'set_language' %}" method="post" class="auth-language">
-        {% csrf_token %}
-        <input name="next" type="hidden" value="{{ request.get_full_path }}">
-        <label class="sr-only" for="auth-language">{% translate "Language" %}</label>
-        <select name="language" id="auth-language" class="form-select compact" onchange="this.form.submit()">
-            {% for code, name in ui_languages %}
-                <option value="{{ code }}" {% if code == ui_language %}selected{% endif %}>{{ name }}</option>
-            {% endfor %}
-        </select>
-        <noscript><button type="submit" class="button small">{% translate "Go" %}</button></noscript>
-    </form>
+        <div class="d-flex justify-content-center gap-2 mt-4">
+            <form action="{% url 'set_language' %}" method="post" class="m-0">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                <label class="visually-hidden" for="auth-language">{% translate "Language" %}</label>
+                <select name="language" id="auth-language" class="form-select form-select-sm"
+                        onchange="this.form.submit()">
+                    {% for code, name in ui_languages %}
+                        <option value="{{ code }}" {% if code == ui_language %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <noscript><button type="submit" class="btn btn-sm btn-secondary">{% translate "Go" %}</button></noscript>
+            </form>
+
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown" aria-label="{% translate 'Change theme' %}" data-theme-menu>
+                    <span data-theme-icon aria-hidden="true">🖥️</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><button type="button" class="dropdown-item" data-theme-value="light">☀️ {% translate "Light" %}<span class="ms-2 d-none" data-theme-check>✓</span></button></li>
+                    <li><button type="button" class="dropdown-item" data-theme-value="dark">🌙 {% translate "Dark" %}<span class="ms-2 d-none" data-theme-check>✓</span></button></li>
+                    <li><button type="button" class="dropdown-item" data-theme-value="system">🖥️ {% translate "System Default" %}<span class="ms-2 d-none" data-theme-check>✓</span></button></li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

@@ -2,35 +2,35 @@
 {% load i18n %}
 
 {% block page_actions %}
-<a class="button" href="{% url 'parents:request_create' %}">{% translate "New request" %}</a>
+<a class="btn btn-primary" href="{% url 'parents:request_create' %}">{% translate "New request" %}</a>
 {% endblock %}
 
 {% block content %}
 <div class="card-grid">
     {% for child in children %}
-        <a class="stat-card link-card" href="{% url 'parents:child_detail' child.pk %}">
-            <p class="stat-label">{{ child.current_class_display }}</p>
-            <p class="stat-value small">{{ child.full_name }}</p>
-            <p class="stat-hint">{{ child.admission_no }}</p>
+        <a class="text-decoration-none text-body card h-100 p-3 border-start border-4 border-secondary" href="{% url 'parents:child_detail' child.pk %}">
+            <p class="text-uppercase small text-body-secondary mb-1">{{ child.current_class_display }}</p>
+            <p class="fs-6 fw-semibold mb-0 text-break">{{ child.full_name }}</p>
+            <p class="small text-body-secondary mb-0">{{ child.admission_no }}</p>
         </a>
     {% empty %}
-        <div class="panel">
-            <p class="muted">{% translate "No children are linked to your account. Please contact the school office." %}</p>
+        <div class="card card-body mb-3">
+            <p class="text-body-secondary">{% translate "No children are linked to your account. Please contact the school office." %}</p>
         </div>
     {% endfor %}
 </div>
 
-<section class="panel">
+<section class="card card-body mb-3">
     <h2>{% translate "My requests" %}</h2>
-    <ul class="plain-list">
+    <ul class="list-group list-group-flush">
         {% for request_item in guardian.requests.all|slice:":10" %}
-            <li>
+            <li class="list-group-item px-0 bg-transparent">
                 {{ request_item.created_at|date:"Y-m-d" }} · {{ request_item.subject }}
-                <span class="pill">{{ request_item.get_status_display }}</span>
-                {% if request_item.response %}<p class="muted">{{ request_item.response }}</p>{% endif %}
+                <span class="badge text-bg-light border">{{ request_item.get_status_display }}</span>
+                {% if request_item.response %}<p class="text-body-secondary">{{ request_item.response }}</p>{% endif %}
             </li>
         {% empty %}
-            <li class="muted">{% translate "You have not raised any requests." %}</li>
+            <li class="list-group-item px-0 bg-transparent text-body-secondary">{% translate "You have not raised any requests." %}</li>
         {% endfor %}
     </ul>
 </section>

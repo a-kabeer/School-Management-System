@@ -4,14 +4,28 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% translate "Something went wrong" %}</title>
+    {# Standalone: the 500 page must render even if context processors failed. #}
+    <script>
+        (function () {
+            try {
+                var choice = localStorage.getItem("sms-theme") || "system";
+                var dark = choice === "dark" || (choice === "system" &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches);
+                document.documentElement.setAttribute("data-bs-theme", dark ? "dark" : "light");
+            } catch (e) { /* fall back to the light default */ }
+        })();
+    </script>
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
-<body class="unauthenticated">
-<main class="auth-shell">
-    <div class="auth-card">
-        <h1>{% translate "Something went wrong" %}</h1>
-        <p>{% translate "The error has been logged. Please try again." %}</p>
-        <a class="button" href="/">{% translate "Go home" %}</a>
+<body class="d-flex align-items-center justify-content-center min-vh-100 bg-body-tertiary">
+<main class="w-100 px-3">
+    <div class="card shadow-sm mx-auto text-center" style="max-width: 26rem;">
+        <div class="card-body p-4">
+            <h1 class="h5">{% translate "Something went wrong" %}</h1>
+            <p class="text-body-secondary">{% translate "The error has been logged. Please try again." %}</p>
+            <a class="btn btn-primary" href="/">{% translate "Go home" %}</a>
+        </div>
     </div>
 </main>
 </body>

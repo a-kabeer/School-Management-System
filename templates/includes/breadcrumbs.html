@@ -1,16 +1,14 @@
 {% load i18n %}
 {% if breadcrumbs %}
-<nav class="breadcrumbs" aria-label="{% translate 'Breadcrumb' %}">
-    <ol>
-        <li><a href="{% url 'core:dashboard' %}">{% translate "Dashboard" %}</a></li>
+<nav aria-label="{% translate 'Breadcrumb' %}">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% translate "Dashboard" %}</a></li>
         {% for crumb in breadcrumbs %}
-            <li>
-                {% if crumb.url and not forloop.last %}
-                    <a href="{{ crumb.url }}">{{ crumb.label }}</a>
-                {% else %}
-                    <span aria-current="page">{{ crumb.label }}</span>
-                {% endif %}
-            </li>
+            {% if crumb.url and not forloop.last %}
+                <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.label }}</a></li>
+            {% else %}
+                <li class="breadcrumb-item active" aria-current="page">{{ crumb.label }}</li>
+            {% endif %}
         {% endfor %}
     </ol>
 </nav>

@@ -217,6 +217,41 @@ All configuration is read through `python-decouple`. See `.env.example`.
 
 ---
 
+## Front end
+
+**Bootstrap 5.3.3** is the styling system, vendored under
+`static/vendor/bootstrap/` so there is no CDN dependency at runtime. Layout,
+spacing, grids, forms, buttons, cards, tables, navigation, dropdowns, offcanvas,
+modals, alerts, badges, pagination and breadcrumbs are all Bootstrap components
+and utilities.
+
+`static/css/app.css` is ~170 lines and holds only what Bootstrap has no utility
+for: three auto-fit CSS grids (Bootstrap's grid takes a fixed column count per
+breakpoint), a two-column definition-list rule, the sticky sidebar column, a few
+sized elements, and print rules. Every one of them is written against Bootstrap's
+CSS variables, so no rule is duplicated per theme.
+
+### Themes
+
+A switcher in the navbar offers **Light**, **Dark** and **System Default**.
+Bootstrap 5.3's `data-bs-theme` attribute on `<html>` does the work; the choice
+is stored in `localStorage` and survives navigation and reloads. System mode
+follows `prefers-color-scheme` and updates live, without a reload.
+
+A small inline script in `<head>` resolves the theme *before the first paint*,
+so there is no flash of the wrong colour scheme on load or on a Back navigation.
+
+### Responsive
+
+The sidebar is one piece of markup that Bootstrap renders as a static column
+from `lg` up and as an offcanvas drawer below it; it closes itself on navigation
+so it never covers the next page on a phone. Every table sits inside a
+`.table-responsive` scroller, so a wide table scrolls within its own card rather
+than making the page scroll sideways.
+
+RTL is handled by loading `bootstrap.rtl.min.css` when the active language is
+Urdu or Arabic, and the project stylesheet uses logical properties throughout.
+
 ## Internationalization
 
 English (LTR), Urdu (RTL) and Arabic (RTL) are supported from the start.

@@ -4,14 +4,14 @@
 {% block list_intro %}
 {% has_perm "attendance.add_staffattendance" as can_mark %}
 {% if can_mark %}
-<details class="panel collapsible">
+<details class="card card-body mb-3">
     <summary><h2>{% translate "Mark staff attendance" %}</h2></summary>
     <form method="post" class="register-form">
         {% csrf_token %}
         <input type="hidden" name="date" value="{{ mark_date|date:'Y-m-d' }}">
-        <p class="muted">{% blocktranslate with date=mark_date %}Marking for {{ date }}. Change the date filter above to mark another day.{% endblocktranslate %}</p>
-        <div class="table-wrap">
-            <table class="data-table compact">
+        <p class="text-body-secondary">{% blocktranslate with date=mark_date %}Marking for {{ date }}. Change the date filter above to mark another day.{% endblocktranslate %}</p>
+        <div class="table-responsive mb-3">
+            <table class="table table-sm table-hover align-middle mb-0">
                 <thead><tr><th>{% translate "Employee #" %}</th><th>{% translate "Name" %}</th><th>{% translate "Status" %}</th></tr></thead>
                 <tbody>
                 {% for row in mark_rows %}
@@ -19,9 +19,9 @@
                         <td>{{ row.staff.employee_no }}</td>
                         <td>{{ row.staff.full_name }}</td>
                         <td>
-                            <div class="status-options">
+                            <div class="d-flex flex-wrap gap-2">
                                 {% for value, label in statuses %}
-                                    <label class="status-option">
+                                    <label class="form-check form-check-inline m-0">
                                         <input type="radio" name="status-{{ row.staff.pk }}" value="{{ value }}"
                                                {% if row.record and row.record.status == value %}checked{% elif not row.record and value == 'present' %}checked{% endif %}>
                                         <span>{{ label }}</span>
@@ -31,13 +31,13 @@
                         </td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="3" class="muted">{% translate "No active staff." %}</td></tr>
+                    <tr><td colspan="3" class="text-body-secondary">{% translate "No active staff." %}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class="form-actions">
-            <button type="submit" class="button">{% translate "Save staff attendance" %}</button>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">{% translate "Save staff attendance" %}</button>
         </div>
     </form>
 </details>
