@@ -1,14 +1,20 @@
 {% load i18n %}
-{# Shared filter bar. Submits with GET so filters stay shareable in the URL. #}
+{% comment %}Shared filter bar. Submits with GET so a filtered view stays
+   shareable in the URL.{% endcomment %}
 {% if filter_has_search or filter_selects or filter_has_dates %}
-<form method="get" class="card card-body mb-3 py-2">
+<form method="get" class="card card-body py-2 mb-3">
     <div class="row g-2 align-items-center">
         {% if filter_has_search %}
             <div class="col-12 col-md-4 col-xl-3">
                 <label class="visually-hidden" for="filter-q">{% translate "Search" %}</label>
-                <input type="search" id="filter-q" name="q" value="{{ filter_search }}"
-                       placeholder="{% translate 'Search…' %}" class="form-control form-control-sm"
-                       autocomplete="off">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-body" id="search-icon">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                    </span>
+                    <input type="search" id="filter-q" name="q" value="{{ filter_search }}"
+                           placeholder="{% translate 'Search…' %}" class="form-control"
+                           autocomplete="off" aria-describedby="search-icon">
+                </div>
             </div>
         {% endif %}
 
@@ -29,18 +35,22 @@
             <div class="col-6 col-md-3 col-xl-2">
                 <label class="visually-hidden" for="filter-from">{% translate "From" %}</label>
                 <input type="date" id="filter-from" name="date_from" value="{{ filter_date_from }}"
-                       class="form-control form-control-sm">
+                       class="form-control form-control-sm" aria-label="{% translate 'From date' %}">
             </div>
             <div class="col-6 col-md-3 col-xl-2">
                 <label class="visually-hidden" for="filter-to">{% translate "To" %}</label>
                 <input type="date" id="filter-to" name="date_to" value="{{ filter_date_to }}"
-                       class="form-control form-control-sm">
+                       class="form-control form-control-sm" aria-label="{% translate 'To date' %}">
             </div>
         {% endif %}
 
         <div class="col-12 col-md-auto d-flex gap-2">
-            <button type="submit" class="btn btn-sm btn-primary flex-fill">{% translate "Filter" %}</button>
-            <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary flex-fill">{% translate "Reset" %}</a>
+            <button type="submit" class="btn btn-sm btn-primary flex-fill">
+                <i class="bi bi-funnel me-1" aria-hidden="true"></i>{% translate "Filter" %}
+            </button>
+            <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary flex-fill">
+                {% translate "Reset" %}
+            </a>
         </div>
     </div>
 </form>

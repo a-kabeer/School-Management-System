@@ -1,10 +1,31 @@
 {% load i18n core_extras %}
-<div class="text-center text-body-secondary py-5 px-3">
-    <p class="mb-3">{{ empty_message|default:_("Nothing here yet.") }}</p>
-    {% if can_create and create_url_name %}
-        {% url_or_blank create_url_name as create_url %}
-        {% if create_url %}
-            <a class="btn btn-sm btn-primary" href="{{ create_url }}">{% translate "Add the first one" %}</a>
+{% comment %}One empty state for the whole application: an icon, a short
+   explanation, and the action that fills the gap. Views can override the
+   icon with `empty_icon` and the message with `empty_message`.{% endcomment %}
+<div class="text-center py-5 px-3">
+    <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
+                 rounded-circle bg-body-tertiary text-body-secondary mb-3">
+        <i class="bi {{ empty_icon|default:'bi-inbox' }} fs-3" aria-hidden="true"></i>
+    </span>
+    <p class="fw-medium mb-1">{{ empty_message|default:_("Nothing here yet") }}</p>
+    {% if filter_search or filter_date_from or filter_date_to %}
+        <p class="text-body-secondary small mb-3">
+            {% translate "No records match the current filters." %}
+        </p>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ request.path }}">
+            <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{% translate "Clear filters" %}
+        </a>
+    {% else %}
+        <p class="text-body-secondary small mb-3">
+            {% translate "Records you add will appear here." %}
+        </p>
+        {% if can_create and create_url_name %}
+            {% url_or_blank create_url_name as create_url %}
+            {% if create_url %}
+                <a class="btn btn-sm btn-primary" href="{{ create_url }}">
+                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "Add the first one" %}
+                </a>
+            {% endif %}
         {% endif %}
     {% endif %}
 </div>

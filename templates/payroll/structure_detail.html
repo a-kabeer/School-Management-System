@@ -2,7 +2,7 @@
 {% load i18n core_extras %}
 
 {% block page_actions %}
-    <a class="btn btn-outline-secondary" href="{% url 'payroll:structure_update' object.pk %}">{% translate "Edit" %}</a>
+    <a class="btn btn-outline-secondary" href="{% url 'payroll:structure_update' object.pk %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>
     <a class="btn btn-primary" href="{% url 'payroll:structureline_create' %}">{% translate "Add line" %}</a>
 {% endblock %}
 

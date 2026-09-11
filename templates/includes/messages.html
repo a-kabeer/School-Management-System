@@ -1,16 +1,21 @@
 {% load i18n %}
+{% comment %}Inline alerts, used on the signed-out pages. Signed-in pages show
+   the same messages as toasts instead - see includes/toasts.html.{% endcomment %}
 {% if messages %}
 <div role="status" aria-live="polite">
     {% for message in messages %}
-        {% if message.tags == 'error' %}{% with variant='danger' %}
-            <div class="alert alert-{{ variant }} alert-dismissible fade show" role="alert">
-                {{ message }}
+        {% if message.level_tag == 'error' %}{% with variant="danger" icon="bi-exclamation-octagon-fill" %}
+            <div class="alert alert-{{ variant }} alert-dismissible d-flex align-items-start gap-2 fade show" role="alert">
+                <i class="bi {{ icon }} flex-shrink-0 mt-1" aria-hidden="true"></i>
+                <span>{{ message }}</span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"
                         aria-label="{% translate 'Close' %}"></button>
             </div>
         {% endwith %}{% else %}
-            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-                {{ message }}
+            <div class="alert alert-{{ message.level_tag|default:'info' }} alert-dismissible d-flex align-items-start gap-2 fade show"
+                 role="alert">
+                <i class="bi bi-info-circle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
+                <span>{{ message }}</span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"
                         aria-label="{% translate 'Close' %}"></button>
             </div>

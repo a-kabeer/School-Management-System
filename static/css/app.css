@@ -1,29 +1,77 @@
 /* School Management System — project styles.
  *
- * Bootstrap 5.3 does the layout, spacing, colour and components. What remains
- * here is only what Bootstrap has no utility for: three auto-fit grids, the
- * fixed-width sidebar column, a couple of sized elements, and print rules.
+ * Bootstrap 5.3 does the layout, components and colour. This file holds the
+ * product's own voice: a slightly tighter radius, quieter borders, a calmer
+ * surface behind the content, and the handful of structures Bootstrap has no
+ * utility for.
  *
- * Everything is written against Bootstrap's CSS variables, so light, dark and
- * system themes are handled without a second set of rules.
+ * Everything is expressed through Bootstrap's own CSS variables, so light,
+ * dark and system themes are handled once rather than per rule.
  */
+
+/* ----------------------------------------------------------- design tokens */
+
+:root {
+    --bs-border-radius: .5rem;
+    --bs-border-radius-sm: .375rem;
+    --bs-border-radius-lg: .75rem;
+    --bs-body-font-size: .9375rem;
+
+    --app-navbar-height: 56px;
+    --app-sidebar-width: 16rem;
+}
+
+/* Cards carry the interface, so they get a quieter border and a shadow you
+   notice only when it is missing. */
+.card {
+    --bs-card-border-color: var(--bs-border-color-translucent);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+/* A faint tint behind the content separates it from the cards sitting on it.
+   Written per colour mode because the two need different directions. */
+[data-bs-theme="light"] .app-main {
+    background-color: #f6f8fb;
+}
+
+[data-bs-theme="dark"] .app-main {
+    background-color: var(--bs-body-bg);
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+}
 
 /* --------------------------------------------------------------- layout */
 
+.app-navbar {
+    min-height: var(--app-navbar-height);
+}
+
 /* The sidebar is a static column from lg up and an offcanvas below it.
-   Bootstrap sizes the offcanvas; this pins the static column's width and
-   lets it scroll independently of the page. */
+   Bootstrap sizes the offcanvas; this pins the static column and lets it
+   scroll independently of the page. */
 @media (min-width: 992px) {
     .app-sidebar {
         position: sticky;
-        top: var(--app-navbar-height, 56px);
-        height: calc(100vh - var(--app-navbar-height, 56px));
+        top: var(--app-navbar-height);
+        height: calc(100vh - var(--app-navbar-height));
         overflow-y: auto;
     }
 }
 
 .app-main {
     min-width: 0; /* lets flex children shrink instead of forcing a page scroll */
+    min-height: calc(100vh - var(--app-navbar-height));
+
+    /* A `.table-responsive` scrolls its own content, but the card around it
+       still lays out at the table's full width, and that width propagates up
+       and scrolls the page sideways on a phone. Containing it here fixes
+       every table at once.
+       `clip` rather than `hidden`: it does not create a scroll container, so
+       `overflow-y` stays visible and a row's action menu can still open past
+       the bottom of its card. */
+    overflow-x: clip;
 }
 
 /* Bootstrap has no min-width utility, and a flex child needs min-width: 0
@@ -35,13 +83,103 @@
 .skip-link {
     position: absolute;
     z-index: 1080;
-    margin: 0.5rem;
+    margin: .5rem;
+}
+
+.brand-mark {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* ------------------------------------------------------------ navigation */
+
+.app-nav-link {
+    border-radius: var(--bs-border-radius);
+    padding-block: .5rem;
+    transition: background-color .12s ease-in-out;
+}
+
+.app-nav-link:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
+.app-nav-icon {
+    width: 1.25rem;
+    flex: none;
+    text-align: center;
+    opacity: .85;
+}
+
+.app-nav-caret {
+    transition: transform .15s ease-in-out;
+}
+
+.app-nav-link:not(.collapsed) > .app-nav-caret {
+    transform: rotate(180deg);
+}
+
+/* Child links sit under a rule that ties them to their section. */
+.app-nav-sub {
+    margin-inline-start: 1.4rem;
+    padding-inline-start: .6rem;
+    border-inline-start: 1px solid var(--bs-border-color);
+}
+
+/* ---------------------------------------------------------------- tables */
+
+.app-table > thead > tr > th {
+    background-color: var(--bs-tertiary-bg);
+    color: var(--bs-secondary-color);
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-bottom-width: 1px;
+}
+
+.app-table > tbody > tr > td {
+    padding-block: .6rem;
+}
+
+/* The record's own name is the primary target in a row; it only shows as a
+   link on hover so the table does not read as a wall of blue. */
+.app-row-link {
+    color: var(--bs-body-color);
+}
+
+.app-row-link:hover,
+.app-row-link:focus-visible {
+    color: var(--bs-link-hover-color);
+    text-decoration: underline !important;
+}
+
+/* Square icon buttons, sized for a fingertip rather than a cursor. */
+.app-icon-btn {
+    --bs-btn-padding-x: .5rem;
+    --bs-btn-padding-y: .3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    min-height: 2rem;
+}
+
+/* Keep numeric columns from wrapping mid-figure in a dense table. */
+.table .font-monospace {
+    white-space: nowrap;
+}
+
+/* ----------------------------------------------------------- empty state */
+
+.empty-state-icon {
+    width: 3.5rem;
+    height: 3.5rem;
 }
 
 /* --------------------------------------------------- auto-fit card grids */
 
 /* Bootstrap's grid takes a fixed column count per breakpoint. These three
-   size themselves to the content instead, which is what the summary tiles
+   size themselves to their content instead, which is what the summary tiles
    and side-by-side detail panels want. */
 .card-grid {
     display: grid;
@@ -64,7 +202,6 @@
     align-items: start;
 }
 
-/* A panel that should span the full width of an auto-fit grid. */
 .detail-grid > .wide,
 .card-grid > .wide {
     grid-column: 1 / -1;
@@ -77,7 +214,7 @@
 .definition-list {
     display: grid;
     grid-template-columns: minmax(7rem, auto) 1fr;
-    gap: 0.25rem 1rem;
+    gap: .35rem 1rem;
     margin-bottom: 0;
 }
 
@@ -87,7 +224,7 @@
 
 .definition-list dt {
     color: var(--bs-secondary-color);
-    font-size: 0.85rem;
+    font-size: .8125rem;
     font-weight: 500;
 }
 
@@ -103,9 +240,9 @@
 /* ------------------------------------------------------ sized fragments */
 
 .avatar {
-    width: 1.85rem;
-    height: 1.85rem;
-    font-size: 0.8rem;
+    width: 2rem;
+    height: 2rem;
+    font-size: .8125rem;
     flex: none;
 }
 
@@ -115,25 +252,7 @@
     flex: none;
 }
 
-.nav-dot {
-    width: 0.4rem;
-    height: 0.4rem;
-    border-radius: 50%;
-    background: currentColor;
-    opacity: 0.45;
-    flex: none;
-}
-
-/* Rotate the group caret with the collapse it controls. */
-.nav-caret {
-    transition: transform 0.15s ease-in-out;
-}
-
-.nav-link:not(.collapsed) > .nav-caret {
-    transform: rotate(180deg);
-}
-
-/* ----------------------------------------------------------- bar chart */
+/* ------------------------------------------------------------ bar chart */
 
 .bar-chart {
     height: 8.75rem;
@@ -141,13 +260,20 @@
 
 .bar-chart .bar {
     min-height: 2px;
+    transition: opacity .12s ease-in-out;
 }
 
-/* --------------------------------------------------------- small tables */
+.bar-chart > div:hover .bar {
+    opacity: .8;
+}
 
-/* Keep numeric columns from wrapping mid-figure in a dense table. */
-.table .font-monospace {
-    white-space: nowrap;
+/* ------------------------------------------------------------ focus ring */
+
+/* A focus ring that is visible on every surface, including inside a table
+   row that is already tinted by :hover. */
+:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
 }
 
 /* ---------------------------------------------------------------- print */
@@ -158,6 +284,7 @@
     .breadcrumb,
     .pagination,
     .btn,
+    .toast-container,
     form.card,
     .alert-dismissible .btn-close {
         display: none !important;
@@ -165,6 +292,7 @@
 
     .app-main {
         padding: 0 !important;
+        background: #fff !important;
     }
 
     .card {
@@ -174,7 +302,29 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .nav-caret {
+    .app-nav-caret,
+    .app-nav-link,
+    .bar-chart .bar {
         transition: none;
     }
+}
+
+/* --------------------------------------------------- dashboard fragments */
+
+.kpi-icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: .9rem;
+}
+
+.status-dot {
+    width: .55rem;
+    height: .55rem;
+    display: inline-block;
+    flex: none;
+}
+
+.brand-mark-lg {
+    width: 3.5rem;
+    height: 3.5rem;
 }

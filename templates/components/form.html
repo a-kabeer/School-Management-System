@@ -1,12 +1,15 @@
 {% load i18n %}
-{% comment %}Renders any bound form using Bootstrap form markup.
-   Widget classes (form-control / form-select) are applied by TenantModelForm,
-   so this only has to lay the fields out and surface errors.{% endcomment %}
+{% comment %}Renders any bound form using Bootstrap form markup. Widget classes
+   (form-control / form-select) come from TenantModelForm, so this only lays
+   the fields out and surfaces errors.{% endcomment %}
 {% if form.non_field_errors %}
-    <div class="alert alert-danger" role="alert">
-        {% for error in form.non_field_errors %}
-            <p class="mb-0">{{ error }}</p>
-        {% endfor %}
+    <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
+        <i class="bi bi-exclamation-octagon-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
+        <div>
+            {% for error in form.non_field_errors %}
+                <p class="mb-0">{{ error }}</p>
+            {% endfor %}
+        </div>
     </div>
 {% endif %}
 
@@ -15,14 +18,16 @@
     {% for field in form.visible_fields %}
         {% if field.field.widget.input_type == 'checkbox' %}
             <div class="col-12 col-md-6 col-xl-4">
-                <div class="form-check mt-md-4">
+                <div class="form-check mt-md-4 pt-md-2">
                     {{ field }}
                     <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {% if field.help_text %}
                         <div class="form-text">{{ field.help_text }}</div>
                     {% endif %}
                     {% for error in field.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
+                        <div class="invalid-feedback d-block">
+                            <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>{{ error }}
+                        </div>
                     {% endfor %}
                 </div>
             </div>
@@ -30,14 +35,19 @@
             <div class="col-12 col-md-6 col-xl-4">
                 <label class="form-label" for="{{ field.id_for_label }}">
                     {{ field.label }}
-                    {% if field.field.required %}<span class="text-danger" aria-hidden="true">*</span>{% endif %}
+                    {% if field.field.required %}
+                        <span class="text-danger" aria-hidden="true">*</span>
+                        <span class="visually-hidden">({% translate "required" %})</span>
+                    {% endif %}
                 </label>
                 {{ field }}
                 {% if field.help_text %}
                     <div class="form-text">{{ field.help_text }}</div>
                 {% endif %}
                 {% for error in field.errors %}
-                    <div class="invalid-feedback d-block">{{ error }}</div>
+                    <div class="invalid-feedback d-block">
+                        <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>{{ error }}
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}

@@ -4,7 +4,7 @@
 {% block page_actions %}
     {% has_perm "students.change_student" as can_edit %}
     {% if can_edit %}
-        <a class="btn btn-primary" href="{% url 'students:student_update' object.pk %}">{% translate "Edit" %}</a>
+        <a class="btn btn-primary" href="{% url 'students:student_update' object.pk %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>
         <a class="btn btn-outline-secondary" href="{% url 'students:student_transfer' object.pk %}">{% translate "Transfer" %}</a>
         <a class="btn btn-outline-secondary" href="{% url 'students:student_status' object.pk %}">{% translate "Change status" %}</a>
     {% endif %}

@@ -4,60 +4,105 @@
 {% block title %}{% translate "Sign in" %}{% endblock %}
 
 {% block anon_content %}
-<div class="card shadow-sm mx-auto" style="max-width: 26rem;">
-    <div class="card-body p-4">
-        <h1 class="h5 text-center mb-1">{{ site_name }}</h1>
-        <p class="text-center text-body-secondary mb-4">{% translate "Sign in to continue" %}</p>
+<div class="mx-auto" style="max-width: 26rem;">
+    <div class="text-center mb-4">
+        <span class="brand-mark-lg d-inline-flex align-items-center justify-content-center
+                     rounded bg-primary text-white mb-3">
+            <i class="bi bi-mortarboard-fill fs-3" aria-hidden="true"></i>
+        </span>
+        <h1 class="h5 fw-semibold mb-1">{{ site_name }}</h1>
+        <p class="text-body-secondary mb-0">{% translate "Sign in to continue" %}</p>
+    </div>
 
-        <form method="post" novalidate>
-            {% csrf_token %}
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
-                    {% for error in form.non_field_errors %}<p class="mb-0">{{ error }}</p>{% endfor %}
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
+                        <i class="bi bi-exclamation-octagon-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
+                        <div>
+                            {% for error in form.non_field_errors %}<p class="mb-0">{{ error }}</p>{% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.username.id_for_label }}">
+                        {% translate "Username" %}
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-body">
+                            <i class="bi bi-person" aria-hidden="true"></i>
+                        </span>
+                        {{ form.username }}
+                    </div>
+                    {% for error in form.username.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
                 </div>
-            {% endif %}
-            <div class="mb-3">
-                <label class="form-label" for="{{ form.username.id_for_label }}">{% translate "Username" %}</label>
-                {{ form.username }}
-                {% for error in form.username.errors %}
-                    <div class="invalid-feedback d-block">{{ error }}</div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="{{ form.password.id_for_label }}">
+                        {% translate "Password" %}
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-body">
+                            <i class="bi bi-lock" aria-hidden="true"></i>
+                        </span>
+                        {{ form.password }}
+                    </div>
+                    {% for error in form.password.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>{% translate "Sign in" %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center align-items-center gap-2 mt-3">
+        <form action="{% url 'set_language' %}" method="post" class="m-0">
+            {% csrf_token %}
+            <input name="next" type="hidden" value="{{ request.get_full_path }}">
+            <label class="visually-hidden" for="auth-language">{% translate "Language" %}</label>
+            <select name="language" id="auth-language" class="form-select form-select-sm"
+                    onchange="this.form.submit()">
+                {% for code, name in ui_languages %}
+                    <option value="{{ code }}" {% if code == ui_language %}selected{% endif %}>{{ name }}</option>
                 {% endfor %}
-            </div>
-            <div class="mb-3">
-                <label class="form-label" for="{{ form.password.id_for_label }}">{% translate "Password" %}</label>
-                {{ form.password }}
-                {% for error in form.password.errors %}
-                    <div class="invalid-feedback d-block">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <button type="submit" class="btn btn-primary w-100">{% translate "Sign in" %}</button>
+            </select>
+            <noscript><button type="submit" class="btn btn-sm btn-secondary">{% translate "Go" %}</button></noscript>
         </form>
 
-        <div class="d-flex justify-content-center gap-2 mt-4">
-            <form action="{% url 'set_language' %}" method="post" class="m-0">
-                {% csrf_token %}
-                <input name="next" type="hidden" value="{{ request.get_full_path }}">
-                <label class="visually-hidden" for="auth-language">{% translate "Language" %}</label>
-                <select name="language" id="auth-language" class="form-select form-select-sm"
-                        onchange="this.form.submit()">
-                    {% for code, name in ui_languages %}
-                        <option value="{{ code }}" {% if code == ui_language %}selected{% endif %}>{{ name }}</option>
-                    {% endfor %}
-                </select>
-                <noscript><button type="submit" class="btn btn-sm btn-secondary">{% translate "Go" %}</button></noscript>
-            </form>
-
-            <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                        data-bs-toggle="dropdown" aria-label="{% translate 'Change theme' %}" data-theme-menu>
-                    <span data-theme-icon aria-hidden="true">🖥️</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><button type="button" class="dropdown-item" data-theme-value="light">☀️ {% translate "Light" %}<span class="ms-2 d-none" data-theme-check>✓</span></button></li>
-                    <li><button type="button" class="dropdown-item" data-theme-value="dark">🌙 {% translate "Dark" %}<span class="ms-2 d-none" data-theme-check>✓</span></button></li>
-                    <li><button type="button" class="dropdown-item" data-theme-value="system">🖥️ {% translate "System Default" %}<span class="ms-2 d-none" data-theme-check>✓</span></button></li>
-                </ul>
-            </div>
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown"
+                    aria-label="{% translate 'Change theme' %}">
+                <i class="bi" data-theme-icon aria-hidden="true"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-theme-value="light">
+                        <i class="bi bi-sun" aria-hidden="true"></i>{% translate "Light" %}
+                        <i class="bi bi-check2 ms-auto d-none" data-theme-check aria-hidden="true"></i>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-theme-value="dark">
+                        <i class="bi bi-moon-stars" aria-hidden="true"></i>{% translate "Dark" %}
+                        <i class="bi bi-check2 ms-auto d-none" data-theme-check aria-hidden="true"></i>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-theme-value="system">
+                        <i class="bi bi-circle-half" aria-hidden="true"></i>{% translate "System Default" %}
+                        <i class="bi bi-check2 ms-auto d-none" data-theme-check aria-hidden="true"></i>
+                    </button>
+                </li>
+            </ul>
         </div>
     </div>
 </div>

@@ -3,7 +3,7 @@
 
 {% block page_actions %}
     {% has_perm "hifz.change_hifzstudentprofile" as can_edit %}
-    {% if can_edit %}<a class="btn btn-primary" href="{% url 'hifz:profile_update' object.pk %}">{% translate "Edit" %}</a>{% endif %}
+    {% if can_edit %}<a class="btn btn-primary" href="{% url 'hifz:profile_update' object.pk %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>{% endif %}
     {% has_perm "hifz.add_dailyprogress" as can_record %}
     {% if can_record %}<a class="btn btn-outline-secondary" href="{% url 'hifz:progress_create' %}">{% translate "Record progress" %}</a>{% endif %}
 {% endblock %}

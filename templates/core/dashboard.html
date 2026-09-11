@@ -1,61 +1,66 @@
 {% extends "base.html" %}
 {% load i18n core_extras humanize %}
 
-{% block page_heading %}
-    {% translate "Dashboard" %}
+{% block page_subtitle %}
+    <p class="text-body-secondary mb-0 mt-1">
+        {% if current_branch %}{{ current_branch.name }}{% endif %}
+        {% if board.academic_year %} · {{ board.academic_year.name }}{% endif %}
+        · {{ today|date:"l, j F Y" }}
+    </p>
 {% endblock %}
 
 {% block page_actions %}
     {% for action in board.quick_actions|slice:":3" %}
         <a class="btn btn-sm {% if forloop.first %}btn-primary{% else %}btn-outline-secondary{% endif %}"
            href="{{ action.url }}">
-            <span aria-hidden="true">{{ action.icon }}</span> {{ action.label }}
+            <i class="bi {{ action.icon }} me-1" aria-hidden="true"></i>{{ action.label }}
         </a>
     {% endfor %}
 {% endblock %}
 
 {% block content %}
 
-{# Context strip: who and when, so every number below has a frame. #}
-<p class="text-body-secondary small mb-3">
-    {% if current_branch %}<span class="fw-semibold">{{ current_branch.name }}</span>{% endif %}
-    {% if board.academic_year %}
-        · {{ board.academic_year.name }}
-    {% endif %}
-    · {{ today|date:"l, j F Y" }}
-</p>
-
 {% if board.is_personal %}
-    <div class="card card-body text-center py-5">
-        <p class="fs-5 mb-1">{% translate "Welcome" %}, {{ user.display_name }}.</p>
-        <p class="text-body-secondary mb-3">
-            {% translate "Your account does not have access to the operational modules." %}
-        </p>
-        <div>
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
+                         rounded-circle bg-body-tertiary text-body-secondary mb-3">
+                <i class="bi bi-person-check fs-3" aria-hidden="true"></i>
+            </span>
+            <p class="fs-5 fw-medium mb-1">{% translate "Welcome" %}, {{ user.display_name }}</p>
+            <p class="text-body-secondary mb-3">
+                {% translate "Your account does not have access to the operational modules." %}
+            </p>
             <a class="btn btn-primary" href="{% url 'notifications:list' %}">
-                {% translate "Open notifications" %}
+                <i class="bi bi-bell me-1" aria-hidden="true"></i>{% translate "Open notifications" %}
             </a>
         </div>
     </div>
 {% else %}
 
-{# ---------------------------------------------------------------- KPIs #}
+{% comment %}KPI row: the state of the school in one glance.{% endcomment %}
 {% if board.kpis %}
 <div class="row row-cols-2 row-cols-lg-3 row-cols-xxl-6 g-3 mb-3">
     {% for kpi in board.kpis %}
         <div class="col">
-            <div class="card h-100 border-start border-4 border-{{ kpi.tone }}">
-                {% if kpi.url %}<a href="{{ kpi.url }}" class="text-decoration-none text-body stretched-link"></a>{% endif %}
+            <div class="card h-100">
                 <div class="card-body py-3">
-                    {% comment %}The label wraps rather than truncating: a clipped
-                       "Outstanding fee..." tells the reader less than two short
-                       lines do on a narrow screen.{% endcomment %}
-                    <p class="text-uppercase small text-body-secondary mb-1 lh-sm">
-                        <span aria-hidden="true">{{ kpi.icon }}</span>
-                        {{ kpi.label }}
-                    </p>
-                    <p class="fs-4 fw-semibold mb-0 text-break">{{ kpi.value }}</p>
-                    {% if kpi.hint %}<p class="small text-body-secondary mb-0">{{ kpi.hint }}</p>{% endif %}
+                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                        <span class="text-uppercase small fw-semibold text-body-secondary lh-sm">
+                            {{ kpi.label }}
+                        </span>
+                        <span class="kpi-icon d-inline-flex align-items-center justify-content-center
+                                     rounded bg-{{ kpi.tone }}-subtle text-{{ kpi.tone }}-emphasis flex-shrink-0">
+                            <i class="bi {{ kpi.icon }}" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <p class="fs-4 fw-semibold mb-0 text-break lh-1">{{ kpi.value }}</p>
+                    {% if kpi.hint %}
+                        <p class="small text-body-secondary mb-0 mt-1">{{ kpi.hint }}</p>
+                    {% endif %}
+                    {% if kpi.url %}
+                        <a href="{{ kpi.url }}" class="stretched-link" aria-label="{{ kpi.label }}"></a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -63,54 +68,59 @@
 </div>
 {% endif %}
 
-{# ------------------------------------------------------ Needs attention #}
+{% comment %}Needs attention: the work waiting, each with the action that
+   clears it.{% endcomment %}
 <section class="card mb-3" aria-labelledby="needs-attention">
-    <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-        <h2 class="h6 mb-0" id="needs-attention">{% translate "Needs attention" %}</h2>
+    <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-circle text-warning-emphasis" aria-hidden="true"></i>
+        <h2 class="h6 mb-0 flex-grow-1" id="needs-attention">{% translate "Needs attention" %}</h2>
         {% if board.attention %}
-            <span class="badge text-bg-secondary">{{ board.attention|length }}</span>
+            <span class="badge rounded-pill text-bg-secondary">{{ board.attention|length }}</span>
         {% endif %}
     </div>
     {% if board.attention %}
         <ul class="list-group list-group-flush">
             {% for item in board.attention %}
-                <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
-                    <span class="badge text-bg-{{ item.tone }} flex-shrink-0">{{ item.count }}</span>
+                <li class="list-group-item d-flex flex-wrap align-items-center gap-2 gap-sm-3">
+                    <span class="badge rounded-pill text-bg-{{ item.tone }} flex-shrink-0">{{ item.count }}</span>
                     <span class="flex-grow-1 min-w-0">
                         <span class="fw-medium d-block">{{ item.label }}</span>
                         <span class="small text-body-secondary">{{ item.description }}</span>
                     </span>
                     {% if item.url %}
                         <a class="btn btn-sm btn-outline-{{ item.tone }}" href="{{ item.url }}">
-                            {{ item.action }}
+                            {{ item.action }}<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
                         </a>
                     {% endif %}
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <div class="card-body text-center text-body-secondary py-4">
-            <p class="mb-0">{% translate "Nothing needs attention right now." %}</p>
+        <div class="card-body text-center py-4">
+            <i class="bi bi-check-circle text-success fs-3 d-block mb-2" aria-hidden="true"></i>
+            <p class="text-body-secondary mb-0">{% translate "Nothing needs attention right now." %}</p>
         </div>
     {% endif %}
 </section>
 
 <div class="row g-3">
 
-    {# ------------------------------------------------------- attendance #}
     {% if board.attendance %}
     <div class="col-12 col-xl-4">
         <section class="card h-100" aria-labelledby="attendance-heading">
-            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-                <h2 class="h6 mb-0" id="attendance-heading">{% translate "Attendance today" %}</h2>
+            <div class="card-header bg-transparent d-flex align-items-center gap-2">
+                <i class="bi bi-calendar-check text-body-secondary" aria-hidden="true"></i>
+                <h2 class="h6 mb-0 flex-grow-1" id="attendance-heading">{% translate "Attendance today" %}</h2>
                 {% if board.attendance.url %}
-                    <a class="small" href="{{ board.attendance.url }}">{% translate "View all" %}</a>
+                    <a class="small text-decoration-none" href="{{ board.attendance.url }}">
+                        {% translate "View all" %}
+                    </a>
                 {% endif %}
             </div>
             <div class="card-body">
                 {% if board.attendance.marked %}
-                    <div class="d-flex align-items-baseline gap-2 mb-3">
-                        <span class="display-6 fw-semibold">{{ board.attendance.rate }}%</span>
+                    <div class="d-flex align-items-baseline gap-2 mb-2">
+                        <span class="display-6 fw-semibold lh-1">{{ board.attendance.rate }}%</span>
                         <span class="small text-body-secondary">
                             {% blocktranslate with n=board.attendance.marked %}{{ n }} marked{% endblocktranslate %}
                         </span>
@@ -122,9 +132,10 @@
                     <ul class="list-group list-group-flush">
                         {% for label, count, tone in board.attendance.rows %}
                             {% if count %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 bg-transparent">
                                     <span class="d-flex align-items-center gap-2">
-                                        <span class="badge text-bg-{{ tone }}">&nbsp;</span>{{ label }}
+                                        <span class="status-dot bg-{{ tone }} rounded-circle" aria-hidden="true"></span>
+                                        {{ label }}
                                     </span>
                                     <strong>{{ count }}</strong>
                                 </li>
@@ -132,12 +143,13 @@
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <div class="text-center text-body-secondary py-4">
-                        <p class="mb-3">{% translate "No attendance has been marked today." %}</p>
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-x text-body-secondary fs-3 d-block mb-2" aria-hidden="true"></i>
+                        <p class="text-body-secondary mb-3">{% translate "No attendance has been marked today." %}</p>
                         {% has_perm "attendance.add_studentattendance" as can_mark %}
                         {% if can_mark and board.attendance.mark_url %}
                             <a class="btn btn-sm btn-primary" href="{{ board.attendance.mark_url }}">
-                                {% translate "Mark attendance" %}
+                                <i class="bi bi-check2-square me-1" aria-hidden="true"></i>{% translate "Mark attendance" %}
                             </a>
                         {% endif %}
                     </div>
@@ -147,30 +159,32 @@
     </div>
     {% endif %}
 
-    {# -------------------------------------------------------- fees #}
     {% if board.fees %}
     <div class="col-12 col-xl-8">
         <section class="card h-100" aria-labelledby="fees-heading">
-            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-                <h2 class="h6 mb-0" id="fees-heading">{% translate "Fee collection" %}</h2>
-                <a class="small" href="{{ board.fees.invoice_url }}">{% translate "View invoices" %}</a>
+            <div class="card-header bg-transparent d-flex align-items-center gap-2">
+                <i class="bi bi-cash-coin text-body-secondary" aria-hidden="true"></i>
+                <h2 class="h6 mb-0 flex-grow-1" id="fees-heading">{% translate "Fee collection" %}</h2>
+                <a class="small text-decoration-none" href="{{ board.fees.invoice_url }}">
+                    {% translate "View invoices" %}
+                </a>
             </div>
             <div class="card-body">
                 <div class="row g-3 mb-3">
                     <div class="col-6 col-md-3">
-                        <p class="small text-body-secondary mb-0">{% translate "Today" %}</p>
+                        <p class="small text-body-secondary mb-1">{% translate "Today" %}</p>
                         <p class="fs-5 fw-semibold mb-0 text-break">{{ board.fees.today|money }}</p>
                     </div>
                     <div class="col-6 col-md-3">
-                        <p class="small text-body-secondary mb-0">{% translate "This month" %}</p>
+                        <p class="small text-body-secondary mb-1">{% translate "This month" %}</p>
                         <p class="fs-5 fw-semibold mb-0 text-break">{{ board.fees.month|money }}</p>
                     </div>
                     <div class="col-6 col-md-3">
-                        <p class="small text-body-secondary mb-0">{% translate "Collected" %}</p>
-                        <p class="fs-5 fw-semibold mb-0 text-break text-success">{{ board.fees.collected|money }}</p>
+                        <p class="small text-body-secondary mb-1">{% translate "Collected" %}</p>
+                        <p class="fs-5 fw-semibold mb-0 text-break text-success-emphasis">{{ board.fees.collected|money }}</p>
                     </div>
                     <div class="col-6 col-md-3">
-                        <p class="small text-body-secondary mb-0">{% translate "Outstanding" %}</p>
+                        <p class="small text-body-secondary mb-1">{% translate "Outstanding" %}</p>
                         <p class="fs-5 fw-semibold mb-0 text-break text-warning-emphasis">{{ board.fees.outstanding|money }}</p>
                     </div>
                 </div>
@@ -186,7 +200,7 @@
                 {% endif %}
 
                 {% if board.trend %}
-                    <h3 class="h6 small text-uppercase text-body-secondary mt-3 mb-2">
+                    <h3 class="small text-uppercase fw-semibold text-body-secondary mt-3 mb-2">
                         {% translate "Last 14 days" %}
                     </h3>
                     <div class="bar-chart d-flex align-items-end gap-1"
@@ -206,12 +220,12 @@
     </div>
     {% endif %}
 
-    {# ---------------------------------------------------- academics #}
     {% if board.academics %}
     <div class="col-12 col-xl-6">
         <section class="card h-100" aria-labelledby="academics-heading">
-            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-                <h2 class="h6 mb-0" id="academics-heading">
+            <div class="card-header bg-transparent d-flex align-items-center gap-2">
+                <i class="bi bi-journal-bookmark text-body-secondary" aria-hidden="true"></i>
+                <h2 class="h6 mb-0 flex-grow-1" id="academics-heading">
                     {% if board.academics.today_is_mine %}
                         {% translate "My classes today" %}
                     {% else %}
@@ -219,13 +233,15 @@
                     {% endif %}
                 </h2>
                 {% if board.academics.timetable_url %}
-                    <a class="small" href="{{ board.academics.timetable_url }}">{% translate "Timetable" %}</a>
+                    <a class="small text-decoration-none" href="{{ board.academics.timetable_url }}">
+                        {% translate "Timetable" %}
+                    </a>
                 {% endif %}
             </div>
             <div class="card-body">
                 {% if board.academics.today_slots %}
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-3">
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm align-middle mb-0 app-table">
                             <caption class="visually-hidden">{% translate "Classes scheduled today" %}</caption>
                             <thead>
                                 <tr>
@@ -248,53 +264,69 @@
                         </table>
                     </div>
                 {% else %}
-                    <p class="text-body-secondary">{% translate "No classes are scheduled today." %}</p>
+                    <p class="text-body-secondary d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar-x" aria-hidden="true"></i>
+                        {% translate "No classes are scheduled today." %}
+                    </p>
                 {% endif %}
 
                 {% if board.academics.upcoming_exams %}
-                    <h3 class="h6 small text-uppercase text-body-secondary mb-2">{% translate "Upcoming exams" %}</h3>
+                    <h3 class="small text-uppercase fw-semibold text-body-secondary mb-2">
+                        {% translate "Upcoming exams" %}
+                    </h3>
                     <ul class="list-group list-group-flush mb-0">
                         {% for exam in board.academics.upcoming_exams %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 gap-2">
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 gap-2 bg-transparent">
                                 <span class="min-w-0">
-                                    <a href="{% url 'exams:exam_detail' exam.pk %}" class="d-block text-truncate">{{ exam.name }}</a>
+                                    <a href="{% url 'exams:exam_detail' exam.pk %}"
+                                       class="d-block text-truncate text-decoration-none fw-medium">{{ exam.name }}</a>
                                     <span class="small text-body-secondary">{{ exam.school_class.name }}</span>
                                 </span>
-                                <span class="badge text-bg-light border text-nowrap">{{ exam.start_date|date:"j M" }}</span>
+                                <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border text-nowrap">
+                                    {{ exam.start_date|date:"j M" }}
+                                </span>
                             </li>
                         {% endfor %}
                     </ul>
                 {% elif board.academics.exam_url %}
-                    <p class="text-body-secondary mb-0">{% translate "No upcoming exams." %}</p>
+                    <p class="text-body-secondary mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-mortarboard" aria-hidden="true"></i>
+                        {% translate "No upcoming exams." %}
+                    </p>
                 {% endif %}
             </div>
         </section>
     </div>
     {% endif %}
 
-    {# ------------------------------------------------ student activity #}
     {% if board.recent_students %}
     <div class="col-12 col-xl-6">
         <section class="card h-100" aria-labelledby="students-heading">
-            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-                <h2 class="h6 mb-0" id="students-heading">{% translate "Recent admissions" %}</h2>
-                <a class="small" href="{% url 'students:student_list' %}">{% translate "View all" %}</a>
+            <div class="card-header bg-transparent d-flex align-items-center gap-2">
+                <i class="bi bi-person-plus text-body-secondary" aria-hidden="true"></i>
+                <h2 class="h6 mb-0 flex-grow-1" id="students-heading">{% translate "Recent admissions" %}</h2>
+                <a class="small text-decoration-none" href="{% url 'students:student_list' %}">
+                    {% translate "View all" %}
+                </a>
             </div>
             <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle mb-0">
+                <table class="table table-hover table-sm align-middle mb-0 app-table">
                     <caption class="visually-hidden">{% translate "Most recently admitted students" %}</caption>
                     <thead>
                         <tr>
-                            <th scope="col">{% translate "Admission #" %}</th>
                             <th scope="col">{% translate "Name" %}</th>
+                            <th scope="col">{% translate "Admission #" %}</th>
                             <th scope="col">{% translate "Class" %}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for student in board.recent_students %}
                             <tr>
-                                <td class="text-nowrap">{{ student.admission_no }}</td>
-                                <td><a href="{% url 'students:student_detail' student.pk %}">{{ student.full_name }}</a></td>
+                                <td>
+                                    <a href="{% url 'students:student_detail' student.pk %}"
+                                       class="fw-medium text-decoration-none app-row-link">{{ student.full_name }}</a>
+                                </td>
+                                <td class="text-nowrap text-body-secondary">{{ student.admission_no }}</td>
                                 <td>{{ student.current_class_display }}</td>
                             </tr>
                         {% endfor %}
@@ -305,13 +337,15 @@
     </div>
     {% endif %}
 
-    {# ------------------------------------------------------------ hifz #}
     {% if board.hifz %}
     <div class="col-12 col-md-6 col-xl-4">
         <section class="card h-100" aria-labelledby="hifz-heading">
-            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-                <h2 class="h6 mb-0" id="hifz-heading">{% translate "Hifz" %}</h2>
-                <a class="small" href="{{ board.hifz.profile_url }}">{% translate "View all" %}</a>
+            <div class="card-header bg-transparent d-flex align-items-center gap-2">
+                <i class="bi bi-book text-body-secondary" aria-hidden="true"></i>
+                <h2 class="h6 mb-0 flex-grow-1" id="hifz-heading">{% translate "Hifz" %}</h2>
+                <a class="small text-decoration-none" href="{{ board.hifz.profile_url }}">
+                    {% translate "View all" %}
+                </a>
             </div>
             <ul class="list-group list-group-flush">
                 <li class="list-group-item d-flex justify-content-between">
@@ -319,7 +353,7 @@
                 </li>
                 <li class="list-group-item d-flex justify-content-between">
                     <span>{% translate "Sabaq heard today" %}</span>
-                    <strong class="text-success">{{ board.hifz.heard_today }}</strong>
+                    <strong class="text-success-emphasis">{{ board.hifz.heard_today }}</strong>
                 </li>
                 <li class="list-group-item d-flex justify-content-between">
                     <span>{% translate "Not yet heard" %}</span>
@@ -327,26 +361,29 @@
                 </li>
                 <li class="list-group-item d-flex justify-content-between">
                     <span>{% translate "Revisions overdue" %}</span>
-                    <strong{% if board.hifz.overdue_revisions %} class="text-danger"{% endif %}>{{ board.hifz.overdue_revisions }}</strong>
+                    <strong{% if board.hifz.overdue_revisions %} class="text-danger-emphasis"{% endif %}>{{ board.hifz.overdue_revisions }}</strong>
                 </li>
             </ul>
         </section>
     </div>
     {% endif %}
 
-    {# ------------------------------------------------- recent payments #}
     {% if board.recent_payments %}
     <div class="col-12 col-md-6 col-xl-4">
         <section class="card h-100" aria-labelledby="payments-heading">
-            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-                <h2 class="h6 mb-0" id="payments-heading">{% translate "Recent payments" %}</h2>
-                <a class="small" href="{{ board.fees.payment_url }}">{% translate "View all" %}</a>
+            <div class="card-header bg-transparent d-flex align-items-center gap-2">
+                <i class="bi bi-receipt text-body-secondary" aria-hidden="true"></i>
+                <h2 class="h6 mb-0 flex-grow-1" id="payments-heading">{% translate "Recent payments" %}</h2>
+                <a class="small text-decoration-none" href="{{ board.fees.payment_url }}">
+                    {% translate "View all" %}
+                </a>
             </div>
             <ul class="list-group list-group-flush">
                 {% for payment in board.recent_payments %}
                     <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
                         <span class="min-w-0">
-                            <a href="{% url 'fees:payment_detail' payment.pk %}" class="d-block text-truncate">
+                            <a href="{% url 'fees:payment_detail' payment.pk %}"
+                               class="d-block text-truncate text-decoration-none fw-medium app-row-link">
                                 {{ payment.student.full_name }}
                             </a>
                             <span class="small text-body-secondary">
@@ -361,18 +398,20 @@
     </div>
     {% endif %}
 
-    {# ------------------------------------------------- recent activity #}
     {% if board.activity %}
     <div class="col-12 col-xl-4">
         <section class="card h-100" aria-labelledby="activity-heading">
-            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-                <h2 class="h6 mb-0" id="activity-heading">{% translate "Recent activity" %}</h2>
-                <a class="small" href="{% url 'audit:list' %}">{% translate "Audit log" %}</a>
+            <div class="card-header bg-transparent d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history text-body-secondary" aria-hidden="true"></i>
+                <h2 class="h6 mb-0 flex-grow-1" id="activity-heading">{% translate "Recent activity" %}</h2>
+                <a class="small text-decoration-none" href="{% url 'audit:list' %}">{% translate "Audit log" %}</a>
             </div>
             <ul class="list-group list-group-flush">
                 {% for entry in board.activity %}
                     <li class="list-group-item">
-                        <span class="badge text-bg-light border me-1">{{ entry.get_action_display }}</span>
+                        <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border me-1">
+                            {{ entry.get_action_display }}
+                        </span>
                         <span class="fw-medium">{{ entry.object_repr|default:entry.app_label|truncatechars:40 }}</span>
                         <span class="d-block small text-body-secondary">
                             {{ entry.username|default:_("system") }} · {{ entry.created_at|date:"j M H:i" }}
@@ -385,16 +424,16 @@
     {% endif %}
 </div>
 
-{# --------------------------------------------------------- quick actions #}
 {% if board.quick_actions %}
 <section class="card mt-3" aria-labelledby="actions-heading">
-    <div class="card-header bg-transparent">
+    <div class="card-header bg-transparent d-flex align-items-center gap-2">
+        <i class="bi bi-lightning-charge text-body-secondary" aria-hidden="true"></i>
         <h2 class="h6 mb-0" id="actions-heading">{% translate "Quick actions" %}</h2>
     </div>
     <div class="card-body d-flex flex-wrap gap-2">
         {% for action in board.quick_actions %}
             <a class="btn btn-sm btn-outline-secondary" href="{{ action.url }}">
-                <span aria-hidden="true">{{ action.icon }}</span> {{ action.label }}
+                <i class="bi {{ action.icon }} me-1" aria-hidden="true"></i>{{ action.label }}
             </a>
         {% endfor %}
     </div>

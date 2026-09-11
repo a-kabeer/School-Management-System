@@ -219,11 +219,33 @@ All configuration is read through `python-decouple`. See `.env.example`.
 
 ## Front end
 
-**Bootstrap 5.3.3** is the styling system, vendored under
-`static/vendor/bootstrap/` so there is no CDN dependency at runtime. Layout,
-spacing, grids, forms, buttons, cards, tables, navigation, dropdowns, offcanvas,
-modals, alerts, badges, pagination and breadcrumbs are all Bootstrap components
-and utilities.
+**Bootstrap 5.3.3** and **Bootstrap Icons 1.11.3** are the design system, both
+vendored under `static/vendor/` so there is no CDN dependency at runtime.
+Layout, spacing, grids, forms, buttons, cards, tables, navigation, dropdowns,
+offcanvas, modals, toasts, alerts, badges, pagination and breadcrumbs are all
+Bootstrap components and utilities, and every icon in the interface comes from
+the one Bootstrap Icons set.
+
+### Shared components
+
+The interface is assembled from a small set of partials, so the same thing
+looks the same everywhere:
+
+| Partial | Role |
+| --- | --- |
+| `base.html` | Shell: navbar, sidebar, page header, toasts |
+| `components/table.html` | Every data table, with its row actions |
+| `components/form.html` | Every form's field layout |
+| `components/filters.html` | Search, select and date filters |
+| `components/empty_state.html` | What a list shows when it has nothing |
+| `components/object_list.html` | List page shell |
+| `components/object_form.html` | Create/edit page shell |
+| `includes/toasts.html` | Action feedback for signed-in pages |
+
+**Row interaction.** Each table's first column is the record's name and is a
+real link; View and Edit are icon buttons sized for a fingertip; anything
+destructive sits behind a kebab menu so it cannot be hit by accident. Icon
+buttons carry a visible tooltip and a screen-reader label.
 
 `static/css/app.css` is ~170 lines and holds only what Bootstrap has no utility
 for: three auto-fit CSS grids (Bootstrap's grid takes a fixed column count per

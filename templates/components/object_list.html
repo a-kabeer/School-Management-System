@@ -1,12 +1,26 @@
 {% extends "base.html" %}
 {% load i18n core_extras %}
 
+{% block page_subtitle %}
+    {% if page_subtitle %}
+        <p class="text-body-secondary mb-0 mt-1">{{ page_subtitle }}</p>
+    {% elif paginator.count %}
+        <p class="text-body-secondary mb-0 mt-1">
+            {% blocktranslate count counter=paginator.count %}{{ counter }} record{% plural %}{{ counter }} records{% endblocktranslate %}
+        </p>
+    {% endif %}
+{% endblock %}
+
 {% block page_actions %}
+    {% block extra_actions %}{% endblock %}
     {% if can_create and create_url_name %}
         {% url_or_blank create_url_name as create_url %}
-        {% if create_url %}<a class="btn btn-primary" href="{{ create_url }}">{% translate "Add new" %}</a>{% endif %}
+        {% if create_url %}
+            <a class="btn btn-primary" href="{{ create_url }}">
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "Add new" %}
+            </a>
+        {% endif %}
     {% endif %}
-    {% block extra_actions %}{% endblock %}
 {% endblock %}
 
 {% block content %}

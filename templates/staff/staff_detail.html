@@ -4,7 +4,7 @@
 {% block page_actions %}
     {% has_perm "staff.change_staff" as can_edit %}
     {% if can_edit %}
-        <a class="btn btn-primary" href="{% url 'staff:staff_update' object.pk %}">{% translate "Edit" %}</a>
+        <a class="btn btn-primary" href="{% url 'staff:staff_update' object.pk %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>
         <a class="btn btn-outline-secondary" href="{% url 'staff:staff_status' object.pk %}">{% translate "Change status" %}</a>
     {% endif %}
 {% endblock %}

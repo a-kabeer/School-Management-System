@@ -34,7 +34,7 @@
         {% if object.is_void %}
             <p class="alert alert-danger">{% translate "This payment has been voided." %} {{ object.void_reason }}</p>
         {% endif %}
-        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">{% translate "Print" %}</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1" aria-hidden="true"></i>{% translate "Print" %}</button>
     </section>
 
     <section class="card card-body mb-3">

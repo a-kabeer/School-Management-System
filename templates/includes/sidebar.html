@@ -1,10 +1,13 @@
 {% load i18n %}
-{# Offcanvas below lg, a static column above it - one markup, both behaviours. #}
-<div class="offcanvas-lg offcanvas-start bg-body-tertiary border-end app-sidebar col-lg-3 col-xl-2 p-0"
+{% comment %}Offcanvas below lg, a static column above it - one markup, both
+   behaviours.{% endcomment %}
+<div class="offcanvas-lg offcanvas-start bg-body border-end app-sidebar col-lg-3 col-xl-2 p-0"
      tabindex="-1" id="sidebar" aria-labelledby="sidebar-label">
 
     <div class="offcanvas-header border-bottom d-lg-none">
-        <h2 class="offcanvas-title h6 mb-0" id="sidebar-label">{% translate "Menu" %}</h2>
+        <h2 class="offcanvas-title h6 mb-0 d-flex align-items-center gap-2" id="sidebar-label">
+            <i class="bi bi-list" aria-hidden="true"></i>{% translate "Menu" %}
+        </h2>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"
                 aria-label="{% translate 'Close' %}"></button>
     </div>
@@ -14,23 +17,23 @@
             {% for item in navigation %}
                 {% if item.children %}
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center gap-2 text-body
+                        <a class="nav-link app-nav-link d-flex align-items-center gap-2 text-body
                                   {% if not item.is_open %}collapsed{% endif %}"
                            data-bs-toggle="collapse" href="#nav-group-{{ forloop.counter }}"
                            role="button" aria-expanded="{{ item.is_open|yesno:'true,false' }}"
                            aria-controls="nav-group-{{ forloop.counter }}">
-                            <span class="nav-dot" aria-hidden="true"></span>
-                            <span class="flex-grow-1">{{ item.label }}</span>
-                            <span class="nav-caret small" aria-hidden="true">▾</span>
+                            <i class="bi {{ item.icon }} app-nav-icon" aria-hidden="true"></i>
+                            <span class="flex-grow-1 text-truncate">{{ item.label }}</span>
+                            <i class="bi bi-chevron-down small app-nav-caret" aria-hidden="true"></i>
                         </a>
                         <div class="collapse {% if item.is_open %}show{% endif %}" id="nav-group-{{ forloop.counter }}">
-                            <ul class="nav flex-column ms-4 mt-1 gap-1 border-start ps-2">
+                            <ul class="nav flex-column gap-1 mt-1 app-nav-sub">
                                 {% for child in item.children %}
                                     <li class="nav-item">
-                                        <a class="nav-link py-1 small {% if child.is_current %}active{% else %}text-body-secondary{% endif %}"
+                                        <a class="nav-link app-nav-link py-1 small {% if child.is_current %}active{% else %}text-body-secondary{% endif %}"
                                            href="{{ child.url }}"
                                            {% if child.is_current %}aria-current="page"{% endif %}>
-                                            {{ child.label }}
+                                            <span class="text-truncate d-block">{{ child.label }}</span>
                                         </a>
                                     </li>
                                 {% endfor %}
@@ -39,10 +42,10 @@
                     </li>
                 {% elif item.url %}
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center gap-2 {% if item.is_current %}active{% else %}text-body{% endif %}"
+                        <a class="nav-link app-nav-link d-flex align-items-center gap-2 {% if item.is_current %}active{% else %}text-body{% endif %}"
                            href="{{ item.url }}" {% if item.is_current %}aria-current="page"{% endif %}>
-                            <span class="nav-dot" aria-hidden="true"></span>
-                            <span>{{ item.label }}</span>
+                            <i class="bi {{ item.icon }} app-nav-icon" aria-hidden="true"></i>
+                            <span class="text-truncate">{{ item.label }}</span>
                         </a>
                     </li>
                 {% endif %}

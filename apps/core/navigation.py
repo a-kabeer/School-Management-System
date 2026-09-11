@@ -12,12 +12,12 @@ NAVIGATION = [
     {
         "label": _("Dashboard"),
         "url_name": "core:dashboard",
-        "icon": "grid",
+        "icon": "bi-grid-1x2",
         "permission": "core.access_dashboard",
     },
     {
         "label": _("Academics"),
-        "icon": "book",
+        "icon": "bi-journal-bookmark",
         "permission": "core.access_academics",
         "children": [
             {"label": _("Academic Years"), "url_name": "academics:year_list"},
@@ -31,7 +31,7 @@ NAVIGATION = [
     },
     {
         "label": _("Students"),
-        "icon": "users",
+        "icon": "bi-people",
         "permission": "core.access_students",
         "children": [
             {"label": _("All Students"), "url_name": "students:student_list"},
@@ -42,7 +42,7 @@ NAVIGATION = [
     },
     {
         "label": _("Staff"),
-        "icon": "briefcase",
+        "icon": "bi-person-badge",
         "permission": "core.access_staff",
         "children": [
             {"label": _("All Staff"), "url_name": "staff:staff_list"},
@@ -52,7 +52,7 @@ NAVIGATION = [
     },
     {
         "label": _("Attendance"),
-        "icon": "check-square",
+        "icon": "bi-calendar-check",
         "permission": "core.access_attendance",
         "children": [
             {"label": _("Student Attendance"), "url_name": "attendance:session_list"},
@@ -62,7 +62,7 @@ NAVIGATION = [
     },
     {
         "label": _("Hifz"),
-        "icon": "book-open",
+        "icon": "bi-book",
         "permission": "core.access_hifz",
         "children": [
             {"label": _("Hifz Students"), "url_name": "hifz:profile_list"},
@@ -72,7 +72,7 @@ NAVIGATION = [
     },
     {
         "label": _("Fees"),
-        "icon": "credit-card",
+        "icon": "bi-receipt",
         "permission": "core.access_fees",
         "children": [
             {"label": _("Fee Types"), "url_name": "fees:type_list"},
@@ -84,7 +84,7 @@ NAVIGATION = [
     },
     {
         "label": _("Finance"),
-        "icon": "trending-up",
+        "icon": "bi-bank",
         "permission": "core.access_finance",
         "children": [
             {"label": _("Chart of Accounts"), "url_name": "finance:account_list"},
@@ -96,7 +96,7 @@ NAVIGATION = [
     },
     {
         "label": _("Payroll"),
-        "icon": "dollar-sign",
+        "icon": "bi-cash-stack",
         "permission": "core.access_payroll",
         "children": [
             {"label": _("Salary Components"), "url_name": "payroll:component_list"},
@@ -107,7 +107,7 @@ NAVIGATION = [
     },
     {
         "label": _("Exams"),
-        "icon": "award",
+        "icon": "bi-mortarboard",
         "permission": "core.access_exams",
         "children": [
             {"label": _("Exam Terms"), "url_name": "exams:term_list"},
@@ -118,7 +118,7 @@ NAVIGATION = [
     },
     {
         "label": _("Parents"),
-        "icon": "heart",
+        "icon": "bi-person-hearts",
         "permission": "core.access_parents",
         "children": [
             {"label": _("Parent Accounts"), "url_name": "parents:guardian_list"},
@@ -127,30 +127,30 @@ NAVIGATION = [
     {
         "label": _("Notifications"),
         "url_name": "notifications:list",
-        "icon": "bell",
+        "icon": "bi-bell",
         "permission": "core.access_notifications",
     },
     {
         "label": _("Reports"),
         "url_name": "reports:index",
-        "icon": "bar-chart",
+        "icon": "bi-bar-chart-line",
         "permission": "core.access_reports",
     },
     {
         "label": _("Subscription"),
         "url_name": "subscriptions:detail",
-        "icon": "package",
+        "icon": "bi-box-seam",
         "permission": "core.access_subscriptions",
     },
     {
         "label": _("Audit Log"),
         "url_name": "audit:list",
-        "icon": "shield",
+        "icon": "bi-shield-check",
         "permission": "core.access_audit",
     },
     {
         "label": _("Settings"),
-        "icon": "settings",
+        "icon": "bi-gear",
         "permission": "core.access_settings",
         "children": [
             {"label": _("Branches"), "url_name": "tenants:branch_list"},
@@ -165,13 +165,13 @@ PARENT_NAVIGATION = [
     {
         "label": _("My Children"),
         "url_name": "parents:portal_home",
-        "icon": "heart",
+        "icon": "bi-person-hearts",
         "permission": "core.access_parents",
     },
     {
         "label": _("Notifications"),
         "url_name": "notifications:list",
-        "icon": "bell",
+        "icon": "bi-bell",
         "permission": "core.access_notifications",
     },
 ]

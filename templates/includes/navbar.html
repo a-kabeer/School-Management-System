@@ -1,25 +1,39 @@
 {% load i18n %}
-<nav class="navbar navbar-expand bg-body-tertiary border-bottom sticky-top app-navbar">
-    <div class="container-fluid gap-2">
+<nav class="navbar navbar-expand bg-body border-bottom sticky-top app-navbar px-0">
+    <div class="container-fluid gap-2 gap-lg-3">
 
-        <button class="btn btn-outline-secondary border-0 d-lg-none" type="button"
+        <button class="btn btn-link text-body p-1 d-lg-none" type="button"
                 data-bs-toggle="offcanvas" data-bs-target="#sidebar"
-                aria-controls="sidebar" aria-label="{% translate 'Toggle navigation' %}">
-            <span class="navbar-toggler-icon"></span>
+                aria-controls="sidebar" aria-label="{% translate 'Open navigation' %}">
+            <i class="bi bi-list fs-4" aria-hidden="true"></i>
         </button>
 
-        <a class="navbar-brand d-flex align-items-center gap-2 me-0 text-truncate"
+        <a class="navbar-brand d-flex align-items-center gap-2 me-0 py-0 min-w-0"
            href="{% url 'core:dashboard' %}">
             {% if current_organization.logo %}
-                <img src="{{ current_organization.logo.url }}" alt="" height="28" class="rounded">
+                <img src="{{ current_organization.logo.url }}" alt="" height="30" class="rounded">
+            {% else %}
+                <span class="brand-mark rounded d-inline-flex align-items-center justify-content-center
+                             bg-primary text-white flex-shrink-0">
+                    <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+                </span>
             {% endif %}
-            <span class="text-truncate fw-semibold">{{ current_organization.name|default:site_name }}</span>
+            <span class="d-none d-sm-block min-w-0">
+                <span class="d-block fw-semibold lh-sm text-truncate">
+                    {{ current_organization.name|default:site_name }}
+                </span>
+                {% if current_branch %}
+                    <span class="d-block small text-body-secondary lh-sm text-truncate">
+                        {{ current_branch.name }}
+                    </span>
+                {% endif %}
+            </span>
         </a>
 
-        <div class="ms-auto d-flex align-items-center gap-2">
+        <div class="ms-auto d-flex align-items-center gap-1 gap-sm-2">
 
             {% if available_branches %}
-                <form method="post" action="{% url 'tenants:switch_branch' %}" class="d-none d-sm-block m-0">
+                <form method="post" action="{% url 'tenants:switch_branch' %}" class="d-none d-md-block m-0">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
                     <label class="visually-hidden" for="branch-select">{% translate "Branch" %}</label>
@@ -36,45 +50,48 @@
                 </form>
             {% endif %}
 
-            {# Theme switcher: light / dark / follow the operating system. #}
+            {% comment %}Theme: light, dark, or follow the operating system.{% endcomment %}
             <div class="dropdown">
-                <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                <button class="btn btn-link text-body p-2 lh-1" type="button"
                         data-bs-toggle="dropdown" aria-expanded="false"
-                        aria-label="{% translate 'Change theme' %}" data-theme-menu>
-                    <span data-theme-icon aria-hidden="true">🖥️</span>
+                        aria-label="{% translate 'Change theme' %}" title="{% translate 'Change theme' %}">
+                    <i class="bi fs-5" data-theme-icon aria-hidden="true"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><h2 class="dropdown-header">{% translate "Appearance" %}</h2></li>
                     <li>
                         <button type="button" class="dropdown-item d-flex align-items-center gap-2"
                                 data-theme-value="light">
-                            <span aria-hidden="true">☀️</span>{% translate "Light" %}
-                            <span class="ms-auto d-none" data-theme-check>✓</span>
+                            <i class="bi bi-sun" aria-hidden="true"></i>{% translate "Light" %}
+                            <i class="bi bi-check2 ms-auto d-none" data-theme-check aria-hidden="true"></i>
                         </button>
                     </li>
                     <li>
                         <button type="button" class="dropdown-item d-flex align-items-center gap-2"
                                 data-theme-value="dark">
-                            <span aria-hidden="true">🌙</span>{% translate "Dark" %}
-                            <span class="ms-auto d-none" data-theme-check>✓</span>
+                            <i class="bi bi-moon-stars" aria-hidden="true"></i>{% translate "Dark" %}
+                            <i class="bi bi-check2 ms-auto d-none" data-theme-check aria-hidden="true"></i>
                         </button>
                     </li>
                     <li>
                         <button type="button" class="dropdown-item d-flex align-items-center gap-2"
                                 data-theme-value="system">
-                            <span aria-hidden="true">🖥️</span>{% translate "System Default" %}
-                            <span class="ms-auto d-none" data-theme-check>✓</span>
+                            <i class="bi bi-circle-half" aria-hidden="true"></i>{% translate "System Default" %}
+                            <i class="bi bi-check2 ms-auto d-none" data-theme-check aria-hidden="true"></i>
                         </button>
                     </li>
                 </ul>
             </div>
 
             <div class="dropdown">
-                <button class="btn btn-outline-secondary border-0 dropdown-toggle" type="button"
+                <button class="btn btn-link text-body p-2 lh-1 d-flex align-items-center gap-1" type="button"
                         data-bs-toggle="dropdown" aria-expanded="false"
-                        aria-label="{% translate 'Language' %}">
-                    <span class="text-uppercase small fw-semibold">{{ ui_language }}</span>
+                        aria-label="{% translate 'Language' %}" title="{% translate 'Language' %}">
+                    <i class="bi bi-translate fs-5" aria-hidden="true"></i>
+                    <span class="small text-uppercase fw-semibold d-none d-sm-inline">{{ ui_language }}</span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><h2 class="dropdown-header">{% translate "Language" %}</h2></li>
                     {% for code, name in ui_languages %}
                         <li>
                             <form action="{% url 'set_language' %}" method="post" class="m-0">
@@ -82,8 +99,9 @@
                                 <input name="next" type="hidden" value="{{ request.get_full_path }}">
                                 <input name="language" type="hidden" value="{{ code }}">
                                 <button type="submit"
-                                        class="dropdown-item {% if code == ui_language %}active{% endif %}">
+                                        class="dropdown-item d-flex align-items-center gap-2 {% if code == ui_language %}active{% endif %}">
                                     {{ name }}
+                                    {% if code == ui_language %}<i class="bi bi-check2 ms-auto" aria-hidden="true"></i>{% endif %}
                                 </button>
                             </form>
                         </li>
@@ -91,9 +109,10 @@
                 </ul>
             </div>
 
-            <a class="btn btn-outline-secondary border-0 position-relative"
-               href="{% url 'notifications:list' %}" aria-label="{% translate 'Notifications' %}">
-                <span aria-hidden="true">✉</span>
+            <a class="btn btn-link text-body p-2 lh-1 position-relative"
+               href="{% url 'notifications:list' %}"
+               aria-label="{% translate 'Notifications' %}" title="{% translate 'Notifications' %}">
+                <i class="bi bi-bell fs-5" aria-hidden="true"></i>
                 {% if unread_notifications %}
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-danger">
                         {{ unread_notifications }}
@@ -103,20 +122,36 @@
             </a>
 
             <div class="dropdown">
-                <button class="btn btn-outline-secondary border-0 d-flex align-items-center gap-2"
-                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="avatar rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-semibold">
+                <button class="btn btn-link text-body p-1 d-flex align-items-center gap-2" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="avatar rounded-circle bg-primary-subtle text-primary-emphasis
+                                 d-inline-flex align-items-center justify-content-center fw-semibold">
                         {{ user.display_name|slice:":1"|upper }}
                     </span>
-                    <span class="d-none d-md-inline text-truncate">{{ user.display_name }}</span>
+                    <span class="d-none d-lg-inline small text-truncate">{{ user.display_name }}</span>
+                    <i class="bi bi-chevron-down small d-none d-lg-inline" aria-hidden="true"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li class="dropdown-header">{{ current_branch.name|default:"—" }}</li>
-                    <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">{% translate "My Profile" %}</a></li>
-                    <li><a class="dropdown-item" href="{% url 'accounts:change_password' %}">{% translate "Change Password" %}</a></li>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li class="px-3 py-2">
+                        <span class="d-block fw-semibold text-truncate">{{ user.display_name }}</span>
+                        <span class="d-block small text-body-secondary text-truncate">
+                            {{ user.role_names|join:", "|default:_("No role") }}
+                        </span>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'accounts:profile' %}">
+                            <i class="bi bi-person" aria-hidden="true"></i>{% translate "My Profile" %}
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'accounts:change_password' %}">
+                            <i class="bi bi-key" aria-hidden="true"></i>{% translate "Change Password" %}
+                        </a>
+                    </li>
                     {% if available_branches %}
-                        <li><hr class="dropdown-divider d-sm-none"></li>
-                        <li class="d-sm-none px-3 py-1">
+                        <li><hr class="dropdown-divider d-md-none"></li>
+                        <li class="d-md-none px-3 py-1">
                             <form method="post" action="{% url 'tenants:switch_branch' %}" class="m-0">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
@@ -137,7 +172,9 @@
                     <li>
                         <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
                             {% csrf_token %}
-                            <button type="submit" class="dropdown-item">{% translate "Sign out" %}</button>
+                            <button type="submit" class="dropdown-item d-flex align-items-center gap-2 text-danger">
+                                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>{% translate "Sign out" %}
+                            </button>
                         </form>
                     </li>
                 </ul>

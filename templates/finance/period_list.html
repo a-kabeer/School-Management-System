@@ -24,7 +24,7 @@
                         {% endif %}
                     </td>
                     <td class="text-end text-nowrap">
-                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'finance:period_update' period.pk %}">{% translate "Edit" %}</a>
+                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'finance:period_update' period.pk %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>
                         {% has_perm "finance.change_fiscalperiod" as can_close %}
                         {% if can_close and not period.is_closed %}
                             <form method="post" action="{% url 'finance:period_close' period.pk %}" class="d-inline-flex align-items-center gap-1 m-0">

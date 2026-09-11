@@ -33,7 +33,7 @@ class Kpi:
     label: str
     value: object
     hint: str = ""
-    icon: str = "•"
+    icon: str = "bi-dot"
     url: str = ""
     tone: str = "secondary"
 
@@ -54,7 +54,7 @@ class Attention:
 class Action:
     label: str
     url: str
-    icon: str = "+"
+    icon: str = "bi-plus-lg"
 
 
 @dataclass
@@ -152,7 +152,7 @@ def _students(board, user, branch, today):
             label=_("Active students"),
             value=counts["active"] or 0,
             hint=_("%(n)s on the register") % {"n": counts["total"] or 0},
-            icon="👥",
+            icon="bi-people",
             url=_url("students:student_list"),
             tone="primary",
         )
@@ -163,7 +163,7 @@ def _students(board, user, branch, today):
             Kpi(
                 label=_("Admissions, 30 days"),
                 value=counts["joined_30d"],
-                icon="🆕",
+                icon="bi-person-plus",
                 url=_url("students:student_list"),
                 tone="info",
             )
@@ -201,7 +201,7 @@ def _staff(board, user, branch):
             label=_("Staff"),
             value=counts["total"] or 0,
             hint=_("%(n)s teaching") % {"n": counts["teaching"] or 0},
-            icon="🧑‍🏫",
+            icon="bi-person-badge",
             url=_url("staff:staff_list"),
             tone="secondary",
         )
@@ -251,7 +251,7 @@ def _attendance(board, user, branch, today):
                 label=_("Attendance today"),
                 value=f"{rate}%",
                 hint=_("%(n)s marked") % {"n": marked},
-                icon="✅",
+                icon="bi-calendar-check",
                 url=_url("attendance:session_list"),
                 tone="success" if rate and rate >= 90 else "warning",
             )
@@ -341,7 +341,7 @@ def _fees(board, user, branch, today):
             label=_("Collected this month"),
             value=money(period["month"]),
             hint=_("%(n)s today") % {"n": money(period["today"])},
-            icon="💰",
+            icon="bi-cash-coin",
             url=_url("fees:payment_list"),
             tone="success",
         )
@@ -351,7 +351,7 @@ def _fees(board, user, branch, today):
             label=_("Outstanding fees"),
             value=outstanding,
             hint=_("of %(n)s billed") % {"n": billed},
-            icon="📄",
+            icon="bi-receipt",
             url=_url("fees:invoice_list"),
             tone="warning",
         )
@@ -451,7 +451,7 @@ def _exams(board, user, branch, today):
                 label=_("Upcoming exams"),
                 value=len(upcoming),
                 hint=_("next on %(d)s") % {"d": upcoming[0].start_date},
-                icon="📝",
+                icon="bi-mortarboard",
                 url=_url("exams:exam_list"),
                 tone="info",
             )
@@ -509,7 +509,7 @@ def _hifz(board, user, branch, today):
             label=_("Hifz students"),
             value=total,
             hint=_("%(n)s heard today") % {"n": heard_today},
-            icon="📖",
+            icon="bi-book",
             url=_url("hifz:profile_list"),
             tone="info",
         )
@@ -591,14 +591,14 @@ def _notifications(board, user):
 
 def _quick_actions(board, can):
     candidates = [
-        ("students.add_student", _("Add student"), "students:student_create", "👤"),
-        ("attendance.add_studentattendance", _("Mark attendance"), "attendance:mark", "✅"),
-        ("core.collect_fee_payment", _("Collect fee"), "fees:payment_create", "💰"),
-        ("fees.add_feeinvoice", _("Generate invoices"), "fees:invoice_generate", "📄"),
-        ("staff.add_staff", _("Add staff"), "staff:staff_create", "🧑‍🏫"),
-        ("exams.add_exam", _("Create exam"), "exams:exam_create", "📝"),
-        ("hifz.add_dailyprogress", _("Record Hifz"), "hifz:progress_create", "📖"),
-        ("core.access_reports", _("Reports"), "reports:index", "📊"),
+        ("students.add_student", _("Add student"), "students:student_create", "bi-person-plus"),
+        ("attendance.add_studentattendance", _("Mark attendance"), "attendance:mark", "bi-calendar-check"),
+        ("core.collect_fee_payment", _("Collect fee"), "fees:payment_create", "bi-cash-coin"),
+        ("fees.add_feeinvoice", _("Generate invoices"), "fees:invoice_generate", "bi-receipt"),
+        ("staff.add_staff", _("Add staff"), "staff:staff_create", "bi-person-badge"),
+        ("exams.add_exam", _("Create exam"), "exams:exam_create", "bi-mortarboard"),
+        ("hifz.add_dailyprogress", _("Record Hifz"), "hifz:progress_create", "bi-book"),
+        ("core.access_reports", _("Reports"), "reports:index", "bi-bar-chart-line"),
     ]
     for permission, label, url_name, icon in candidates:
         if not can(permission):

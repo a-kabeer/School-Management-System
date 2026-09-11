@@ -3,24 +3,30 @@
 <nav aria-label="{% translate 'Pagination' %}"
      class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
     <p class="small text-body-secondary mb-0">
-        {% blocktranslate with start=page_obj.start_index end=page_obj.end_index total=paginator.count %}{{ start }}–{{ end }} of {{ total }}{% endblocktranslate %}
+        {% blocktranslate with start=page_obj.start_index end=page_obj.end_index total=paginator.count %}Showing {{ start }}–{{ end }} of {{ total }}{% endblocktranslate %}
     </p>
     <ul class="pagination pagination-sm mb-0 flex-wrap">
         {% comment %}Guard every page-number access: Paginator raises rather than
            returning a fallback when there is no previous or next page.{% endcomment %}
         {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?{{ querystring }}page=1"
-                   aria-label="{% translate 'First page' %}">&laquo;</a>
+                <a class="page-link" href="?{{ querystring }}page=1" aria-label="{% translate 'First page' %}">
+                    <i class="bi bi-chevron-double-left" aria-hidden="true"></i>
+                </a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?{{ querystring }}page={{ page_obj.previous_page_number }}">
-                    {% translate "Previous" %}
+                <a class="page-link" href="?{{ querystring }}page={{ page_obj.previous_page_number }}"
+                   aria-label="{% translate 'Previous page' %}">
+                    <i class="bi bi-chevron-left" aria-hidden="true"></i>
                 </a>
             </li>
         {% else %}
-            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-            <li class="page-item disabled"><span class="page-link">{% translate "Previous" %}</span></li>
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-double-left" aria-hidden="true"></i></span>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-left" aria-hidden="true"></i></span>
+            </li>
         {% endif %}
 
         <li class="page-item active" aria-current="page">
@@ -31,17 +37,24 @@
 
         {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?{{ querystring }}page={{ page_obj.next_page_number }}">
-                    {% translate "Next" %}
+                <a class="page-link" href="?{{ querystring }}page={{ page_obj.next_page_number }}"
+                   aria-label="{% translate 'Next page' %}">
+                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
                 </a>
             </li>
             <li class="page-item">
                 <a class="page-link" href="?{{ querystring }}page={{ paginator.num_pages }}"
-                   aria-label="{% translate 'Last page' %}">&raquo;</a>
+                   aria-label="{% translate 'Last page' %}">
+                    <i class="bi bi-chevron-double-right" aria-hidden="true"></i>
+                </a>
             </li>
         {% else %}
-            <li class="page-item disabled"><span class="page-link">{% translate "Next" %}</span></li>
-            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-double-right" aria-hidden="true"></i></span>
+            </li>
         {% endif %}
     </ul>
 </nav>

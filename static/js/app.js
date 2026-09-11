@@ -41,9 +41,10 @@
     }
 
     function paintControls(choice) {
-        var icons = { light: "☀️", dark: "🌙", system: "🖥️" };
+        var icons = { light: "bi-sun", dark: "bi-moon-stars", system: "bi-circle-half" };
         document.querySelectorAll("[data-theme-icon]").forEach(function (node) {
-            node.textContent = icons[choice] || icons.system;
+            node.classList.remove("bi-sun", "bi-moon-stars", "bi-circle-half");
+            node.classList.add(icons[choice] || icons.system);
         });
         document.querySelectorAll("[data-theme-value]").forEach(function (button) {
             var active = button.getAttribute("data-theme-value") === choice;
@@ -248,6 +249,17 @@
         window.addEventListener("resize", set);
     }
 
+    /* ----------------------------------------------------------- toasts */
+
+    function initToasts() {
+        if (!window.bootstrap) return;
+        document.querySelectorAll(".toast").forEach(function (element) {
+            // Errors and warnings stay until dismissed (they carry a reason the
+            // reader may need); confirmations fade on their own.
+            window.bootstrap.Toast.getOrCreateInstance(element, { delay: 6000 }).show();
+        });
+    }
+
     function ready(fn) {
         if (document.readyState !== "loading") fn();
         else document.addEventListener("DOMContentLoaded", fn);
@@ -258,6 +270,7 @@
 
     ready(function () {
         trackNavbarHeight();
+        initToasts();
         initSidebar();
         initConfirmations();
         initSectionFilter();
