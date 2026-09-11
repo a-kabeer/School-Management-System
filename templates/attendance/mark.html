@@ -1,80 +1,195 @@
 {% extends "base.html" %}
 {% load i18n %}
 
+{% block page_actions %}
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'attendance:today' %}">
+        <i class="bi bi-calendar-day me-1" aria-hidden="true"></i>{% translate "Today's classes" %}
+    </a>
+{% endblock %}
+
 {% block content %}
-<form method="get" class="card card-body mb-3 d-flex flex-row flex-wrap align-items-center gap-2">
-    <div class="flex-grow-1">
-        <label class="visually-hidden" for="class-select">{% translate "Class" %}</label>
-        <select name="school_class" id="class-select" class="form-select">
-            <option value="">{% translate "Select class" %}</option>
-            {% for item in classes %}
-                <option value="{{ item.pk }}" {% if selected_class and item.pk == selected_class.pk %}selected{% endif %}>{{ item.name }}</option>
-            {% endfor %}
-        </select>
+<form method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-body-secondary mb-1" for="class-select">{% translate "Class" %}</label>
+            <select name="school_class" id="class-select" class="form-select">
+                <option value="">{% translate "Select class" %}</option>
+                {% for item in classes %}
+                    <option value="{{ item.pk }}" {% if selected_class and item.pk == selected_class.pk %}selected{% endif %}>{{ item.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-body-secondary mb-1" for="section-select">{% translate "Section" %}</label>
+            <select name="section" id="section-select" class="form-select">
+                <option value="">{% translate "All sections" %}</option>
+                {% for item in sections %}
+                    <option value="{{ item.pk }}" data-class="{{ item.school_class_id }}"
+                            {% if selected_section and item.pk == selected_section.pk %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label small text-body-secondary mb-1" for="subject-select">{% translate "Subject" %}</label>
+            <select name="class_subject" id="subject-select" class="form-select">
+                {% comment %}No subject means the daily register — a different
+                   record from a subject's period register for the same day.{% endcomment %}
+                <option value="">{% translate "Daily register" %}</option>
+                {% for item in subjects %}
+                    <option value="{{ item.pk }}" data-class="{{ item.school_class_id }}"
+                            {% if selected_subject and item.pk == selected_subject.pk %}selected{% endif %}>
+                        {{ item.subject.name }}{% if not selected_class %} — {{ item.school_class.name }}{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-1">
+            <label class="form-label small text-body-secondary mb-1" for="period-input">{% translate "Period" %}</label>
+            <input type="number" id="period-input" name="period" min="0" max="20"
+                   value="{{ selected_period }}" class="form-control">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-body-secondary mb-1" for="date-input">{% translate "Date" %}</label>
+            <input type="date" id="date-input" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control">
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-people me-1" aria-hidden="true"></i>{% translate "Load register" %}
+            </button>
+        </div>
     </div>
-    <div class="flex-grow-1">
-        <label class="visually-hidden" for="section-select">{% translate "Section" %}</label>
-        <select name="section" id="section-select" class="form-select">
-            <option value="">{% translate "All sections" %}</option>
-            {% for item in sections %}
-                <option value="{{ item.pk }}" data-class="{{ item.school_class_id }}"
-                        {% if selected_section and item.pk == selected_section.pk %}selected{% endif %}>{{ item }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="flex-grow-1">
-        <label class="visually-hidden" for="date-input">{% translate "Date" %}</label>
-        <input type="date" id="date-input" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control">
-    </div>
-    <button type="submit" class="btn btn-primary">{% translate "Load register" %}</button>
 </form>
 
 {% if rows %}
-<form method="post" class="register-form">
-    {% csrf_token %}
-    <div class="table-responsive mb-3">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-            <tr>
-                <th>{% translate "Admission #" %}</th>
-                <th>{% translate "Student" %}</th>
-                <th>{% translate "Status" %}</th>
-                <th>{% translate "Remarks" %}</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in rows %}
+<div class="card mb-3">
+    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="min-w-0">
+            <p class="fw-semibold mb-0 text-break">
+                {{ selected_class.name }}{% if selected_section %} · {{ selected_section.name }}{% endif %}
+                {% if selected_subject %} · {{ selected_subject.subject.name }}{% endif %}
+                {% if selected_period %} · {% blocktranslate with number=selected_period %}Period {{ number }}{% endblocktranslate %}{% endif %}
+            </p>
+            <p class="text-body-secondary small mb-0">{{ selected_date }}</p>
+        </div>
+        {% if session %}
+            <span class="badge text-bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{% translate "Already taken — saving updates it" %}
+            </span>
+        {% endif %}
+    </div>
+
+    <form method="post" class="register-form" data-attendance-register>
+        {% csrf_token %}
+
+        <div class="card-body border-bottom py-2">
+            <div class="row g-2 align-items-center">
+                <div class="col-12 col-lg-4">
+                    <label class="visually-hidden" for="register-search">{% translate "Search students" %}</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                        <input type="search" id="register-search" class="form-control"
+                               data-register-search autocomplete="off"
+                               placeholder="{% translate 'Search name or admission number' %}">
+                    </div>
+                </div>
+                <div class="col-12 col-lg-8 d-flex flex-wrap gap-2 justify-content-lg-end">
+                    <button type="button" class="btn btn-sm btn-outline-success" data-mark-all="present">
+                        <i class="bi bi-check2-all me-1" aria-hidden="true"></i>{% translate "Mark all present" %}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-mark-all="absent">
+                        <i class="bi bi-x-lg me-1" aria-hidden="true"></i>{% translate "Mark all absent" %}
+                    </button>
+                </div>
+            </div>
+            <p class="text-body-secondary small mb-0 mt-2" data-register-filter-note hidden>
+                {% translate "Filtered — the buttons above apply only to the rows shown." %}
+            </p>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
                 <tr>
-                    <td data-label="{% translate 'Admission #' %}">{{ row.student.admission_no }}</td>
-                    <td data-label="{% translate 'Student' %}">{{ row.student.full_name }}</td>
-                    <td data-label="{% translate 'Status' %}">
-                        <div class="d-flex flex-wrap gap-2">
-                            {% for value, label in statuses %}
-                                <label class="form-check form-check-inline m-0">
-                                    <input type="radio" name="status-{{ row.student.pk }}" value="{{ value }}"
-                                           {% if row.record and row.record.status == value %}checked{% elif not row.record and value == 'present' %}checked{% endif %}>
-                                    <span>{{ label }}</span>
-                                </label>
-                            {% endfor %}
-                        </div>
-                    </td>
-                    <td data-label="{% translate 'Remarks' %}">
-                        <input type="text" name="remarks-{{ row.student.pk }}" class="form-control"
-                               value="{{ row.record.remarks|default:'' }}" maxlength="255">
-                    </td>
+                    <th scope="col">{% translate "Admission #" %}</th>
+                    <th scope="col">{% translate "Student" %}</th>
+                    <th scope="col">{% translate "Status" %}</th>
+                    <th scope="col">{% translate "Remarks" %}</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <div class="d-flex flex-wrap gap-2 align-items-center py-2 position-sticky bottom-0 bg-body border-top">
-        <button type="submit" class="btn btn-primary">{% translate "Save attendance" %}</button>
-        <span class="text-body-secondary">{% blocktranslate count counter=rows|length %}{{ counter }} student{% plural %}{{ counter }} students{% endblocktranslate %}</span>
-    </div>
-</form>
+                </thead>
+                <tbody>
+                {% for row in rows %}
+                    <tr data-student-row
+                        data-search="{{ row.student.full_name|lower }} {{ row.student.admission_no|lower }}">
+                        <td data-label="{% translate 'Admission #' %}" class="text-nowrap">{{ row.student.admission_no }}</td>
+                        <td data-label="{% translate 'Student' %}">{{ row.student.full_name }}</td>
+                        <td data-label="{% translate 'Status' %}">
+                            <div class="btn-group btn-group-sm flex-wrap" role="group"
+                                 aria-label="{% translate 'Attendance status' %}">
+                                {% for value, label in statuses %}
+                                    <input type="radio" class="btn-check"
+                                           name="status-{{ row.student.pk }}" value="{{ value }}"
+                                           id="s-{{ row.student.pk }}-{{ value }}"
+                                           {% if row.record and row.record.status == value %}checked{% elif not row.record and value == 'present' %}checked{% endif %}>
+                                    <label class="btn btn-outline-secondary" for="s-{{ row.student.pk }}-{{ value }}">{{ label }}</label>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td data-label="{% translate 'Remarks' %}">
+                            <input type="text" name="remarks-{{ row.student.pk }}" class="form-control form-control-sm"
+                                   value="{{ row.record.remarks|default:'' }}" maxlength="255"
+                                   aria-label="{% translate 'Remarks' %}">
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer d-flex flex-wrap gap-3 align-items-center position-sticky bottom-0 bg-body">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1" aria-hidden="true"></i>{% translate "Save attendance" %}
+            </button>
+            <div class="d-flex flex-wrap gap-2 small">
+                {% comment %}A running tally so the register can be checked
+                   against the room before it is saved.{% endcomment %}
+                {% for value, label in statuses %}
+                    <span class="badge text-bg-light border">
+                        {{ label }} <strong data-count="{{ value }}">0</strong>
+                    </span>
+                {% endfor %}
+                <span class="text-body-secondary">
+                    {% blocktranslate count counter=rows|length %}{{ counter }} student{% plural %}{{ counter }} students{% endblocktranslate %}
+                </span>
+            </div>
+        </div>
+    </form>
+</div>
 {% elif selected_class %}
-    <div class="card card-body mb-3"><p class="text-body-secondary">{% translate "No students are enrolled in that class." %}</p></div>
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
+                         rounded-circle bg-body-tertiary text-body-secondary mb-3">
+                <i class="bi bi-people fs-3" aria-hidden="true"></i>
+            </span>
+            <p class="fw-medium mb-1">{% translate "Nobody to mark" %}</p>
+            <p class="text-body-secondary small mb-0">{% translate "No students are enrolled in that class." %}</p>
+        </div>
+    </div>
 {% else %}
-    <div class="card card-body mb-3"><p class="text-body-secondary">{% translate "Choose a class to load its register." %}</p></div>
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
+                         rounded-circle bg-body-tertiary text-body-secondary mb-3">
+                <i class="bi bi-clipboard-check fs-3" aria-hidden="true"></i>
+            </span>
+            <p class="fw-medium mb-1">{% translate "Choose a class" %}</p>
+            <p class="text-body-secondary small mb-3">
+                {% translate "Pick a class above to load its register, or open today's timetable." %}
+            </p>
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'attendance:today' %}">
+                <i class="bi bi-calendar-day me-1" aria-hidden="true"></i>{% translate "Today's classes" %}
+            </a>
+        </div>
+    </div>
 {% endif %}
 {% endblock %}

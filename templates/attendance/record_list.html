@@ -1,0 +1,70 @@
+{% extends "components/object_list.html" %}
+{% load i18n %}
+
+{% block extra_actions %}
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'attendance:today' %}">
+        <i class="bi bi-calendar-day me-1" aria-hidden="true"></i>{% translate "Today's classes" %}
+    </a>
+    <a class="btn btn-sm btn-primary" href="{% url 'attendance:mark' %}">
+        <i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>{% translate "Mark attendance" %}
+    </a>
+{% endblock %}
+
+{% block list_intro %}
+{% if summary.total %}
+<div class="row g-2 g-lg-3 mb-3">
+    {% comment %}The percentage counts late arrivals as attending; only an
+       absence costs a student their rate.{% endcomment %}
+    <div class="col-6 col-lg">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Attendance" %}</p>
+                <p class="fs-4 fw-semibold mb-0">
+                    {% if summary.percentage is not None %}{{ summary.percentage }}%{% else %}—{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Present" %}</p>
+                <p class="fs-4 fw-semibold mb-0 text-success">{{ summary.present }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Absent" %}</p>
+                <p class="fs-4 fw-semibold mb-0 text-danger">{{ summary.absent }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Late" %}</p>
+                <p class="fs-4 fw-semibold mb-0 text-warning-emphasis">{{ summary.late }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Leave" %}</p>
+                <p class="fs-4 fw-semibold mb-0">{{ summary.leave }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Records" %}</p>
+                <p class="fs-4 fw-semibold mb-0">{{ summary.total }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

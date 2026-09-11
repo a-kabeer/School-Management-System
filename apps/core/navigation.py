@@ -51,13 +51,36 @@ NAVIGATION = [
         ],
     },
     {
+        # No group permission: each card sheet carries the permission of the
+        # register it is printed from, so an office that handles students but
+        # not staff sees only the student sheet.
+        "label": _("ID Cards"),
+        "icon": "bi-person-vcard",
+        "children": [
+            {
+                "label": _("Student Cards"),
+                "url_name": "core:student_cards",
+                "permission": "core.access_students",
+            },
+            {
+                "label": _("Staff Cards"),
+                "url_name": "core:staff_cards",
+                "permission": "core.access_staff",
+            },
+        ],
+    },
+    {
         "label": _("Attendance"),
         "icon": "bi-calendar-check",
         "permission": "core.access_attendance",
         "children": [
-            {"label": _("Student Attendance"), "url_name": "attendance:session_list"},
+            {"label": _("Today's Classes"), "url_name": "attendance:today"},
             {"label": _("Mark Attendance"), "url_name": "attendance:mark"},
+            {"label": _("Attendance Sessions"), "url_name": "attendance:session_list"},
+            {"label": _("Student Records"), "url_name": "attendance:record_list"},
+            {"label": _("Check In / Out"), "url_name": "attendance:clock"},
             {"label": _("Staff Attendance"), "url_name": "attendance:staff_list"},
+            {"label": _("Staff Monthly Report"), "url_name": "attendance:staff_month"},
         ],
     },
     {
@@ -214,12 +237,18 @@ def visible_navigation(user, branch=None, current_path=""):
 
         children = []
         for child in item.get("children", ()):
+            child_permission = child.get("permission")
+            if child_permission and not user_has_permission(user, child_permission, branch):
+                continue
             url = _resolve(child.get("url_name"))
             if not url:
                 continue
             children.append(
                 {**child, "url": url, "is_current": url == current_path}
             )
+        if item.get("children") and not children:
+            # A group whose every entry is out of reach is not a group.
+            continue
         if children:
             entry["children"] = children
             # A section opens when the page being viewed lives inside it.

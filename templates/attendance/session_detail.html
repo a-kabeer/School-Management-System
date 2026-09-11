@@ -1,34 +1,83 @@
 {% extends "base.html" %}
 {% load i18n %}
 
+{% block page_actions %}
+    {% comment %}Re-open the same register: the query string carries the whole
+       selection, so the session cannot be duplicated by reloading it.{% endcomment %}
+    <a class="btn btn-sm btn-outline-primary"
+       href="{% url 'attendance:mark' %}?school_class={{ object.school_class_id }}{% if object.section_id %}&section={{ object.section_id }}{% endif %}{% if object.class_subject_id %}&class_subject={{ object.class_subject_id }}{% endif %}&period={{ object.period }}&date={{ object.date|date:'Y-m-d' }}">
+        <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Open register" %}
+    </a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'attendance:session_list' %}">
+        {% translate "All sessions" %}
+    </a>
+{% endblock %}
+
 {% block content %}
-<div class="card card-body mb-3">
-    <dl class="definition-list inline">
-        <dt>{% translate "Class" %}</dt><dd>{{ object.school_class.name }}</dd>
-        <dt>{% translate "Section" %}</dt><dd>{{ object.section.name|default:"—" }}</dd>
-        <dt>{% translate "Date" %}</dt><dd>{{ object.date|date:"Y-m-d" }}</dd>
-        <dt>{% translate "Taken by" %}</dt><dd>{{ object.taken_by.display_name|default:"—" }}</dd>
-    </dl>
+<div class="card mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-6 col-md-3 fw-normal text-body-secondary">{% translate "Class" %}</dt>
+            <dd class="col-6 col-md-3 fw-medium">{{ object.school_class.name }}</dd>
+            <dt class="col-6 col-md-3 fw-normal text-body-secondary">{% translate "Section" %}</dt>
+            <dd class="col-6 col-md-3 fw-medium">{{ object.section.name|default:"—" }}</dd>
+
+            <dt class="col-6 col-md-3 fw-normal text-body-secondary">{% translate "Subject" %}</dt>
+            <dd class="col-6 col-md-3 fw-medium">
+                {% if object.class_subject %}
+                    {{ object.class_subject.subject.name }}
+                {% else %}
+                    {% translate "Daily register" %}
+                {% endif %}
+            </dd>
+            <dt class="col-6 col-md-3 fw-normal text-body-secondary">{% translate "Period" %}</dt>
+            <dd class="col-6 col-md-3 fw-medium">{{ object.period|default:"—" }}</dd>
+
+            <dt class="col-6 col-md-3 fw-normal text-body-secondary">{% translate "Date" %}</dt>
+            <dd class="col-6 col-md-3 fw-medium">{{ object.date|date:"Y-m-d" }}</dd>
+            <dt class="col-6 col-md-3 fw-normal text-body-secondary">{% translate "Taken by" %}</dt>
+            <dd class="col-6 col-md-3 fw-medium mb-0">{{ object.taken_by.display_name|default:"—" }}</dd>
+        </dl>
+    </div>
+    <div class="card-footer d-flex flex-wrap gap-2">
+        {% for item in counts %}
+            <span class="badge text-bg-light border">{{ item.label }} <strong>{{ item.count }}</strong></span>
+        {% endfor %}
+    </div>
 </div>
 
-<div class="table-responsive mb-3">
-    <table class="table table-hover align-middle mb-0">
-        <thead><tr>
-            <th>{% translate "Admission #" %}</th><th>{% translate "Student" %}</th>
-            <th>{% translate "Status" %}</th><th>{% translate "Remarks" %}</th>
-        </tr></thead>
-        <tbody>
-        {% for record in records %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
             <tr>
-                <td data-label="{% translate 'Admission #' %}">{{ record.student.admission_no }}</td>
-                <td data-label="{% translate 'Student' %}">{{ record.student.full_name }}</td>
-                <td data-label="{% translate 'Status' %}"><span class="badge text-bg-light border">{{ record.get_status_display }}</span></td>
-                <td data-label="{% translate 'Remarks' %}">{{ record.remarks|default:"—" }}</td>
+                <th scope="col">{% translate "Admission #" %}</th>
+                <th scope="col">{% translate "Student" %}</th>
+                <th scope="col">{% translate "Status" %}</th>
+                <th scope="col">{% translate "Remarks" %}</th>
             </tr>
-        {% empty %}
-            <tr><td colspan="4" class="text-body-secondary">{% translate "No records in this session." %}</td></tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for record in records %}
+                <tr>
+                    <td data-label="{% translate 'Admission #' %}" class="text-nowrap">{{ record.student.admission_no }}</td>
+                    <td data-label="{% translate 'Student' %}">{{ record.student.full_name }}</td>
+                    <td data-label="{% translate 'Status' %}">
+                        <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border">
+                            {{ record.get_status_display }}
+                        </span>
+                    </td>
+                    <td data-label="{% translate 'Remarks' %}">{{ record.remarks|default:"—" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="text-body-secondary text-center py-4">
+                        {% translate "No records in this session." %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block page_actions %}
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'attendance:staff_list' %}">
+        <i class="bi bi-list-ul me-1" aria-hidden="true"></i>{% translate "Staff register" %}
+    </a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'attendance:staff_month' %}">
+        <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>{% translate "Monthly report" %}
+    </a>
+{% endblock %}
+
+{% block content %}
+
+{% if me %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-12 col-lg">
+                <p class="fw-semibold mb-1 text-break">{{ me.full_name }}</p>
+                <p class="text-body-secondary small mb-0">
+                    {{ today }} · {% blocktranslate with time=now|time:"H:i" %}Now {{ time }}{% endblocktranslate %}
+                </p>
+            </div>
+
+            <div class="col-12 col-lg-auto">
+                <div class="d-flex flex-wrap gap-4">
+                    <div>
+                        <p class="text-body-secondary small mb-0">{% translate "Checked in" %}</p>
+                        <p class="fs-5 fw-semibold mb-0">
+                            {% if my_record.check_in %}{{ my_record.check_in|time:"H:i" }}{% else %}—{% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-body-secondary small mb-0">{% translate "Checked out" %}</p>
+                        <p class="fs-5 fw-semibold mb-0">
+                            {% if my_record.check_out %}{{ my_record.check_out|time:"H:i" }}{% else %}—{% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-body-secondary small mb-0">{% translate "Hours" %}</p>
+                        <p class="fs-5 fw-semibold mb-0">{{ my_record.worked_hours_display|default:"—" }}</p>
+                    </div>
+                    {% if my_record %}
+                        <div>
+                            <p class="text-body-secondary small mb-0">{% translate "Status" %}</p>
+                            <p class="mb-0 mt-1">
+                                <span class="badge text-bg-secondary">{{ my_record.get_status_display }}</span>
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-auto">
+                <form method="post" class="d-flex gap-2">
+                    {% csrf_token %}
+                    {% comment %}The date and time are the server's; nobody types
+                       their own arrival time here.{% endcomment %}
+                    {% if not my_record or not my_record.check_in %}
+                        <button type="submit" name="action" value="check_in" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>{% translate "Check in" %}
+                        </button>
+                    {% elif my_record.is_open %}
+                        <button type="submit" name="action" value="check_out" class="btn btn-outline-primary">
+                            <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>{% translate "Check out" %}
+                        </button>
+                    {% else %}
+                        <span class="badge text-bg-success-subtle text-success-emphasis border border-success-subtle align-self-center py-2 px-3">
+                            <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Day complete" %}
+                        </span>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning d-flex gap-2" role="status">
+    <i class="bi bi-exclamation-triangle mt-1" aria-hidden="true"></i>
+    <span>{% translate "Your account is not linked to a staff record, so you cannot clock yourself in." %}</span>
+</div>
+{% endif %}
+
+{% if can_clock_others %}
+<div class="card mb-3">
+    <div class="card-header">
+        <p class="fw-semibold mb-0">{% translate "Everyone today" %}</p>
+        <p class="text-body-secondary small mb-0">{% translate "Clock a colleague in or out from the office." %}</p>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+            <tr>
+                <th scope="col">{% translate "Employee #" %}</th>
+                <th scope="col">{% translate "Name" %}</th>
+                <th scope="col">{% translate "Status" %}</th>
+                <th scope="col">{% translate "In" %}</th>
+                <th scope="col">{% translate "Out" %}</th>
+                <th scope="col">{% translate "Hours" %}</th>
+                <th scope="col" class="text-end">{% translate "Action" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td data-label="{% translate 'Employee #' %}" class="text-nowrap">{{ row.staff.employee_no }}</td>
+                    <td data-label="{% translate 'Name' %}">{{ row.staff.full_name }}</td>
+                    <td data-label="{% translate 'Status' %}">
+                        {% if row.record %}
+                            <span class="badge text-bg-secondary">{{ row.record.get_status_display }}</span>
+                        {% else %}
+                            <span class="text-body-secondary">—</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="{% translate 'In' %}">{{ row.record.check_in|time:"H:i"|default:"—" }}</td>
+                    <td data-label="{% translate 'Out' %}">{{ row.record.check_out|time:"H:i"|default:"—" }}</td>
+                    <td data-label="{% translate 'Hours' %}">{{ row.record.worked_hours_display|default:"—" }}</td>
+                    <td data-label="{% translate 'Action' %}" class="text-end">
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="staff" value="{{ row.staff.pk }}">
+                            {% if not row.record or not row.record.check_in %}
+                                <button type="submit" name="action" value="check_in" class="btn btn-sm btn-outline-primary">
+                                    {% translate "Check in" %}
+                                </button>
+                            {% elif row.record.is_open %}
+                                <button type="submit" name="action" value="check_out" class="btn btn-sm btn-outline-secondary">
+                                    {% translate "Check out" %}
+                                </button>
+                            {% else %}
+                                <span class="text-body-secondary small">{% translate "Done" %}</span>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="text-body-secondary text-center py-4">{% translate "No active staff." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if history %}
+<div class="card">
+    <div class="card-header">
+        <p class="fw-semibold mb-0">{% translate "Your last two weeks" %}</p>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead>
+            <tr>
+                <th scope="col">{% translate "Date" %}</th>
+                <th scope="col">{% translate "Status" %}</th>
+                <th scope="col">{% translate "In" %}</th>
+                <th scope="col">{% translate "Out" %}</th>
+                <th scope="col">{% translate "Hours" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for record in history %}
+                <tr>
+                    <td data-label="{% translate 'Date' %}">{{ record.date }}</td>
+                    <td data-label="{% translate 'Status' %}">
+                        <span class="badge text-bg-light border">{{ record.get_status_display }}</span>
+                    </td>
+                    <td data-label="{% translate 'In' %}">{{ record.check_in|time:"H:i"|default:"—" }}</td>
+                    <td data-label="{% translate 'Out' %}">{{ record.check_out|time:"H:i"|default:"—" }}</td>
+                    <td data-label="{% translate 'Hours' %}">{{ record.worked_hours_display }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

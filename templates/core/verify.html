@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Card verification" %}{% endblock %}
+{% block page_heading %}{% translate "Card verification" %}{% endblock %}
+
+{% block page_subtitle %}
+    <p class="text-body-secondary mb-0 mt-1">{% translate "Scanned from an identity card." %}</p>
+{% endblock %}
+
+{% block content %}{% include "core/_verify_body.html" %}{% endblock %}
+
+{% block anon_content %}{% include "core/_verify_body.html" %}{% endblock %}

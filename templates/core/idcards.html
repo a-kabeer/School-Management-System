@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/idcard.css' %}">
+{% endblock %}
+
+{% block page_actions %}
+    <div class="btn-group btn-group-sm" role="group" aria-label="{% translate 'Card language' %}">
+        {% for code, label in languages %}
+            <a class="btn {% if code == card_language %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+               href="?{% if selected_class %}school_class={{ selected_class.pk }}&{% endif %}lang={{ code }}{% if show_back %}&back=1{% endif %}">
+                {{ label }}
+            </a>
+        {% endfor %}
+    </div>
+    <a class="btn btn-sm btn-outline-secondary"
+       href="?{% if selected_class %}school_class={{ selected_class.pk }}&{% endif %}lang={{ card_language }}&back={% if show_back %}0{% else %}1{% endif %}">
+        <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>
+        {% if show_back %}{% translate "Front only" %}{% else %}{% translate "Show back" %}{% endif %}
+    </a>
+    <button type="button" class="btn btn-sm btn-primary" onclick="window.print()">
+        <i class="bi bi-printer me-1" aria-hidden="true"></i>{% translate "Print / Save as PDF" %}
+    </button>
+    {% if back_url %}
+        <a class="btn btn-sm btn-outline-secondary d-print-none" href="{{ back_url }}">
+            {% translate "Back" %}
+        </a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+{% if bulk and classes %}
+<form method="get" class="card card-body py-2 mb-3 d-print-none">
+    <input type="hidden" name="lang" value="{{ card_language }}">
+    <div class="row g-2 align-items-center">
+        <div class="col-12 col-md-4">
+            <label class="visually-hidden" for="class-select">{% translate "Class" %}</label>
+            <select name="school_class" id="class-select" class="form-select form-select-sm">
+                <option value="">{% translate "All classes" %}</option>
+                {% for item in classes %}
+                    <option value="{{ item.pk }}"
+                            {% if selected_class and item.pk == selected_class.pk %}selected{% endif %}>
+                        {{ item.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-auto">
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-funnel me-1" aria-hidden="true"></i>{% translate "Apply" %}
+            </button>
+        </div>
+    </div>
+</form>
+{% endif %}
+
+<p class="text-body-secondary small d-print-none">
+    {% blocktranslate count counter=cards|length %}{{ counter }} card ready to print.{% plural %}{{ counter }} cards ready to print.{% endblocktranslate %}
+    {% translate "Cards print at 85.6 × 54 mm (CR80). Use your browser's print dialog and choose “Save as PDF” for a PDF." %}
+</p>
+
+{% if cards %}
+<div class="card-sheet">
+    {% for card in cards %}
+        {% comment %}The card sets its own dir/lang so Urdu and Arabic lay out
+           right-to-left with the correct script, whatever language the rest of
+           the interface is in.{% endcomment %}
+        <article class="idcard idcard-front" lang="{{ card_language }}"
+                 dir="{% if card_is_rtl %}rtl{% else %}ltr{% endif %}">
+            <header class="idcard-head">
+                {% if branding.logo_url %}
+                    <img class="idcard-logo" src="{{ branding.logo_url }}" alt="">
+                {% else %}
+                    <span class="idcard-logo idcard-logo-fallback" aria-hidden="true">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </span>
+                {% endif %}
+                <div class="idcard-org">
+                    <p class="idcard-org-name">{{ branding.name }}</p>
+                    {% if branding.subtitle %}
+                        <p class="idcard-org-sub">{{ branding.subtitle }}</p>
+                    {% endif %}
+                </div>
+            </header>
+
+            <p class="idcard-kind">{{ card.title }}</p>
+
+            <div class="idcard-body">
+                <div class="idcard-photo-wrap">
+                    {% if card.photo_url %}
+                        <img class="idcard-photo" src="{{ card.photo_url }}" alt="">
+                    {% else %}
+                        <span class="idcard-photo idcard-photo-fallback" aria-hidden="true">
+                            <i class="bi bi-person"></i>
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="idcard-fields">
+                    <p class="idcard-name">{{ card.full_name }}</p>
+                    <p class="idcard-id">
+                        <span class="idcard-label">{{ card.id_label }}</span>
+                        <span class="idcard-value">{{ card.identifier }}</span>
+                    </p>
+                    <dl class="idcard-list">
+                        {% for label, value in card.rows %}
+                            <dt>{{ label }}</dt>
+                            <dd>{{ value }}</dd>
+                        {% endfor %}
+                    </dl>
+                </div>
+
+                <div class="idcard-qr-wrap">
+                    <div class="idcard-qr">{{ card.qr_svg|safe }}</div>
+                    <p class="idcard-scan">{{ card.scan_label }}</p>
+                </div>
+            </div>
+
+            <footer class="idcard-foot">
+                <span class="idcard-validity {% if not card.valid %}is-invalid{% endif %}">
+                    {{ card.validity_label }}
+                </span>
+                {% if branding.phone %}<span>{{ branding.phone }}</span>{% endif %}
+            </footer>
+        </article>
+
+        {% if show_back %}
+            <article class="idcard idcard-back" lang="{{ card_language }}"
+                     dir="{% if card_is_rtl %}rtl{% else %}ltr{% endif %}">
+                <header class="idcard-head idcard-head-compact">
+                    <div class="idcard-org">
+                        <p class="idcard-org-name">{{ branding.name }}</p>
+                    </div>
+                </header>
+                <div class="idcard-back-body">
+                    {% if branding.address %}<p>{{ branding.address }}</p>{% endif %}
+                    {% if branding.phone %}<p>{{ branding.phone }}</p>{% endif %}
+                    {% if branding.email %}<p>{{ branding.email }}</p>{% endif %}
+                    <p class="idcard-back-note">{{ card.verify_url }}</p>
+                </div>
+                <div class="idcard-qr idcard-qr-back">{{ card.qr_svg|safe }}</div>
+            </article>
+        {% endif %}
+    {% endfor %}
+</div>
+{% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
+                         rounded-circle bg-body-tertiary text-body-secondary mb-3">
+                <i class="bi bi-person-vcard fs-3" aria-hidden="true"></i>
+            </span>
+            <p class="fw-medium mb-1">{% translate "No cards to print" %}</p>
+            <p class="text-body-secondary small mb-0">
+                {% translate "Nobody active matches this selection." %}
+            </p>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

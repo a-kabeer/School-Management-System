@@ -1,0 +1,309 @@
+/* ID cards.
+ *
+ * Cards are laid out at their real printed size (CR80, 85.6 x 54 mm) in
+ * millimetres, so what the screen shows is what the printer produces. The
+ * sheet wraps as many as fit the paper; printing is done through the
+ * browser's own dialog, which is also how a PDF is produced ("Save as PDF").
+ *
+ * The browser is deliberately the PDF engine here: it shapes Urdu and Arabic
+ * correctly with the reader's own fonts, which a server-side PDF library only
+ * manages with bundled fonts and native dependencies.
+ */
+
+.card-sheet {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6mm;
+    align-items: flex-start;
+}
+
+.idcard {
+    /* CR80 — the size every badge holder and lanyard wallet is cut for. */
+    inline-size: 85.6mm;
+    block-size: 54mm;
+    box-sizing: border-box;
+    padding: 2.6mm 3.2mm;
+    display: flex;
+    flex-direction: column;
+    gap: .8mm;
+    overflow: hidden;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 3mm;
+    background: #fff;
+    color: #14213d;
+    font-size: 2.6mm;
+    line-height: 1.35;
+    box-shadow: 0 .25rem .75rem rgb(0 0 0 / .12);
+    /* Cards are printed objects: they stay light whatever theme the
+       interface is in, because that is what comes out of the printer. */
+    color-scheme: light;
+}
+
+.idcard-head {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    border-block-end: .4mm solid #0d6efd;
+    padding-block-end: .8mm;
+}
+
+.idcard-logo {
+    inline-size: 8mm;
+    block-size: 8mm;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
+.idcard-logo-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #e7f1ff;
+    color: #0d6efd;
+    font-size: 5mm;
+}
+
+.idcard-org { min-inline-size: 0; }
+
+.idcard-org-name {
+    margin: 0;
+    font-size: 3.1mm;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.idcard-org-sub {
+    margin: 0;
+    font-size: 2.2mm;
+    color: #5b6472;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.idcard-kind {
+    margin: 0;
+    font-size: 2.2mm;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #0d6efd;
+}
+
+.idcard-body {
+    display: flex;
+    gap: 2.5mm;
+    flex: 1 1 auto;
+    min-block-size: 0;
+}
+
+.idcard-photo-wrap { flex: 0 0 auto; }
+
+.idcard-photo {
+    inline-size: 18mm;
+    block-size: 22mm;
+    object-fit: cover;
+    border: .3mm solid var(--bs-border-color, #ced4da);
+    border-radius: 1.5mm;
+    background: #f1f3f5;
+}
+
+.idcard-photo-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-size: 9mm;
+}
+
+.idcard-fields {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
+.idcard-name {
+    margin: 0 0 .4mm;
+    font-size: 3.3mm;
+    font-weight: 700;
+    line-height: 1.2;
+    /* A long name wraps to a second line rather than being cut off: a name is
+       the one thing on the card that must always be readable in full. */
+    overflow-wrap: anywhere;
+}
+
+.idcard-id {
+    margin: 0 0 .6mm;
+    display: flex;
+    gap: 1.2mm;
+    align-items: baseline;
+}
+
+.idcard-label { color: #5b6472; }
+.idcard-value { font-weight: 600; letter-spacing: .02em; }
+
+.idcard-list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 1.5mm;
+    row-gap: .2mm;
+    margin: 0;
+}
+
+.idcard-list dt {
+    color: #5b6472;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+.idcard-list dd {
+    margin: 0;
+    font-weight: 600;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.idcard-qr-wrap {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: .6mm;
+    inline-size: 18mm;
+}
+
+.idcard-qr svg {
+    inline-size: 17mm;
+    block-size: 17mm;
+    display: block;
+}
+
+.idcard-scan {
+    margin: 0;
+    font-size: 1.9mm;
+    color: #5b6472;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.idcard-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2mm;
+    border-block-start: .2mm solid #e3e6ea;
+    padding-block-start: .8mm;
+    font-size: 2.1mm;
+    color: #5b6472;
+}
+
+.idcard-validity {
+    font-weight: 700;
+    color: #0f7b3e;
+}
+
+.idcard-validity.is-invalid { color: #b02a37; }
+
+/* ---------------------------------------------------------------- back */
+.idcard-back { justify-content: space-between; }
+
+.idcard-head-compact { border-block-end: none; padding-block-end: 0; }
+
+.idcard-back-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: .6mm;
+}
+
+.idcard-back-body p { margin: 0; }
+
+.idcard-back-note {
+    font-size: 2mm;
+    color: #5b6472;
+    overflow-wrap: anywhere;
+}
+
+.idcard-qr-back {
+    align-self: flex-end;
+}
+
+.idcard-qr-back svg {
+    inline-size: 14mm;
+    block-size: 14mm;
+}
+
+/* ---------------------------------------------------------------- RTL
+ * Urdu and Arabic are not an LTR card flipped over: the script needs more
+ * vertical room, the label column reads from the right, and Nastaliq in
+ * particular sits low on its line.
+ */
+.idcard[dir="rtl"] {
+    text-align: start;
+}
+
+/* Nastaliq sits low on its line and needs more leading than Latin, but the
+   card is a fixed 54mm: the type shrinks so the extra leading fits rather
+   than pushing the last field off the bottom. */
+.idcard[lang="ur"] {
+    font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Alvi Nastaleeq",
+        "Noto Naskh Arabic", serif;
+    font-size: 2.4mm;
+    line-height: 1.45;
+}
+
+.idcard[lang="ur"] .idcard-name { font-size: 3.1mm; line-height: 1.45; }
+.idcard[lang="ur"] .idcard-list { row-gap: 0; }
+
+.idcard[lang="ar"] {
+    font-family: "Noto Naskh Arabic", "Traditional Arabic", "Segoe UI", serif;
+    line-height: 1.4;
+}
+
+/* Identifiers stay left-to-right inside a right-to-left card: an admission
+   number is a number, not a phrase. */
+.idcard[dir="rtl"] .idcard-value,
+.idcard[dir="rtl"] .idcard-back-note {
+    direction: ltr;
+    unicode-bidi: embed;
+    text-align: end;
+}
+
+/* Uppercasing does nothing for these scripts and only widens the letterform. */
+.idcard[dir="rtl"] .idcard-kind { text-transform: none; letter-spacing: normal; }
+
+/* ---------------------------------------------------------------- print */
+@media print {
+    /* A4 with a small margin fits two cards across and five down. */
+    @page {
+        size: A4 portrait;
+        margin: 8mm;
+    }
+
+    body { background: #fff; }
+
+    /* On a sheet of cards the page heading is screen furniture. This rule is
+       safe to write globally because this stylesheet loads only on the card
+       screens. */
+    .app-main > header { display: none !important; }
+
+    .card-sheet {
+        gap: 4mm;
+        justify-content: flex-start;
+    }
+
+    .idcard {
+        box-shadow: none;
+        border: .2mm dashed #9aa0a6;   /* a cutting guide, not decoration */
+        break-inside: avoid;
+        page-break-inside: avoid;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+}

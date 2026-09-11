@@ -43,6 +43,15 @@ class AttendanceSession(BranchOwnedModel):
         related_name="attendance_sessions",
         verbose_name=_("section"),
     )
+    class_subject = models.ForeignKey(
+        "academics.ClassSubject",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="attendance_sessions",
+        verbose_name=_("subject"),
+        help_text=_("Set for subject or period attendance; empty for the daily register."),
+    )
     date = models.DateField(_("date"), db_index=True)
     session_type = models.CharField(
         _("session type"),
@@ -67,20 +76,36 @@ class AttendanceSession(BranchOwnedModel):
         verbose_name_plural = _("attendance sessions")
         ordering = ["-date", "school_class__level"]
         constraints = [
+            # Two constraints rather than one: in PostgreSQL every NULL is
+            # distinct, so a single constraint including `class_subject` would
+            # let the daily register be taken twice.
             models.UniqueConstraint(
                 fields=["branch", "school_class", "section", "date", "period"],
-                name="uq_attendance_session",
-            )
+                condition=models.Q(class_subject__isnull=True),
+                name="uq_attendance_session_daily",
+            ),
+            models.UniqueConstraint(
+                fields=["branch", "school_class", "section", "date", "period", "class_subject"],
+                condition=models.Q(class_subject__isnull=False),
+                name="uq_attendance_session_subject",
+            ),
         ]
         indexes = [
             models.Index(fields=["branch", "date"]),
             models.Index(fields=["branch", "academic_year", "date"]),
             models.Index(fields=["school_class", "date"]),
+            models.Index(fields=["class_subject", "date"]),
         ]
 
     def __str__(self):
         label = self.section or self.school_class
+        if self.class_subject_id:
+            return f"{label} — {self.class_subject.subject.name} — {self.date}"
         return f"{label} — {self.date}"
+
+    @property
+    def is_subject_session(self):
+        return self.class_subject_id is not None
 
     @property
     def is_editable(self):
@@ -181,3 +206,24 @@ class StaffAttendance(BranchOwnedModel):
 
     def __str__(self):
         return f"{self.staff} — {self.date}"
+
+    @property
+    def worked_minutes(self):
+        """Minutes between check-in and check-out, or ``None`` if still open."""
+        if not self.check_in or not self.check_out:
+            return None
+        start = self.check_in.hour * 60 + self.check_in.minute
+        end = self.check_out.hour * 60 + self.check_out.minute
+        return max(end - start, 0)
+
+    @property
+    def worked_hours_display(self):
+        minutes = self.worked_minutes
+        if minutes is None:
+            return "—"
+        return f"{minutes // 60}h {minutes % 60:02d}m"
+
+    @property
+    def is_open(self):
+        """Checked in but not yet out."""
+        return bool(self.check_in) and not self.check_out

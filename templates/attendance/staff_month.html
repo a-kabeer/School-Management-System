@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block page_actions %}
+    <form method="get" class="d-flex align-items-center gap-2">
+        <label class="visually-hidden" for="month-input">{% translate "Month" %}</label>
+        {% comment %}A date input rather than a month input: the view parses a
+           full date and snaps it to the first of its month, so any day works
+           and every browser renders this control.{% endcomment %}
+        <input type="date" id="month-input" name="month" class="form-control form-control-sm"
+               value="{{ month|date:'Y-m-d' }}">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">{% translate "Show" %}</button>
+    </form>
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+        <i class="bi bi-printer me-1" aria-hidden="true"></i>{% translate "Print" %}
+    </button>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'attendance:clock' %}">
+        <i class="bi bi-stopwatch me-1" aria-hidden="true"></i>{% translate "Check in / out" %}
+    </a>
+{% endblock %}
+
+{% block content %}
+
+{% if report.rows %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+            <tr>
+                <th scope="col">{% translate "Employee #" %}</th>
+                <th scope="col">{% translate "Staff" %}</th>
+                <th scope="col" class="text-end">{% translate "Days marked" %}</th>
+                <th scope="col" class="text-end">{% translate "Present" %}</th>
+                <th scope="col" class="text-end">{% translate "Late" %}</th>
+                <th scope="col" class="text-end">{% translate "Absent" %}</th>
+                <th scope="col" class="text-end">{% translate "Leave" %}</th>
+                <th scope="col" class="text-end">{% translate "Hours worked" %}</th>
+                <th scope="col" class="text-end">{% translate "Attendance" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in report.rows %}
+                <tr>
+                    <td data-label="{% translate 'Employee #' %}" class="text-nowrap">{{ row.staff__employee_no }}</td>
+                    <td data-label="{% translate 'Staff' %}">{{ row.staff__full_name }}</td>
+                    <td data-label="{% translate 'Days marked' %}" class="text-end">{{ row.days }}</td>
+                    <td data-label="{% translate 'Present' %}" class="text-end">{{ row.present }}</td>
+                    <td data-label="{% translate 'Late' %}" class="text-end">{{ row.late }}</td>
+                    <td data-label="{% translate 'Absent' %}" class="text-end">{{ row.absent }}</td>
+                    <td data-label="{% translate 'Leave' %}" class="text-end">{{ row.leave }}</td>
+                    <td data-label="{% translate 'Hours worked' %}" class="text-end text-nowrap">{{ row.worked_display }}</td>
+                    <td data-label="{% translate 'Attendance' %}" class="text-end">
+                        {% if row.percentage is not None %}
+                            <span class="badge {% if row.percentage >= 90 %}text-bg-success-subtle text-success-emphasis{% elif row.percentage >= 75 %}text-bg-warning-subtle text-warning-emphasis{% else %}text-bg-danger-subtle text-danger-emphasis{% endif %} border">
+                                {{ row.percentage }}%
+                            </span>
+                        {% else %}
+                            <span class="text-body-secondary">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
+                         rounded-circle bg-body-tertiary text-body-secondary mb-3">
+                <i class="bi bi-calendar3 fs-3" aria-hidden="true"></i>
+            </span>
+            <p class="fw-medium mb-1">{% translate "Nothing recorded this month" %}</p>
+            <p class="text-body-secondary small mb-3">
+                {% translate "Staff attendance appears here once people start checking in." %}
+            </p>
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'attendance:clock' %}">
+                <i class="bi bi-stopwatch me-1" aria-hidden="true"></i>{% translate "Check in / out" %}
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
