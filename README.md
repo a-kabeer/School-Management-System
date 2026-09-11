@@ -150,6 +150,33 @@ user. It writes configuration only — no invented students, staff or invoices.
 Then, in the application: add an academic year, classes and sections, fee types
 and fee structures, before admitting students.
 
+### Demo accounts
+
+`bootstrap_organization` creates exactly one login — the admin you name. To get
+a login per role for evaluation:
+
+```bash
+python manage.py seed_demo_users
+```
+
+| Username | Role | Can reach |
+| --- | --- | --- |
+| `admin` | Admin | everything |
+| `teacher` | Teacher | students, attendance, hifz, marks |
+| `feescollector` | Fees Collector | students, invoices, collect payment |
+| `finance` | Finance | fees, ledger, payroll, refunds |
+| `student` | Student | own dashboard and notifications |
+| `parent` | Parent | the portal, own children only |
+
+All six share the password **`Madrasah#2026`** (override with `--password`).
+The command also creates the staff, student and guardian records those logins
+need, all named "Demo …".
+
+This is the only command that invents business data, and it refuses to run with
+`DEBUG=False` unless you pass `--force` — the password above is published, so
+these accounts must never exist on an installation holding real data. Delete
+them, or change the password, before going live.
+
 ### Environment
 
 All configuration is read through `python-decouple`. See `.env.example`.
