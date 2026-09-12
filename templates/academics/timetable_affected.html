@@ -1,68 +1,8 @@
 {% extends "base.html" %}
 {% load i18n %}
-
-{% block page_actions %}
-    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:timetable' %}">
-        <i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Back to timetable" %}
-    </a>
-{% endblock %}
-
+{% block page_actions %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:timetable' %}"><i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Back to timetable" %}</a>{% endblock %}
 {% block content %}
-<div class="mb-3">
-    <h1 class="h5 mb-1">{% translate "Affected timetable slots" %}</h1>
-    <p class="text-body-secondary mb-0">{% translate "These recurring timetable slots are on days that are no longer configured as working days. Review each record before moving or removing it." %}</p>
-</div>
-
-{% if slots %}
-<div class="card">
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead>
-            <tr>
-                <th>{% translate "Date / Day" %}</th>
-                <th>{% translate "Class" %}</th>
-                <th>{% translate "Section" %}</th>
-                <th>{% translate "Subject" %}</th>
-                <th>{% translate "Teacher" %}</th>
-                <th>{% translate "Period" %}</th>
-                <th>{% translate "Room" %}</th>
-                <th class="text-end">{% translate "Action" %}</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for slot in slots %}
-            <tr>
-                <td class="text-nowrap">{{ slot.get_weekday_display }}</td>
-                <td>{{ slot.section.school_class.name }}</td>
-                <td>{{ slot.section.name }}</td>
-                <td>{{ slot.class_subject.subject.name }}</td>
-                <td>{{ slot.teacher.full_name|default:_('Not assigned') }}</td>
-                <td class="text-nowrap">P{{ slot.period }} · {{ slot.start_time|time:"H:i" }}–{{ slot.end_time|time:"H:i" }}</td>
-                <td>{{ slot.room|default:"—" }}</td>
-                <td class="text-end text-nowrap">
-                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:timetable_detail' slot.pk %}" title="{% translate 'View' %}">
-                        <i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">{% translate "View" %}</span>
-                    </a>
-                    {% if can_edit %}
-                    <a class="btn btn-sm btn-outline-primary" href="{% url 'academics:timetable_update' slot.pk %}" data-modal-url="{% url 'academics:timetable_update' slot.pk %}" data-modal-title="{% translate 'Review timetable slot' %}" title="{% translate 'Edit / move' %}">
-                        <i class="bi bi-pencil" aria-hidden="true"></i><span class="visually-hidden">{% translate "Edit / move" %}</span>
-                    </a>
-                    <a class="btn btn-sm btn-outline-danger" href="{% url 'academics:timetable_delete' slot.pk %}" data-modal-url="{% url 'academics:timetable_delete' slot.pk %}" data-modal-title="{% translate 'Remove timetable slot' %}" title="{% translate 'Remove' %}">
-                        <i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">{% translate "Remove" %}</span>
-                    </a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-{% else %}
-<div class="card"><div class="card-body text-center py-5">
-    <i class="bi bi-check-circle fs-2 text-success" aria-hidden="true"></i>
-    <p class="fw-medium mt-3 mb-1">{% translate "No affected timetable slots" %}</p>
-    <p class="text-body-secondary mb-0">{% translate "All timetable slots are on currently configured working days." %}</p>
-</div></div>
-{% endif %}
+<div class="mb-3"><h1 class="h5 mb-1">{% translate "Affected timetable slots" %}</h1><p class="text-body-secondary mb-0">{% translate "These recurring timetable slots are on days that are no longer configured as working days. No records are deleted automatically. Review each record before moving or removing it." %}</p></div>
+{% if slots %}<div class="card"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>{% translate "Date / Day" %}</th><th>{% translate "Class" %}</th><th>{% translate "Section" %}</th><th>{% translate "Subject" %}</th><th>{% translate "Teacher" %}</th><th>{% translate "Period" %}</th><th>{% translate "Room" %}</th><th class="text-end">{% translate "Action" %}</th></tr></thead><tbody>{% for slot in slots %}<tr><td class="text-nowrap">{{ slot.get_weekday_display }}</td><td>{{ slot.section.school_class.name }}</td><td>{{ slot.section.name }}</td><td>{{ slot.class_subject.subject.name }}</td><td>{{ slot.teacher.full_name|default:_('Not assigned') }}</td><td class="text-nowrap">P{{ slot.period }} · {{ slot.start_time|time:"H:i" }}–{{ slot.end_time|time:"H:i" }}</td><td>{{ slot.room|default:"—" }}</td><td class="text-end text-nowrap">{% if can_edit %}<form method="post" class="d-inline-flex align-items-center gap-1">{% csrf_token %}<input type="hidden" name="slot" value="{{ slot.pk }}"><select name="weekday" class="form-select form-select-sm" aria-label="{% translate 'Move to working day' %}">{% for day, label in working_days %}<option value="{{ day }}">{{ label }}</option>{% endfor %}</select><button class="btn btn-sm btn-outline-primary" type="submit" title="{% translate 'Move to selected working day' %}"><i class="bi bi-arrow-right" aria-hidden="true"></i><span class="visually-hidden">{% translate "Move" %}</span></button></form>{% endif %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:timetable_detail' slot.pk %}" title="{% translate 'View' %}"><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">{% translate "View" %}</span></a>{% if can_edit %}<a class="btn btn-sm btn-outline-danger" href="{% url 'academics:timetable_delete' slot.pk %}" data-modal-url="{% url 'academics:timetable_delete' slot.pk %}" data-modal-title="{% translate 'Remove timetable slot' %}" title="{% translate 'Remove' %}"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">{% translate "Remove" %}</span></a>{% endif %}</td></tr>{% endfor %}</tbody></table></div></div>
+{% else %}<div class="card"><div class="card-body text-center py-5"><i class="bi bi-check-circle fs-2 text-success" aria-hidden="true"></i><p class="fw-medium mt-3 mb-1">{% translate "No affected timetable slots" %}</p><p class="text-body-secondary mb-0">{% translate "All timetable slots are on currently configured working days." %}</p></div></div>{% endif %}
 {% endblock %}
