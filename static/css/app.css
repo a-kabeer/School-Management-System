@@ -40,14 +40,15 @@ body { -webkit-font-smoothing: antialiased; }
 .app-nav-link:not(.collapsed) > .app-nav-caret { transform: rotate(180deg); }
 .app-nav-sub { margin-inline-start: 1.4rem; padding-inline-start: .6rem; border-inline-start: 1px solid var(--bs-border-color); }
 
-.app-table > thead > tr > th { background-color: var(--bs-tertiary-bg); color: var(--bs-secondary-color); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; border-bottom-width: 1px; }
+.app-table > thead > tr > th { background-color: var(--bs-tertiary-bg); color: var(--bs-secondary-color); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; border-bottom-width: 1px; white-space: normal; }
 .app-table > tbody > tr > td { padding-block: .6rem; }
 .app-row { cursor: pointer; }
 .app-row > td[data-col="0"], .app-row:hover > td[data-col="0"], .app-row:focus-visible > td[data-col="0"] { text-decoration: none; font-weight: inherit; }
 .app-row:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: -2px; }
 .app-icon-btn { --bs-btn-padding-x: .5rem; --bs-btn-padding-y: .3rem; display: inline-flex; align-items: center; justify-content: center; min-width: 2rem; min-height: 2rem; }
 .table .font-monospace { white-space: nowrap; }
-.app-th-sort { cursor: pointer; }
+.app-th-sort { cursor: pointer; min-width: 0; }
+.app-th-sort > span { overflow-wrap: anywhere; }
 .app-th-hint { opacity: 0; transition: opacity .12s ease-in-out; }
 .app-th-sort:hover .app-th-hint, .app-th-sort:focus-visible .app-th-hint { opacity: .6; }
 
@@ -66,14 +67,16 @@ body { -webkit-font-smoothing: antialiased; }
 .app-combo-add { margin-block-start: .25rem; border-top: 1px solid var(--bs-border-color); border-radius: 0; color: var(--bs-primary); font-weight: 500; }
 .app-combo-empty { margin: 0; padding: .75rem; color: var(--bs-secondary-color); }
 
-/* Tables stay tables. On narrow screens the card becomes the intentional
-   horizontal scroll surface instead of forcing unreadable columns. */
+/* Standard data tables are responsive and use the available card width.
+   Cells wrap instead of expanding the table to the longest value. Only the
+   dedicated timetable grid keeps its intentional fixed scheduling canvas. */
 .app-table-card, .app-table-form { min-width: 0; }
 .app-table-scroll-x, .table-responsive { max-width: 100%; }
 .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.app-table { min-width: max-content; }
+.app-table { width: 100%; min-width: 0; table-layout: auto; }
+.app-table td, .app-table th { max-width: 18rem; overflow-wrap: anywhere; word-break: normal; }
 .app-table .text-nowrap { white-space: nowrap; }
-.app-table td, .app-table th { overflow-wrap: anywhere; }
+.app-table > thead .text-nowrap { white-space: normal; }
 
 .timetable-grid { table-layout: fixed; min-inline-size: 56rem; width: 56rem; }
 .timetable-grid > thead > tr > th { background-color: var(--bs-tertiary-bg); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
@@ -121,7 +124,8 @@ body { -webkit-font-smoothing: antialiased; }
     .breadcrumb-item { max-width: 100%; }
     .breadcrumb-item a, .breadcrumb-item.active { overflow-wrap: anywhere; }
     .table-responsive { border-radius: inherit; }
-    .app-table { min-width: 44rem; }
+    .app-table { min-width: 0; }
+    .app-table td, .app-table th { max-width: 14rem; }
     .timetable-grid { min-width: 56rem; width: 56rem; }
 }
 
