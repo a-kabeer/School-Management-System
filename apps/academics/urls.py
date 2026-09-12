@@ -1,10 +1,11 @@
 from django.urls import path
 
-from . import affected_timetable_views, detail_views, timetable_views, views
+from . import affected_timetable_views, detail_views, overview_views, timetable_views, views
 
 app_name = "academics"
 
 urlpatterns = [
+    path("", overview_views.AcademicsOverviewView.as_view(), name="overview"),
     path("years/", views.AcademicYearListView.as_view(), name="year_list"),
     path("years/new/", views.AcademicYearCreateView.as_view(), name="year_create"),
     path("years/<uuid:pk>/", detail_views.AcademicYearDetailView.as_view(), name="year_detail"),
