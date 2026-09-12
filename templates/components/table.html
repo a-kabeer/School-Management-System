@@ -24,7 +24,7 @@ sort, direction, page size and page the reader was using.{% endcomment %}
                 <thead><tr>
                     {% if selectable %}<th scope="col" class="app-table-check"><input class="form-check-input" type="checkbox" data-select-all aria-label="{% translate 'Select all rows on this page' %}"></th>{% endif %}
                     {% for column in table_columns %}
-                        <th scope="col" data-col="{{ forloop.counter0 }}" class="text-nowrap {% if column.type == 'money' %}text-end{% endif %}" {% if column.is_sorted %}aria-sort="{% if column.sort_dir == 'desc' %}descending{% else %}ascending{% endif %}"{% endif %}>
+                        <th scope="col" data-col="{{ forloop.counter0 }}" class="app-table-column app-table-column-{{ column.type|default:'text' }} {% if column.is_sorted %}is-sorted{% endif %} {% if column.type == 'money' %}text-end{% endif %}" {% if column.is_sorted %}aria-sort="{% if column.sort_dir == 'desc' %}descending{% else %}ascending{% endif %}"{% endif %}>
                             {% if column.sortable %}
                                 <a class="app-th-sort text-decoration-none text-reset d-inline-flex align-items-center gap-1" data-table-nav href="{% query_replace sort=column.field dir=column.next_dir page="" %}" aria-label="{% translate 'Sort by' %} {{ column.label }} — {% if column.is_sorted and column.sort_dir == 'asc' %}{% translate 'descending' %}{% else %}{% translate 'ascending' %}{% endif %}">
                                     <span>{{ column.label }}</span>
@@ -33,7 +33,7 @@ sort, direction, page size and page the reader was using.{% endcomment %}
                             {% else %}{{ column.label }}{% endif %}
                         </th>
                     {% endfor %}
-                    {% if detail_url_name or update_url_name or delete_url_name or row_actions_template %}<th scope="col" class="text-end text-nowrap">{% translate "Actions" %}</th>{% endif %}
+                    {% if detail_url_name or update_url_name or delete_url_name or row_actions_template %}<th scope="col" class="app-table-actions text-end">{% translate "Actions" %}</th>{% endif %}
                 </tr></thead>
                 <tbody>
                 {% for object in objects %}
@@ -43,7 +43,7 @@ sort, direction, page size and page the reader was using.{% endcomment %}
                     <tr {% if open_url %}class="app-row" data-row-url="{{ open_url }}?return_to={{ request.get_full_path|urlencode }}" tabindex="0" aria-label="{% translate 'View' %} {{ object }}"{% endif %}>
                         {% if selectable %}<td class="app-table-check" data-label="{% translate 'Select' %}"><input class="form-check-input" type="checkbox" name="selected" value="{{ object.pk }}" data-row-select aria-label="{% translate 'Select this row' %}: {{ object }}"></td>{% endif %}
                         {% for column in table_columns %}
-                            <td data-col="{{ forloop.counter0 }}" class="{% if column.type == 'money' %}text-end font-monospace{% endif %}" data-label="{{ column.label }}">
+                            <td data-col="{{ forloop.counter0 }}" class="app-table-cell app-table-cell-{{ column.type|default:'text' }} {% if column.type == 'money' %}text-end font-monospace{% endif %}" data-label="{{ column.label }}">
                                 {% if column.type == 'bool' %}{% if object|attr:column.field %}<span class="badge rounded-pill text-bg-success-subtle text-success-emphasis border border-success-subtle"><i class="bi bi-check-lg" aria-hidden="true"></i> {% translate "Yes" %}</span>{% else %}<span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border">{% translate "No" %}</span>{% endif %}
                                 {% elif column.type == 'choice' %}<span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border">{{ object|display:column.field }}</span>
                                 {% elif column.type == 'money' %}{{ object|attr:column.field|money }}
@@ -55,7 +55,7 @@ sort, direction, page size and page the reader was using.{% endcomment %}
                             </td>
                         {% endfor %}
                         {% if detail_url_name or update_url_name or delete_url_name or row_actions_template %}
-                            <td class="text-end text-nowrap"><div class="d-inline-flex align-items-center gap-1">
+                            <td class="app-table-actions text-end" data-label="{% translate 'Actions' %}"><div class="d-inline-flex align-items-center gap-1">
                                 {% if row_actions_template %}{% include row_actions_template %}{% endif %}
                                 {% if open_url %}<a class="btn btn-sm btn-outline-secondary app-icon-btn" href="{{ open_url }}?return_to={{ request.get_full_path|urlencode }}" title="{% translate 'View' %}"><i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">{% translate "View" %}</span></a>{% endif %}
                                 {% if update_url %}<a class="btn btn-sm btn-outline-secondary app-icon-btn" href="{{ update_url }}?return_to={{ request.get_full_path|urlencode }}" title="{% translate 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i><span class="visually-hidden">{% translate "Edit" %}</span></a>{% endif %}
