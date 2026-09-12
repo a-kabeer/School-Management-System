@@ -16,34 +16,21 @@
 {% endblock %}
 
 {% block content %}
-
-{% comment %}The week is always about one section in one year, so those two
-   choices sit above it rather than being asked again for every lesson.{% endcomment %}
 <form method="get" class="card card-body py-2 mb-3">
     <div class="row g-2 align-items-end">
         <div class="col-12 col-md-4">
-            <label class="form-label small text-body-secondary mb-1" for="id_academic_year">
-                {% translate "Academic year" %}
-            </label>
-            <select name="academic_year" id="id_academic_year" class="form-select form-select-sm"
-                    data-combo data-combo-placeholder="{% translate 'Search or select…' %}">
+            <label class="form-label small text-body-secondary mb-1" for="id_academic_year">{% translate "Academic year" %}</label>
+            <select name="academic_year" id="id_academic_year" class="form-select form-select-sm" data-combo data-combo-placeholder="{% translate 'Search or select…' %}">
                 {% for item in years %}
-                    <option value="{{ item.pk }}" {% if year and item.pk == year.pk %}selected{% endif %}>
-                        {{ item.name }}
-                    </option>
+                    <option value="{{ item.pk }}" {% if year and item.pk == year.pk %}selected{% endif %}>{{ item.name }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-12 col-md-5">
-            <label class="form-label small text-body-secondary mb-1" for="id_section">
-                {% translate "Class and section" %}
-            </label>
-            <select name="section" id="id_section" class="form-select form-select-sm"
-                    data-combo data-combo-placeholder="{% translate 'Search or select…' %}">
+            <label class="form-label small text-body-secondary mb-1" for="id_section">{% translate "Class and section" %}</label>
+            <select name="section" id="id_section" class="form-select form-select-sm" data-combo data-combo-placeholder="{% translate 'Search or select…' %}">
                 {% for item in sections %}
-                    <option value="{{ item.pk }}" {% if section and item.pk == section.pk %}selected{% endif %}>
-                        {{ item }}
-                    </option>
+                    <option value="{{ item.pk }}" {% if section and item.pk == section.pk %}selected{% endif %}>{{ item }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -58,31 +45,38 @@
 {% if not section or not year %}
     <div class="card">
         <div class="card-body text-center py-5">
-            <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
-                         rounded-circle bg-body-tertiary text-body-secondary mb-3">
+            <span class="empty-state-icon d-inline-flex align-items-center justify-content-center rounded-circle bg-body-tertiary text-body-secondary mb-3">
                 <i class="bi bi-calendar-week fs-3" aria-hidden="true"></i>
             </span>
             <p class="fw-medium mb-1">{% translate "Nothing to show yet" %}</p>
-            <p class="text-body-secondary small mb-3">
-                {% translate "A timetable needs an academic year and a section to belong to." %}
-            </p>
+            <p class="text-body-secondary small mb-3">{% translate "A timetable needs an academic year and a section to belong to." %}</p>
             <a class="btn btn-sm btn-outline-primary" href="{% url 'academics:section_list' %}">
                 <i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% translate "Manage sections" %}
             </a>
         </div>
     </div>
 {% else %}
+    <div class="alert alert-light border d-flex gap-2 py-2 mb-3" role="status">
+        <i class="bi bi-calendar-week mt-1" aria-hidden="true"></i>
+        <span><strong>{% translate "Working days:" %}</strong> {{ working_day_schedule }} <span class="text-body-secondary">· {% translate "Saturday and Sunday are off days and are not shown." %}</span></span>
+    </div>
+
+    {% if weekend_slot_count %}
+        <div class="alert alert-warning d-flex gap-2" role="alert">
+            <i class="bi bi-exclamation-triangle mt-1" aria-hidden="true"></i>
+            <div>
+                <p class="fw-medium mb-1">{% blocktranslate count counter=weekend_slot_count %}{{ counter }} existing weekend lesson needs review{% plural %}{{ counter }} existing weekend lessons need review{% endblocktranslate %}</p>
+                <p class="mb-0 small">{% translate "Weekend records were kept safely and are hidden from the working-week grid. Edit or remove them explicitly if they are no longer needed." %}</p>
+            </div>
+        </div>
+    {% endif %}
 
     {% if conflicts %}
         <div class="alert alert-warning d-flex gap-2" role="alert">
             <i class="bi bi-exclamation-triangle mt-1" aria-hidden="true"></i>
             <div>
-                <p class="fw-medium mb-1">
-                    {% blocktranslate count counter=conflicts|length %}{{ counter }} teacher is double-booked{% plural %}{{ counter }} teachers are double-booked{% endblocktranslate %}
-                </p>
-                <p class="mb-0 small">
-                    {% translate "The lessons marked below need a teacher who is already with another section in that period." %}
-                </p>
+                <p class="fw-medium mb-1">{% blocktranslate count counter=conflicts|length %}{{ counter }} teacher is double-booked{% plural %}{{ counter }} teachers are double-booked{% endblocktranslate %}</p>
+                <p class="mb-0 small">{% translate "The lessons marked below need a teacher who is already with another section in that period." %}</p>
             </div>
         </div>
     {% endif %}
@@ -93,56 +87,28 @@
                 <thead>
                 <tr>
                     <th scope="col" class="text-nowrap">{% translate "Period" %}</th>
-                    {% for day in weekdays %}
-                        <th scope="col" class="text-nowrap">{{ day.label }}</th>
-                    {% endfor %}
+                    {% for day in weekdays %}<th scope="col" class="text-nowrap">{{ day.label }}</th>{% endfor %}
                 </tr>
                 </thead>
                 <tbody>
                 {% for line in grid %}
                     <tr>
-                        <th scope="row" class="text-nowrap align-middle">
-                            {% blocktranslate with number=line.period %}Period {{ number }}{% endblocktranslate %}
-                        </th>
+                        <th scope="row" class="text-nowrap align-middle">{% blocktranslate with number=line.period %}Period {{ number }}{% endblocktranslate %}</th>
                         {% for cell in line.cells %}
                             <td class="timetable-cell p-1">
                                 {% if cell.slot %}
-                                    <a class="timetable-lesson d-block text-decoration-none p-2 rounded
-                                              {% if cell.conflict %}is-conflicted{% endif %}"
+                                    <a class="timetable-lesson d-block text-decoration-none p-2 rounded {% if cell.conflict %}is-conflicted{% endif %}"
                                        href="{% url 'academics:timetable_detail' cell.slot.pk %}"
-                                       {% if can_edit %}
-                                           data-modal-url="{{ cell.edit_url }}"
-                                           data-modal-title="{% translate 'Edit lesson' %}"
-                                       {% endif %}>
-                                        <span class="d-block fw-medium text-body text-truncate">
-                                            {{ cell.slot.class_subject.subject.name }}
-                                        </span>
+                                       {% if can_edit %}data-modal-url="{{ cell.edit_url }}" data-modal-title="{% translate 'Edit lesson' %}"{% endif %}>
+                                        <span class="d-block fw-medium text-body text-truncate">{{ cell.slot.class_subject.subject.name }}</span>
                                         <span class="d-block small text-body-secondary text-truncate">
-                                            {% if cell.slot.teacher %}
-                                                {{ cell.slot.teacher.full_name }}
-                                            {% else %}
-                                                <i class="bi bi-person-dash me-1" aria-hidden="true"></i>{% translate "No teacher" %}
-                                            {% endif %}
+                                            {% if cell.slot.teacher %}{{ cell.slot.teacher.full_name }}{% else %}<i class="bi bi-person-dash me-1" aria-hidden="true"></i>{% translate "No teacher" %}{% endif %}
                                         </span>
-                                        <span class="d-block small text-body-secondary">
-                                            {{ cell.slot.start_time|time:"H:i" }}–{{ cell.slot.end_time|time:"H:i" }}
-                                            {% if cell.slot.room %} · {{ cell.slot.room }}{% endif %}
-                                        </span>
-                                        {% if cell.conflict %}
-                                            <span class="badge text-bg-warning-subtle text-warning-emphasis border border-warning-subtle mt-1">
-                                                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
-                                                {% blocktranslate with other=cell.conflict.section %}Also with {{ other }}{% endblocktranslate %}
-                                            </span>
-                                        {% endif %}
+                                        <span class="d-block small text-body-secondary">{{ cell.slot.start_time|time:"H:i" }}–{{ cell.slot.end_time|time:"H:i" }}{% if cell.slot.room %} · {{ cell.slot.room }}{% endif %}</span>
+                                        {% if cell.conflict %}<span class="badge text-bg-warning-subtle text-warning-emphasis border border-warning-subtle mt-1"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% blocktranslate with other=cell.conflict.section %}Also with {{ other }}{% endblocktranslate %}</span>{% endif %}
                                     </a>
                                 {% elif can_edit %}
-                                    <a class="timetable-empty d-block text-center text-decoration-none p-2 rounded"
-                                       href="{{ cell.add_url }}"
-                                       data-modal-url="{{ cell.add_url }}"
-                                       data-modal-title="{{ cell.label }}"
-                                       aria-label="{{ cell.label }}">
-                                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                                    </a>
+                                    <a class="timetable-empty d-block text-center text-decoration-none p-2 rounded" href="{{ cell.add_url }}" data-modal-url="{{ cell.add_url }}" data-modal-title="{{ cell.label }}" aria-label="{{ cell.label }}"><i class="bi bi-plus-lg" aria-hidden="true"></i></a>
                                 {% else %}
                                     <span class="timetable-empty d-block text-center p-2 text-body-secondary">—</span>
                                 {% endif %}
@@ -154,15 +120,10 @@
             </table>
         </div>
         <div class="card-footer bg-transparent d-flex flex-wrap gap-3 small text-body-secondary">
-            <span>
-                {% blocktranslate count counter=slot_count %}{{ counter }} lesson this week{% plural %}{{ counter }} lessons this week{% endblocktranslate %}
-            </span>
+            <span>{% blocktranslate count counter=slot_count %}{{ counter }} lesson this week{% plural %}{{ counter }} lessons this week{% endblocktranslate %}</span>
             <span class="flex-grow-1"></span>
-            <a href="{% url 'academics:section_detail' section.pk %}">
-                <i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% translate "Open this section" %}
-            </a>
+            <a href="{% url 'academics:section_detail' section.pk %}"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% translate "Open this section" %}</a>
         </div>
     </div>
 {% endif %}
-
 {% endblock %}
