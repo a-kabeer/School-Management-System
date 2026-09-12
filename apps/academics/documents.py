@@ -54,7 +54,11 @@ def _timetable_rows(slots, weekdays, include_section=False):
             "subject": slot.class_subject.subject.name,
             "teacher": slot.teacher.full_name if slot.teacher else "",
             "room": slot.room or "",
-            "section": slot.section.name if include_section else "",
+            "class_section": (
+                f"{slot.section.school_class.name} / {slot.section.name}"
+                if include_section and slot.section_id
+                else ""
+            ),
         }
     rows = []
     for period in sorted(periods):
@@ -84,7 +88,11 @@ def _timetable_document(request, year, slots, **objects):
             "title": _("Weekly Timetable"),
             "timetable": True,
             "weekdays": [{"value": day, "label": Timetable.Weekday(day).label} for day in weekdays],
-            "rows": _timetable_rows(slots, weekdays, include_section=bool(objects.get("school_class") and not objects.get("section"))),
+            "rows": _timetable_rows(
+                slots,
+                weekdays,
+                include_section=bool(objects.get("teacher") or (objects.get("school_class") and not objects.get("section"))),
+            ),
         }],
         "objects": objects,
     }
