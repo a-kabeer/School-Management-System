@@ -1,9 +1,8 @@
 {% load i18n core_extras %}
-{% comment %}One empty state for the whole application, and it says which of
-   two different things has happened: a list nobody has filled in yet, or a
-   search that matched nothing. The first offers the Add button; the second
-   offers a way back out of the filters. Views can override the icon with
-   `empty_icon` and the message with `empty_message`.{% endcomment %}
+{% comment %}One empty state for the whole application. A filtered list explains
+why nothing matched; an unfiltered list explains what is empty, why it may be
+empty, and the next action. Views can override the icon/message/reason.
+{% endcomment %}
 {% if filter_active %}
     <div class="text-center py-5 px-3" role="status" aria-live="polite">
         <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
@@ -31,7 +30,11 @@
         </span>
         <h2 class="h6 fw-medium mb-1">{{ empty_message|default:_("Nothing here yet") }}</h2>
         <p class="text-body-secondary small mb-3">
-            {% translate "Records you add will appear here." %}
+            {% if empty_reason %}
+                {{ empty_reason }}
+            {% else %}
+                {% translate "This list can be empty until the administrator creates or activates records for this branch." %}
+            {% endif %}
         </p>
         {% if can_create and create_url_name %}
             {% url_or_blank create_url_name as create_url %}
