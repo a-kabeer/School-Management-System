@@ -1,58 +1,19 @@
 {% load i18n humanize core_extras %}
-{% comment %}The bar above every table: how many rows there are, how many to
-   show at a time, which columns to show, and the export. Everything here
-   changes the query string and reloads, because the sorting, filtering and
-   paging it drives all happen in the database.{% endcomment %}
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
     <p class="small text-body-secondary mb-0" role="status" data-table-count>
-        {% if paginator.count %}
-            {% blocktranslate with start=page_obj.start_index|intcomma end=page_obj.end_index|intcomma total=paginator.count|intcomma %}Showing {{ start }}–{{ end }} of {{ total }}{% endblocktranslate %}
-        {% else %}
-            {% translate "No records" %}
-        {% endif %}
+        {% if paginator.count %}{% blocktranslate with start=page_obj.start_index|intcomma end=page_obj.end_index|intcomma total=paginator.count|intcomma %}Showing {{ start }}–{{ end }} of {{ total }}{% endblocktranslate %}{% else %}{% translate "No records" %}{% endif %}
     </p>
-
-    <div class="d-flex flex-wrap align-items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2 table-toolbar-actions">
         {% if show_column_toggle %}
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                    <i class="bi bi-layout-three-columns me-1" aria-hidden="true"></i>{% translate "Columns" %}
-                </button>
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="viewport" aria-expanded="false"><i class="bi bi-layout-three-columns me-1" aria-hidden="true"></i>{% translate "Columns" %}</button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm p-2" data-column-menu>
-                    {% for column in table_columns %}
-                        <li>
-                            <label class="dropdown-item d-flex align-items-center gap-2 mb-0">
-                                <input class="form-check-input m-0" type="checkbox" checked
-                                       data-column-toggle="{{ forloop.counter0 }}">
-                                <span>{{ column.label }}</span>
-                            </label>
-                        </li>
-                    {% endfor %}
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <button type="button" class="dropdown-item" data-column-reset>
-                            {% translate "Show all columns" %}
-                        </button>
-                    </li>
+                    {% for column in table_columns %}<li><label class="dropdown-item d-flex align-items-center gap-2 mb-0"><input class="form-check-input m-0" type="checkbox" checked data-column-toggle="{{ forloop.counter0 }}"><span class="text-wrap">{{ column.label }}</span></label></li>{% endfor %}
+                    <li><hr class="dropdown-divider"></li><li><button type="button" class="dropdown-item" data-column-reset>{% translate "Show all columns" %}</button></li>
                 </ul>
             </div>
         {% endif %}
-
-        {% if exportable %}
-            <a class="btn btn-sm btn-outline-secondary"
-               href="{% query_replace export='xlsx' page="" %}">
-                <i class="bi bi-download me-1" aria-hidden="true"></i>{% translate "Export" %}
-            </a>
-        {% endif %}
-
-        <div class="d-flex align-items-center gap-1">
-            <label class="small text-body-secondary mb-0" for="per-page">{% translate "Rows" %}</label>
-            <select id="per-page" class="form-select form-select-sm w-auto" data-per-page>
-                {% for size in page_sizes %}
-                    <option value="{{ size }}" {% if size == per_page %}selected{% endif %}>{{ size }}</option>
-                {% endfor %}
-            </select>
-        </div>
+        {% if exportable %}<a class="btn btn-sm btn-outline-secondary" href="{% query_replace export='xlsx' page="" %}"><i class="bi bi-download me-1" aria-hidden="true"></i>{% translate "Export" %}</a>{% endif %}
+        <div class="d-flex align-items-center gap-1"><label class="small text-body-secondary mb-0" for="per-page">{% translate "Rows" %}</label><select id="per-page" class="form-select form-select-sm w-auto" data-per-page>{% for size in page_sizes %}<option value="{{ size }}" {% if size == per_page %}selected{% endif %}>{{ size }}</option>{% endfor %}</select></div>
     </div>
 </div>
