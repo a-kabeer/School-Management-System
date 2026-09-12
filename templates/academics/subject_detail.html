@@ -4,9 +4,7 @@
 {% block detail_actions %}
     {% has_perm "academics.change_subject" as can_edit %}
     {% if can_edit %}
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:subject_update' object.pk %}"
-           data-modal-url="{% url 'academics:subject_update' object.pk %}"
-           data-modal-title="{% translate 'Edit subject' %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:subject_update' object.pk %}?return_to={{ request.get_full_path|urlencode }}" data-modal-url="{% url 'academics:subject_update' object.pk %}?return_to={{ request.get_full_path|urlencode }}" data-modal-title="{% translate 'Edit subject' %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>
     {% endif %}
     <a class="btn btn-sm btn-primary" href="{% url 'academics:classsubject_list' %}?subject={{ object.pk }}"><i class="bi bi-mortarboard me-1" aria-hidden="true"></i>{% translate "Classes" %}</a>
     <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:assignment_list' %}?subject={{ object.pk }}"><i class="bi bi-person-video3 me-1" aria-hidden="true"></i>{% translate "Teachers" %}</a>
@@ -15,12 +13,7 @@
 {% block detail_body %}
 <div class="tab-pane fade show active" id="pane-overview" role="tabpanel" aria-labelledby="tab-overview">
     {% if not object.is_active %}<div class="alert alert-secondary d-flex gap-2" role="status"><i class="bi bi-slash-circle mt-1" aria-hidden="true"></i><span>{% translate "This subject is inactive. Existing records remain available, but it is not offered for new class assignments." %}</span></div>{% endif %}
-    <div class="row g-3 mb-3">
-        <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body py-3"><p class="text-body-secondary small mb-1">{% translate "Classes" %}</p><p class="fs-4 fw-semibold mb-0">{{ classes_card.total }}</p></div></div></div>
-        <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body py-3"><p class="text-body-secondary small mb-1">{% translate "Teachers" %}</p><p class="fs-4 fw-semibold mb-0">{{ teachers_card.total }}</p></div></div></div>
-        <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body py-3"><p class="text-body-secondary small mb-1">{% translate "Timetable Slots" %}</p><p class="fs-4 fw-semibold mb-0">{{ slot_count }}</p></div></div></div>
-        <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body py-3"><p class="text-body-secondary small mb-1">{% translate "Kind" %}</p><p class="fs-5 fw-semibold mb-0">{{ object.get_kind_display }}</p></div></div></div>
-    </div>
+    <div class="row g-3 mb-3"><div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body py-3"><p class="text-body-secondary small mb-1">{% translate "Classes" %}</p><p class="fs-4 fw-semibold mb-0">{{ classes_card.total }}</p></div></div></div><div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body py-3"><p class="text-body-secondary small mb-1">{% translate "Teachers" %}</p><p class="fs-4 fw-semibold mb-0">{{ teachers_card.total }}</p></div></div></div><div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body py-3"><p class="text-body-secondary small mb-1">{% translate "Timetable Slots" %}</p><p class="fs-4 fw-semibold mb-0">{{ slot_count }}</p></div></div></div><div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body py-3"><p class="text-body-secondary small mb-1">{% translate "Kind" %}</p><p class="fs-5 fw-semibold mb-0">{{ object.get_kind_display }}</p></div></div></div></div>
     {% include "components/related_card.html" with card=classes_card %}
 </div>
 <div class="tab-pane fade" id="pane-classes" role="tabpanel" aria-labelledby="tab-classes">{% include "components/related_card.html" with card=classes_card %}</div>
