@@ -4,10 +4,10 @@
 {% block detail_actions %}
     {% has_perm "academics.change_schoolclass" as can_edit %}
     {% if can_edit %}<a class="btn btn-sm btn-primary" href="{% url 'academics:class_update' object.pk %}?return_to={{ request.get_full_path|urlencode }}" data-modal-url="{% url 'academics:class_update' object.pk %}?return_to={{ request.get_full_path|urlencode }}" data-modal-title="{% translate 'Edit class' %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>{% endif %}
-    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:section_list' %}?school_class={{ object.pk }}"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% translate "Sections" %}</a>
-    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:classsubject_list' %}?school_class={{ object.pk }}"><i class="bi bi-journal-text me-1" aria-hidden="true"></i>{% translate "Class Subjects" %}</a>
-    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:assignment_list' %}?school_class={{ object.pk }}"><i class="bi bi-person-video3 me-1" aria-hidden="true"></i>{% translate "Teachers" %}</a>
-    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:timetable' %}?school_class={{ object.pk }}"><i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Timetable" %}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:section_list' %}?school_class={{ object.pk }}&return_to={{ request.get_full_path|urlencode }}"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% translate "Sections" %}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:classsubject_list' %}?school_class={{ object.pk }}&return_to={{ request.get_full_path|urlencode }}"><i class="bi bi-journal-text me-1" aria-hidden="true"></i>{% translate "Class Subjects" %}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:assignment_list' %}?school_class={{ object.pk }}&return_to={{ request.get_full_path|urlencode }}"><i class="bi bi-person-video3 me-1" aria-hidden="true"></i>{% translate "Teachers" %}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:timetable' %}?school_class={{ object.pk }}&return_to={{ request.get_full_path|urlencode }}"><i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Timetable" %}</a>
 {% endblock %}
 
 {% block detail_body %}
