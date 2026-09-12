@@ -4,136 +4,207 @@
    Interaction rules this encodes, so every list behaves the same way:
    - the first column is the record's name and is a proper link, not a tiny
      one inside a wall of text;
+   - a column header sorts in the database, not in the browser, and says
+     which way it is sorted;
    - View and Edit are icon buttons with real labels for screen readers;
    - anything destructive lives behind a kebab menu, so it cannot be hit by
      accident next to the everyday actions;
    - the whole table sits in a `table-responsive` scroller, so a wide table
      never drags the page sideways on a phone.{% endcomment %}
-<div class="card mb-3">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 app-table">
-            <thead>
-            <tr>
-                {% for column in table_columns %}
-                    <th scope="col" class="text-nowrap {% if column.type == 'money' %}text-end{% endif %}">
-                        {{ column.label }}
-                    </th>
+<form method="post" class="app-table-form" data-table-form>
+    {% csrf_token %}
+
+    {% if selectable %}
+        {% comment %}The selection bar only exists once something is ticked, so
+           a table nobody is acting on stays quiet.{% endcomment %}
+        <div class="app-bulk-bar card card-body py-2 mb-2 d-none" data-bulk-bar>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="fw-medium">
+                    <span data-bulk-count>0</span> {% translate "selected" %}
+                </span>
+                <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 ms-1"
+                        data-bulk-clear>{% translate "Clear" %}</button>
+                <span class="flex-grow-1"></span>
+                {% for action in bulk_actions %}
+                    <button type="submit" name="action" value="{{ action.key }}"
+                            class="btn btn-sm btn-{{ action.variant|default:'outline-secondary' }}"
+                            {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}>
+                        {% if action.icon %}<i class="bi {{ action.icon }} me-1" aria-hidden="true"></i>{% endif %}
+                        {{ action.label }}
+                    </button>
                 {% endfor %}
-                {% if detail_url_name or update_url_name or delete_url_name %}
-                    <th scope="col" class="text-end text-nowrap">{% translate "Actions" %}</th>
-                {% endif %}
-            </tr>
-            </thead>
-            <tbody>
-            {% for object in objects %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card mb-3" data-table-card>
+        <div class="table-responsive {% if objects|length > 10 %}app-table-scroll{% endif %}">
+            <table class="table table-hover align-middle mb-0 app-table" data-table
+                   {% if table_key %}data-table-key="{{ table_key }}"{% endif %}>
+                <thead>
                 <tr>
+                    {% if selectable %}
+                        <th scope="col" class="app-table-check">
+                            <input class="form-check-input" type="checkbox" data-select-all
+                                   aria-label="{% translate 'Select all rows on this page' %}">
+                        </th>
+                    {% endif %}
                     {% for column in table_columns %}
-                        <td class="{% if column.type == 'money' %}text-end font-monospace{% endif %}"
-                            data-label="{{ column.label }}">
-                            {% if forloop.first and detail_url_name %}
-                                {% url_or_blank detail_url_name object.pk as row_url %}
-                                {% if row_url %}
-                                    <a href="{{ row_url }}" class="fw-medium text-decoration-none app-row-link">
+                        <th scope="col" data-col="{{ forloop.counter0 }}"
+                            class="text-nowrap {% if column.type == 'money' %}text-end{% endif %}"
+                            {% if column.is_sorted %}aria-sort="{% if column.sort_dir == 'desc' %}descending{% else %}ascending{% endif %}"{% endif %}>
+                            {% if column.sortable %}
+                                <a class="app-th-sort text-decoration-none text-reset d-inline-flex align-items-center gap-1"
+                                   data-table-nav
+                                   href="{% query_replace sort=column.field dir=column.next_dir page="" %}">
+                                    <span>{{ column.label }}</span>
+                                    {% if column.is_sorted %}
+                                        <i class="bi {% if column.sort_dir == 'desc' %}bi-sort-down{% else %}bi-sort-up{% endif %}"
+                                           aria-hidden="true"></i>
+                                        <span class="visually-hidden">
+                                            {% if column.sort_dir == 'desc' %}{% translate "sorted descending" %}{% else %}{% translate "sorted ascending" %}{% endif %}
+                                        </span>
+                                    {% else %}
+                                        <i class="bi bi-arrow-down-up app-th-hint" aria-hidden="true"></i>
+                                    {% endif %}
+                                </a>
+                            {% else %}
+                                {{ column.label }}
+                            {% endif %}
+                        </th>
+                    {% endfor %}
+                    {% if detail_url_name or update_url_name or delete_url_name or row_actions_template %}
+                        <th scope="col" class="text-end text-nowrap">{% translate "Actions" %}</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for object in objects %}
+                    <tr>
+                        {% if selectable %}
+                            <td class="app-table-check" data-label="{% translate 'Select' %}">
+                                <input class="form-check-input" type="checkbox" name="selected"
+                                       value="{{ object.pk }}" data-row-select
+                                       aria-label="{% translate 'Select this row' %}">
+                            </td>
+                        {% endif %}
+                        {% for column in table_columns %}
+                            <td data-col="{{ forloop.counter0 }}"
+                                class="{% if column.type == 'money' %}text-end font-monospace{% endif %}"
+                                data-label="{{ column.label }}">
+                                {% if forloop.first and detail_url_name %}
+                                    {% url_or_blank detail_url_name object.pk as row_url %}
+                                    {% if row_url %}
+                                        <a href="{{ row_url }}" class="fw-medium text-decoration-none app-row-link">
+                                            {{ object|attr:column.field|default:"—" }}
+                                        </a>
+                                    {% else %}
                                         {{ object|attr:column.field|default:"—" }}
-                                    </a>
+                                    {% endif %}
+                                {% elif column.type == 'bool' %}
+                                    {% if object|attr:column.field %}
+                                        <span class="badge rounded-pill text-bg-success-subtle text-success-emphasis border border-success-subtle">
+                                            <i class="bi bi-check-lg" aria-hidden="true"></i> {% translate "Yes" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border">
+                                            {% translate "No" %}
+                                        </span>
+                                    {% endif %}
+                                {% elif column.type == 'choice' %}
+                                    <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border">
+                                        {{ object|display:column.field }}
+                                    </span>
+                                {% elif column.type == 'money' %}
+                                    {{ object|attr:column.field|money }}
+                                {% elif column.type == 'date' %}
+                                    {{ object|attr:column.field|date:"Y-m-d"|default:"—" }}
+                                {% elif column.type == 'datetime' %}
+                                    {{ object|attr:column.field|date:"Y-m-d H:i"|default:"—" }}
+                                {% elif column.type == 'time' %}
+                                    {{ object|attr:column.field|time:"H:i"|default:"—" }}
+                                {% elif column.type == 'list' %}
+                                    {{ object|attr:column.field|join:", "|default:"—" }}
                                 {% else %}
                                     {{ object|attr:column.field|default:"—" }}
                                 {% endif %}
-                            {% elif column.type == 'bool' %}
-                                {% if object|attr:column.field %}
-                                    <span class="badge rounded-pill text-bg-success-subtle text-success-emphasis border border-success-subtle">
-                                        <i class="bi bi-check-lg" aria-hidden="true"></i> {% translate "Yes" %}
-                                    </span>
-                                {% else %}
-                                    <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border">
-                                        {% translate "No" %}
-                                    </span>
-                                {% endif %}
-                            {% elif column.type == 'choice' %}
-                                <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border">
-                                    {{ object|display:column.field }}
-                                </span>
-                            {% elif column.type == 'money' %}
-                                {{ object|attr:column.field|money }}
-                            {% elif column.type == 'date' %}
-                                {{ object|attr:column.field|date:"Y-m-d"|default:"—" }}
-                            {% elif column.type == 'datetime' %}
-                                {{ object|attr:column.field|date:"Y-m-d H:i"|default:"—" }}
-                            {% elif column.type == 'time' %}
-                                {{ object|attr:column.field|time:"H:i"|default:"—" }}
-                            {% elif column.type == 'list' %}
-                                {{ object|attr:column.field|join:", "|default:"—" }}
-                            {% else %}
-                                {{ object|attr:column.field|default:"—" }}
-                            {% endif %}
-                        </td>
-                    {% endfor %}
+                            </td>
+                        {% endfor %}
 
-                    {% if detail_url_name or update_url_name or delete_url_name %}
-                        {% url_or_blank detail_url_name object.pk as detail_url %}
-                        {% url_or_blank update_url_name object.pk as update_url %}
-                        {% url_or_blank delete_url_name object.pk as delete_url %}
-                        <td class="text-end text-nowrap">
-                            <div class="d-inline-flex align-items-center gap-1">
-                                {% if detail_url %}
-                                    <a class="btn btn-sm btn-outline-secondary app-icon-btn" href="{{ detail_url }}"
-                                       title="{% translate 'View' %}">
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
-                                        <span class="visually-hidden">{% translate "View" %}</span>
-                                    </a>
-                                {% endif %}
-                                {% if update_url %}
-                                    <a class="btn btn-sm btn-outline-secondary app-icon-btn" href="{{ update_url }}"
-                                       title="{% translate 'Edit' %}">
-                                        <i class="bi bi-pencil" aria-hidden="true"></i>
-                                        <span class="visually-hidden">{% translate "Edit" %}</span>
-                                    </a>
-                                {% endif %}
-                                {% if delete_url %}
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary app-icon-btn" type="button"
-                                                data-bs-toggle="dropdown" data-bs-boundary="viewport"
-                                                aria-expanded="false" title="{% translate 'More actions' %}">
-                                            <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
-                                            <span class="visually-hidden">{% translate "More actions" %}</span>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                            {% if detail_url %}
+                        {% if detail_url_name or update_url_name or delete_url_name or row_actions_template %}
+                            {% url_or_blank detail_url_name object.pk as detail_url %}
+                            {% url_or_blank update_url_name object.pk as update_url %}
+                            {% url_or_blank delete_url_name object.pk as delete_url %}
+                            <td class="text-end text-nowrap">
+                                <div class="d-inline-flex align-items-center gap-1">
+                                    {% comment %}One slot for a verb this module
+                                       has and others do not - correcting a
+                                       clock-in, say. It sits before the
+                                       everyday actions so those stay where the
+                                       eye expects them.{% endcomment %}
+                                    {% if row_actions_template %}
+                                        {% include row_actions_template %}
+                                    {% endif %}
+                                    {% if detail_url %}
+                                        <a class="btn btn-sm btn-outline-secondary app-icon-btn" href="{{ detail_url }}"
+                                           title="{% translate 'View' %}">
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                            <span class="visually-hidden">{% translate "View" %}</span>
+                                        </a>
+                                    {% endif %}
+                                    {% if update_url %}
+                                        <a class="btn btn-sm btn-outline-secondary app-icon-btn" href="{{ update_url }}"
+                                           title="{% translate 'Edit' %}">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                                            <span class="visually-hidden">{% translate "Edit" %}</span>
+                                        </a>
+                                    {% endif %}
+                                    {% if delete_url %}
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary app-icon-btn" type="button"
+                                                    data-bs-toggle="dropdown" data-bs-boundary="viewport"
+                                                    aria-expanded="false" title="{% translate 'More actions' %}">
+                                                <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+                                                <span class="visually-hidden">{% translate "More actions" %}</span>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                                {% if detail_url %}
+                                                    <li>
+                                                        <a class="dropdown-item d-flex align-items-center gap-2" href="{{ detail_url }}">
+                                                            <i class="bi bi-eye" aria-hidden="true"></i>{% translate "View" %}
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                                {% if update_url %}
+                                                    <li>
+                                                        <a class="dropdown-item d-flex align-items-center gap-2" href="{{ update_url }}">
+                                                            <i class="bi bi-pencil" aria-hidden="true"></i>{% translate "Edit" %}
+                                                        </a>
+                                                    </li>
+                                                {% endif %}
+                                                <li><hr class="dropdown-divider"></li>
                                                 <li>
-                                                    <a class="dropdown-item d-flex align-items-center gap-2" href="{{ detail_url }}">
-                                                        <i class="bi bi-eye" aria-hidden="true"></i>{% translate "View" %}
+                                                    <a class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                                                       href="{{ delete_url }}">
+                                                        <i class="bi bi-trash" aria-hidden="true"></i>{% translate "Delete" %}
                                                     </a>
                                                 </li>
-                                            {% endif %}
-                                            {% if update_url %}
-                                                <li>
-                                                    <a class="dropdown-item d-flex align-items-center gap-2" href="{{ update_url }}">
-                                                        <i class="bi bi-pencil" aria-hidden="true"></i>{% translate "Edit" %}
-                                                    </a>
-                                                </li>
-                                            {% endif %}
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                                                   href="{{ delete_url }}">
-                                                    <i class="bi bi-trash" aria-hidden="true"></i>{% translate "Delete" %}
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                {% endif %}
-                            </div>
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="{{ table_columns|length|add:3 }}" class="p-0 border-0">
+                            {% include "components/empty_state.html" %}
                         </td>
-                    {% endif %}
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="{{ table_columns|length|add:1 }}" class="p-0 border-0">
-                        {% include "components/empty_state.html" %}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+</form>

@@ -10,17 +10,12 @@
     </a>
 {% endblock %}
 
-{% comment %}The staff register carries a per-row correction, which the shared
-   table component has no place for, so this screen renders its own table
-   rather than bending the component out of shape for one caller.{% endcomment %}
-{% block content %}
+{% block list_intro %}
 {% has_perm "attendance.add_staffattendance" as can_mark %}
-{% has_perm "attendance.change_staffattendance" as can_correct %}
-
 {% if can_mark %}
 <details class="card mb-3">
     <summary class="card-header fw-semibold">{% translate "Mark staff attendance by hand" %}</summary>
-    <form method="post" class="register-form">
+    <form method="post" class="register-form" action="{% url 'attendance:staff_list' %}">
         {% csrf_token %}
         <input type="hidden" name="date" value="{{ mark_date|date:'Y-m-d' }}">
         <div class="card-body py-2 border-bottom">
@@ -61,78 +56,22 @@
             </table>
         </div>
         <div class="card-footer">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" name="action" value="mark" class="btn btn-primary">
                 <i class="bi bi-save me-1" aria-hidden="true"></i>{% translate "Save staff attendance" %}
             </button>
         </div>
     </form>
 </details>
 {% endif %}
+{% endblock %}
 
-{% include "components/filters.html" %}
+{% block content %}
+{{ block.super }}
 
-<div class="card mb-3">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 app-table">
-            <thead>
-            <tr>
-                <th scope="col">{% translate "Staff" %}</th>
-                <th scope="col">{% translate "Date" %}</th>
-                <th scope="col">{% translate "Status" %}</th>
-                <th scope="col">{% translate "In" %}</th>
-                <th scope="col">{% translate "Out" %}</th>
-                <th scope="col">{% translate "Hours" %}</th>
-                <th scope="col">{% translate "Remarks" %}</th>
-                {% if can_correct %}<th scope="col" class="text-end text-nowrap">{% translate "Actions" %}</th>{% endif %}
-            </tr>
-            </thead>
-            <tbody>
-            {% for record in objects %}
-                <tr>
-                    <td data-label="{% translate 'Staff' %}">
-                        <span class="fw-medium">{{ record.staff.full_name }}</span>
-                        <span class="d-block text-body-secondary small">{{ record.staff.employee_no }}</span>
-                    </td>
-                    <td data-label="{% translate 'Date' %}" class="text-nowrap">{{ record.date|date:"Y-m-d" }}</td>
-                    <td data-label="{% translate 'Status' %}">
-                        <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary border">
-                            {{ record.get_status_display }}
-                        </span>
-                    </td>
-                    <td data-label="{% translate 'In' %}">{{ record.check_in|time:"H:i"|default:"—" }}</td>
-                    <td data-label="{% translate 'Out' %}">{{ record.check_out|time:"H:i"|default:"—" }}</td>
-                    <td data-label="{% translate 'Hours' %}" class="text-nowrap">{{ record.worked_hours_display }}</td>
-                    <td data-label="{% translate 'Remarks' %}">{{ record.remarks|default:"—" }}</td>
-                    {% if can_correct %}
-                        <td class="text-end text-nowrap">
-                            <button type="button" class="btn btn-sm btn-outline-secondary app-icon-btn"
-                                    data-bs-toggle="modal" data-bs-target="#correct-modal"
-                                    title="{% translate 'Correct' %}"
-                                    data-correct-url="{% url 'attendance:staff_correct' record.pk %}"
-                                    data-correct-name="{{ record.staff.full_name }} · {{ record.date|date:'Y-m-d' }}"
-                                    data-correct-status="{{ record.status }}"
-                                    data-correct-in="{{ record.check_in|time:'H:i' }}"
-                                    data-correct-out="{{ record.check_out|time:'H:i' }}"
-                                    data-correct-remarks="{{ record.remarks }}">
-                                <i class="bi bi-pencil" aria-hidden="true"></i>
-                                <span class="visually-hidden">{% translate "Correct" %}</span>
-                            </button>
-                        </td>
-                    {% endif %}
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="8" class="p-0 border-0">{% include "components/empty_state.html" %}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{% include "includes/pagination.html" %}
-
+{% has_perm "attendance.change_staffattendance" as can_correct %}
 {% if can_correct %}
+{% comment %}One modal serves every row: the row's Correct button carries that
+   row's values into it, so the page does not repeat a form per record.{% endcomment %}
 <div class="modal fade" id="correct-modal" tabindex="-1" aria-labelledby="correct-modal-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="post" class="modal-content" data-correct-form>

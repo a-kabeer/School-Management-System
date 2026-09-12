@@ -57,6 +57,22 @@ class FilterSpec:
             queryset = apply_date_range(queryset, request, self.date_field)
         return queryset
 
+    def params(self):
+        """Every query parameter this spec reads."""
+        names = {"q"} | set(self.choices) | set(self.selects)
+        if self.date_field:
+            names |= {"date_from", "date_to"}
+        return names
+
+    def is_active(self, request):
+        """Whether the reader has narrowed the list at all.
+
+        The empty state needs to tell "nobody has added one yet" apart from
+        "your search matched nothing", and only the spec knows which
+        parameters count as a filter here.
+        """
+        return any(request.GET.get(name) for name in self.params())
+
     def as_context(self, request):
         selects = []
         for param, spec in self.selects.items():
@@ -75,4 +91,5 @@ class FilterSpec:
             "filter_has_dates": bool(self.date_field),
             "filter_date_from": request.GET.get("date_from", ""),
             "filter_date_to": request.GET.get("date_to", ""),
+            "filter_active": self.is_active(request),
         }

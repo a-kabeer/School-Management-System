@@ -67,7 +67,7 @@ class BranchListView(TenantListView):
         {"label": _("Active"), "field": "is_active", "type": "bool"},
     )
 
-    def get_queryset(self):
+    def get_list_queryset(self):
         # Branch is the tenancy anchor itself, so it is filtered by the
         # organization and the user's access list rather than by `branch`.
         from apps.accounts.rbac import accessible_branches
@@ -75,7 +75,7 @@ class BranchListView(TenantListView):
         queryset = accessible_branches(self.request.user)
         if self.filter_spec:
             queryset = self.filter_spec.apply(queryset, self.request)
-        return queryset.order_by("name")
+        return queryset
 
 
 class BranchCreateView(TenantCreateView):

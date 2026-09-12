@@ -753,7 +753,7 @@ msgstr ""
 
 #: .\apps\accounts\views.py:125 .\templates\audit\activity_detail.html:9
 msgid "Role"
-msgstr ""
+msgstr "کردار"
 
 #: .\apps\accounts\views.py:126 .\apps\finance\forms.py:100
 #: .\apps\finance\views.py:169 .\apps\staff\views.py:148
@@ -1025,7 +1025,7 @@ msgstr "طالب علم"
 #: .\templates\attendance\session_detail.html:26
 #: .\templates\parents\child_detail.html:19
 msgid "Remarks"
-msgstr ""
+msgstr "تبصرے"
 
 #: .\apps\attendance\views.py:196 .\apps\core\navigation.py:60
 msgid "Staff Attendance"
@@ -1083,11 +1083,11 @@ msgstr "حذف کریں"
 
 #: .\apps\audit\models.py:52
 msgid "Restore"
-msgstr ""
+msgstr "بحال کریں"
 
 #: .\apps\audit\models.py:53 .\templates\students\student_list.html:7
 msgid "Export"
-msgstr ""
+msgstr "برآمد کریں"
 
 #: .\apps\audit\models.py:54
 msgid "Import"
@@ -4234,7 +4234,7 @@ msgstr ""
 #: .\apps\reports\registry.py:256 .\apps\reports\registry.py:353
 #: .\apps\staff\views.py:58 .\templates\attendance\staff_list.html:15
 msgid "Employee #"
-msgstr ""
+msgstr "ملازم نمبر"
 
 #: .\apps\reports\registry.py:257 .\templates\payroll\run_detail.html:41
 #: .\templates\payroll\run_detail.html:52
@@ -5224,7 +5224,7 @@ msgstr ""
 #: .\templates\audit\activity_list.html:10
 #: .\templates\audit\activity_list.html:18
 msgid "When"
-msgstr ""
+msgstr "کب"
 
 #: .\templates\audit\activity_detail.html:8
 #: .\templates\audit\activity_list.html:10
@@ -5240,13 +5240,13 @@ msgstr ""
 #: .\templates\audit\activity_list.html:11
 #: .\templates\audit\activity_list.html:21
 msgid "Resource"
-msgstr ""
+msgstr "وسیلہ"
 
 #: .\templates\audit\activity_detail.html:14
 #: .\templates\audit\activity_list.html:12
 #: .\templates\audit\activity_list.html:22
 msgid "Object"
-msgstr ""
+msgstr "آبجیکٹ"
 
 #: .\templates\audit\activity_detail.html:15
 msgid "Path"
@@ -5271,7 +5271,7 @@ msgstr ""
 #: .\templates\audit\activity_list.html:13
 #: .\templates\audit\activity_list.html:24
 msgid "IP"
-msgstr ""
+msgstr "آئی پی"
 
 #: .\templates\audit\activity_list.html:25
 msgid "Details"
@@ -5287,7 +5287,7 @@ msgstr "مواد پر جائیں"
 
 #: .\templates\components\empty_state.html:8
 msgid "Add the first one"
-msgstr ""
+msgstr "پہلا شامل کریں"
 
 #: .\templates\components\filters.html:9
 msgid "Search…"
@@ -6020,3 +6020,103 @@ msgstr ""
 #: .\templates\tenants\branch_list.html:5
 msgid "You can only see branches you have been granted access to."
 msgstr ""
+
+#. Shared table interface: sorting, paging, selection and export.
+
+msgid "No records"
+msgstr "کوئی ریکارڈ نہیں"
+
+msgid "Columns"
+msgstr "کالم"
+
+msgid "Show all columns"
+msgstr "تمام کالم دکھائیں"
+
+msgid "Rows"
+msgstr "قطاریں"
+
+msgid "selected"
+msgstr "منتخب"
+
+msgid "Clear"
+msgstr "صاف کریں"
+
+msgid "Select all rows on this page"
+msgstr "اس صفحے کی تمام قطاریں منتخب کریں"
+
+msgid "Select this row"
+msgstr "یہ قطار منتخب کریں"
+
+msgid "Select"
+msgstr "منتخب کریں"
+
+msgid "sorted ascending"
+msgstr "صعودی ترتیب میں"
+
+msgid "sorted descending"
+msgstr "نزولی ترتیب میں"
+
+msgid "Clear search"
+msgstr "تلاش صاف کریں"
+
+msgid "Reset filters"
+msgstr "فلٹر ری سیٹ کریں"
+
+msgid "No matching records"
+msgstr "کوئی مماثل ریکارڈ نہیں"
+
+msgid "Nothing matches the current filters."
+msgstr "موجودہ فلٹرز سے کچھ مماثل نہیں۔"
+
+msgid "Nothing matches “%(term)s” with the current filters."
+msgstr "موجودہ فلٹرز کے ساتھ ”%(term)s“ سے کچھ مماثل نہیں۔"
+
+msgid "Delete selected"
+msgstr "منتخب حذف کریں"
+
+msgid "Delete the selected records? An administrator can restore them."
+msgstr "منتخب ریکارڈ حذف کریں؟ منتظم انہیں بحال کر سکتا ہے۔"
+
+msgid "Delete the selected records permanently?"
+msgstr "منتخب ریکارڈ مستقل طور پر حذف کریں؟"
+
+msgid "That action is not available here."
+msgstr "یہ عمل یہاں دستیاب نہیں۔"
+
+msgid "%(count)s records deleted."
+msgstr "%(count)s ریکارڈ حذف کر دیے گئے۔"
+
+msgid "Nothing was selected."
+msgstr "کچھ منتخب نہیں کیا گیا۔"
+
+msgid "%(count)s records are still in use and were kept."
+msgstr "%(count)s ریکارڈ زیرِ استعمال ہیں، اس لیے رکھے گئے۔"
+
+msgid "You are not allowed to export."
+msgstr "آپ کو برآمد کرنے کی اجازت نہیں۔"
+
+msgid "Every recorded action, newest first."
+msgstr "ہر ریکارڈ شدہ عمل، تازہ ترین پہلے۔"
+
+msgid "No activity recorded yet"
+msgstr "ابھی تک کوئی سرگرمی ریکارڈ نہیں ہوئی"
+
+msgid "Module"
+msgstr "ماڈیول"
+
+msgid "Nothing has been deleted"
+msgstr "کچھ حذف نہیں کیا گیا"
+
+msgid "Correct"
+msgstr "درست کریں"
+
+#. Shared table interface.
+
+msgid "Nothing here yet"
+msgstr "ابھی یہاں کچھ نہیں"
+
+msgid "Records you add will appear here."
+msgstr "آپ کے شامل کردہ ریکارڈ یہاں نظر آئیں گے۔"
+
+msgid "More actions"
+msgstr "مزید اعمال"

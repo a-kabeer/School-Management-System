@@ -1,8 +1,18 @@
 {% load i18n %}
 {% comment %}Shared filter bar. Submits with GET so a filtered view stays
-   shareable in the URL.{% endcomment %}
+   shareable in the URL — and so Back and Forward move between filter states
+   the way they move between pages.{% endcomment %}
 {% if filter_has_search or filter_selects or filter_has_dates %}
-<form method="get" class="card card-body py-2 mb-3">
+<form method="get" class="card card-body py-2 mb-3" data-table-filters>
+    {% comment %}Sorting and page size ride along as hidden fields: filtering
+       a list should not throw away the column the reader sorted by. Page is
+       deliberately absent, so a new filter starts at page one.{% endcomment %}
+    {% if table_sort %}
+        <input type="hidden" name="sort" value="{{ table_sort }}">
+        <input type="hidden" name="dir" value="{{ table_dir }}">
+    {% endif %}
+    <input type="hidden" name="per_page" value="{{ per_page }}">
+
     <div class="row g-2 align-items-center">
         {% if filter_has_search %}
             <div class="col-12 col-md-4 col-xl-3">
@@ -13,7 +23,14 @@
                     </span>
                     <input type="search" id="filter-q" name="q" value="{{ filter_search }}"
                            placeholder="{% translate 'Search…' %}" class="form-control"
-                           autocomplete="off" aria-describedby="search-icon">
+                           autocomplete="off" aria-describedby="search-icon" data-table-search>
+                    {% if filter_search %}
+                        <button type="button" class="btn btn-outline-secondary" data-search-clear
+                                title="{% translate 'Clear search' %}">
+                            <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            <span class="visually-hidden">{% translate "Clear search" %}</span>
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         {% endif %}
@@ -48,8 +65,11 @@
             <button type="submit" class="btn btn-sm btn-primary flex-fill">
                 <i class="bi bi-funnel me-1" aria-hidden="true"></i>{% translate "Filter" %}
             </button>
-            <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary flex-fill">
-                {% translate "Reset" %}
+            {% comment %}Reset clears the filters but keeps how the reader is
+               looking at the list — their sort column and page size.{% endcomment %}
+            <a class="btn btn-sm btn-outline-secondary flex-fill"
+               href="{{ request.path }}?per_page={{ per_page }}{% if table_sort %}&sort={{ table_sort }}&dir={{ table_dir }}{% endif %}">
+                {% translate "Reset filters" %}
             </a>
         </div>
     </div>

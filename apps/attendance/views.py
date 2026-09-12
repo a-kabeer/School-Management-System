@@ -378,12 +378,17 @@ class StaffAttendanceListView(TenantListView):
     )
     table_columns = (
         {"label": _("Staff"), "field": "staff.full_name"},
+        {"label": _("Employee #"), "field": "staff.employee_no"},
         {"label": _("Date"), "field": "date", "type": "date"},
         {"label": _("Status"), "field": "status", "type": "choice"},
         {"label": _("In"), "field": "check_in", "type": "time"},
         {"label": _("Out"), "field": "check_out", "type": "time"},
+        # Worked hours are computed from the two times, so the database has
+        # nothing to sort by; the times themselves do sort.
         {"label": _("Hours"), "field": "worked_hours_display"},
+        {"label": _("Remarks"), "field": "remarks"},
     )
+    row_actions_template = "attendance/_correct_action.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -406,6 +411,11 @@ class StaffAttendanceListView(TenantListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        # The shared table posts bulk actions here too, so this view answers
+        # only for its own.
+        if request.POST.get("action") != "mark":
+            return super().post(request, *args, **kwargs)
+
         require_permission(
             request.user, "attendance.add_staffattendance", self.active_branch
         )

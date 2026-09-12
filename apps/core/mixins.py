@@ -18,6 +18,7 @@ from django.views.generic import (
     View,
 )
 
+from . import tables
 from .filters import FilterSpec
 from .pagination import querystring_without_page
 from .permissions import PermissionRequiredMixin, user_has_permission
@@ -127,7 +128,13 @@ class BreadcrumbMixin:
 class TenantListView(
     PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, ListView
 ):
-    """List view with shared filtering, pagination and table rendering."""
+    """List view with shared filtering, sorting, pagination and rendering.
+
+    Subclasses needing a different starting queryset override
+    :meth:`get_list_queryset`, not ``get_queryset``: ordering is applied after
+    it, so a subclass that ordered its own rows would otherwise quietly
+    override the column the reader clicked.
+    """
 
     template_name = "components/object_list.html"
     context_object_name = "objects"
@@ -140,28 +147,227 @@ class TenantListView(
     delete_url_name = None
     create_permission = None
     empty_message = _("Nothing here yet.")
+    #: Template rendered in each row's action cell, for a verb only this
+    #: module has. It is given the row as ``object``.
+    row_actions_template = None
+    #: Extra bulk actions beyond the ones derived from the user's permissions.
+    bulk_actions = ()
+    #: Offer the filtered rows as a spreadsheet.
+    exportable = False
+    #: A wide table gets a column chooser; a narrow one does not need one.
+    column_toggle_from = 6
+    #: Rows an export may write, so one click cannot stream a whole database.
+    export_limit = 10000
 
+    # ------------------------------------------------------------------ data
     def get_paginate_by(self, queryset):
         from django.conf import settings
 
-        return getattr(self, "paginate_by", None) or settings.PAGE_SIZE
+        default = getattr(self, "paginate_by", None) or settings.PAGE_SIZE
+        return tables.page_size(self.request, default)
 
-    def get_queryset(self):
+    def get_list_queryset(self):
+        """The rows this view is about: filtered, but not yet ordered."""
         queryset = super().get_queryset()
         if self.filter_spec:
             queryset = self.filter_spec.apply(queryset, self.request)
-        ordering = getattr(self, "ordering", None)
-        if ordering:
-            queryset = queryset.order_by(*ordering)
         return queryset
 
+    def get_sort(self):
+        if not hasattr(self, "_sort_state"):
+            self._sort_state = tables.sort_state(
+                self.request,
+                self.model,
+                self.table_columns,
+                getattr(self, "ordering", None) or (),
+            )
+        return self._sort_state
+
+    def get_queryset(self):
+        return self.get_list_queryset().order_by(*self.get_sort()["ordering"])
+
+    def paginate_queryset(self, queryset, page_size):
+        """Clamp a bad page number rather than raising 404.
+
+        Growing the page size while deep in a list, or a hand-edited ``?page``,
+        would otherwise land the reader on an error page instead of on their
+        data. A number past the end means the last page; anything that is not
+        a page number at all means the first.
+        """
+        try:
+            return super().paginate_queryset(queryset, page_size)
+        except Http404:
+            paginator = self.get_paginator(
+                queryset,
+                page_size,
+                orphans=self.get_paginate_orphans(),
+                allow_empty_first_page=self.get_allow_empty(),
+            )
+            requested = self.kwargs.get(self.page_kwarg) or self.request.GET.get(
+                self.page_kwarg
+            )
+            try:
+                number = int(requested)
+            except (TypeError, ValueError):
+                number = 1
+            page = paginator.page(min(max(number, 1), paginator.num_pages))
+            return paginator, page, page.object_list, page.has_other_pages()
+
+    # --------------------------------------------------------------- actions
+    def get_bulk_actions(self):
+        """Bulk actions this user may run on this list.
+
+        Deleting several rows is the same authority as deleting one, so the
+        action appears exactly when the row menu's Delete does.
+        """
+        actions = []
+        if self.delete_url_name and user_has_permission(
+            self.request.user,
+            f"{self.model._meta.app_label}.delete_{self.model._meta.model_name}",
+            self.active_branch,
+        ):
+            actions.append(
+                {
+                    "key": "delete",
+                    "label": _("Delete selected"),
+                    "icon": "bi-trash",
+                    "variant": "outline-danger",
+                    # Some models retire a row and some erase it. The wording
+                    # has to say which, because only one of them is undoable.
+                    "confirm": _(
+                        "Delete the selected records? An administrator can restore them."
+                    )
+                    if hasattr(self.model, "restore")
+                    else _("Delete the selected records permanently?"),
+                }
+            )
+        return actions + list(self.bulk_actions)
+
+    def post(self, request, *args, **kwargs):
+        """Run a bulk action over the rows the reader ticked."""
+        from django.shortcuts import redirect
+
+        action = request.POST.get("action", "")
+        if action not in {entry["key"] for entry in self.get_bulk_actions()}:
+            raise PermissionDenied(_("That action is not available here."))
+
+        # The selection is re-read through this view own queryset, so an id
+        # posted from outside the user branches simply is not in it.
+        selected = self.get_list_queryset().filter(
+            pk__in=request.POST.getlist("selected")
+        )
+        self.handle_bulk_action(action, selected)
+        return redirect(request.get_full_path())
+
+    def handle_bulk_action(self, action, queryset):
+        from apps.audit.services import log_activity, snapshot
+
+        if action != "delete":
+            return
+
+        from django.db.models import ProtectedError, RestrictedError
+
+        count = 0
+        blocked = 0
+        for obj in queryset:
+            previous = snapshot(obj)
+            try:
+                obj.delete()
+            except (ProtectedError, RestrictedError):
+                # A row other records depend on stays; deleting the rest of
+                # the selection is still the right outcome.
+                blocked += 1
+                continue
+            log_activity(
+                request=self.request,
+                action="delete",
+                instance=obj,
+                previous_values=previous,
+                metadata={"event": "bulk_delete"},
+            )
+            count += 1
+
+        if count:
+            messages.success(
+                self.request, _("%(count)s records deleted.") % {"count": count}
+            )
+        elif not blocked:
+            messages.info(self.request, _("Nothing was selected."))
+
+        if blocked:
+            messages.warning(
+                self.request,
+                _("%(count)s records are still in use and were kept.")
+                % {"count": blocked},
+            )
+
+    def export_response(self, queryset):
+        """The current search, filters and sort, as a spreadsheet."""
+        from apps.audit.services import log_activity
+        from apps.core.templatetags.core_extras import attr, display
+        from apps.core.utils import export_to_excel
+
+        columns = list(self.table_columns)
+        rows = [
+            [
+                display(obj, column["field"])
+                if column.get("type") == "choice"
+                else attr(obj, column["field"])
+                for column in columns
+            ]
+            for obj in queryset[: self.export_limit]
+        ]
+
+        title = str(self.get_page_title() or self.model._meta.verbose_name_plural)
+        log_activity(
+            action="export",
+            request=self.request,
+            metadata={
+                "table": self.model._meta.label,
+                "rows": len(rows),
+                "filters": self.request.GET.dict(),
+            },
+        )
+        return export_to_excel(
+            title, [str(column["label"]) for column in columns], rows, sheet_title=title
+        )
+
+    def get(self, request, *args, **kwargs):
+        if self.exportable and request.GET.get("export") == "xlsx":
+            if not user_has_permission(
+                request.user, "core.export_report", self.active_branch
+            ):
+                raise PermissionDenied(_("You are not allowed to export."))
+            return self.export_response(self.get_queryset())
+        return super().get(request, *args, **kwargs)
+
+    # --------------------------------------------------------------- context
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.filter_spec:
             context.update(self.filter_spec.as_context(self.request))
+
+        sort = self.get_sort()
+        bulk_actions = self.get_bulk_actions()
         context.update(
             {
-                "table_columns": self.table_columns,
+                "table_columns": tables.column_headers(
+                    self.model, self.table_columns, sort
+                ),
+                "table_sort": sort["active"],
+                "table_dir": sort["direction"],
+                # Identifies this table saved column choices in the browser.
+                "table_key": getattr(self.request.resolver_match, "view_name", ""),
+                "page_sizes": tables.PAGE_SIZES,
+                "per_page": self.get_paginate_by(None),
+                "show_column_toggle": len(self.table_columns) >= self.column_toggle_from,
+                "bulk_actions": bulk_actions,
+                "selectable": bool(bulk_actions),
+                "exportable": self.exportable
+                and user_has_permission(
+                    self.request.user, "core.export_report", self.active_branch
+                ),
+                "row_actions_template": self.row_actions_template,
                 "create_url_name": self.create_url_name,
                 "detail_url_name": self.detail_url_name,
                 "update_url_name": self.update_url_name,

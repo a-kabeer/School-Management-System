@@ -157,11 +157,9 @@ class SavedReportListView(TenantListView):
         {"label": _("Shared"), "field": "is_shared", "type": "bool"},
     )
 
-    def get_queryset(self):
+    def get_list_queryset(self):
         from django.db.models import Q
 
-        return (
-            SavedReport.objects.for_user(self.request.user)
-            .filter(Q(is_shared=True) | Q(created_by=self.request.user))
-            .order_by("name")
+        return SavedReport.objects.for_user(self.request.user).filter(
+            Q(is_shared=True) | Q(created_by=self.request.user)
         )

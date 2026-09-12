@@ -100,3 +100,19 @@ def percentage(part, whole):
     if whole == 0:
         return "0.0"
     return f"{(part / whole * 100):.1f}"
+
+
+@register.filter
+def page_window(paginator, number):
+    """Page numbers around the current one, elided at both ends.
+
+    A list two hundred pages long must not print two hundred links; this
+    returns the handful either side plus the first and last, with Django's
+    ellipsis marker between them.
+    """
+    from django.core.paginator import EmptyPage, PageNotAnInteger
+
+    try:
+        return list(paginator.get_elided_page_range(number, on_each_side=2, on_ends=1))
+    except (EmptyPage, PageNotAnInteger, AttributeError):
+        return []

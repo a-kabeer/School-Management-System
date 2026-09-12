@@ -1,9 +1,3 @@
 {% extends "components/object_list.html" %}
-{% load i18n core_extras %}
-
-{% block extra_actions %}
-    {% has_perm "core.export_report" as can_export %}
-    {% if can_export %}
-        <a class="btn btn-outline-secondary" href="{% url 'reports:detail' key='students' %}?export=xlsx"><i class="bi bi-download me-1" aria-hidden="true"></i>{% translate "Export" %}</a>
-    {% endif %}
-{% endblock %}
+{% comment %}The table toolbar carries the export, which is built from the
+   search, filters and sort the reader is looking at.{% endcomment %}

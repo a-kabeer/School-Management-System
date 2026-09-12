@@ -235,6 +235,7 @@ looks the same everywhere:
 | --- | --- |
 | `base.html` | Shell: navbar, sidebar, page header, toasts |
 | `components/table.html` | Every data table, with its row actions |
+| `components/table_toolbar.html` | Result count, rows per page, columns, export |
 | `components/form.html` | Every form's field layout |
 | `components/filters.html` | Search, select and date filters |
 | `components/empty_state.html` | What a list shows when it has nothing |
@@ -245,7 +246,17 @@ looks the same everywhere:
 **Row interaction.** Each table's first column is the record's name and is a
 real link; View and Edit are icon buttons sized for a fingertip; anything
 destructive sits behind a kebab menu so it cannot be hit by accident. Icon
-buttons carry a visible tooltip and a screen-reader label.
+buttons carry a visible tooltip and a screen-reader label. A module with a verb
+of its own — restoring a deleted student, closing a fiscal period — supplies a
+`row_actions_template` rather than a table of its own.
+
+**List behaviour.** Searching, filtering, sorting and paging all happen in the
+database (`apps/core/tables.py`), so a branch with nine thousand students never
+loads nine thousand rows to show twenty-five. A `?sort=` is matched against the
+columns the view declared and ignored otherwise; every sort ends with a
+primary-key tiebreaker so paging cannot repeat a row. The whole state lives in
+the query string, which is what makes a filtered list shareable and makes Back
+and Forward move between list states. Rows per page: 25, 50, 100, 200, 500.
 
 `static/css/app.css` is ~170 lines and holds only what Bootstrap has no utility
 for: three auto-fit CSS grids (Bootstrap's grid takes a fixed column count per

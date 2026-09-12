@@ -1,21 +1,22 @@
-{% load i18n %}
+{% load i18n humanize core_extras %}
 {% if is_paginated %}
 <nav aria-label="{% translate 'Pagination' %}"
      class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
     <p class="small text-body-secondary mb-0">
-        {% blocktranslate with start=page_obj.start_index end=page_obj.end_index total=paginator.count %}Showing {{ start }}–{{ end }} of {{ total }}{% endblocktranslate %}
+        {% blocktranslate with start=page_obj.start_index|intcomma end=page_obj.end_index|intcomma total=paginator.count|intcomma %}Showing {{ start }}–{{ end }} of {{ total }}{% endblocktranslate %}
     </p>
     <ul class="pagination pagination-sm mb-0 flex-wrap">
         {% comment %}Guard every page-number access: Paginator raises rather than
            returning a fallback when there is no previous or next page.{% endcomment %}
         {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?{{ querystring }}page=1" aria-label="{% translate 'First page' %}">
+                <a class="page-link" data-table-nav href="{% query_replace page=1 %}"
+                   aria-label="{% translate 'First page' %}">
                     <i class="bi bi-chevron-double-left" aria-hidden="true"></i>
                 </a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?{{ querystring }}page={{ page_obj.previous_page_number }}"
+                <a class="page-link" data-table-nav href="{% query_replace page=page_obj.previous_page_number %}"
                    aria-label="{% translate 'Previous page' %}">
                     <i class="bi bi-chevron-left" aria-hidden="true"></i>
                 </a>
@@ -29,21 +30,34 @@
             </li>
         {% endif %}
 
-        <li class="page-item active" aria-current="page">
-            <span class="page-link">
-                {% blocktranslate with number=page_obj.number total=paginator.num_pages %}{{ number }} / {{ total }}{% endblocktranslate %}
-            </span>
-        </li>
+        {% comment %}A window of page numbers around the current page, elided at
+           both ends: a list of two hundred pages must not print two hundred
+           links.{% endcomment %}
+        {% for number in paginator|page_window:page_obj.number %}
+            {% if number == "…" %}
+                <li class="page-item disabled d-none d-sm-block">
+                    <span class="page-link">…</span>
+                </li>
+            {% elif number == page_obj.number %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">{{ number }}</span>
+                </li>
+            {% else %}
+                <li class="page-item d-none d-sm-block">
+                    <a class="page-link" data-table-nav href="{% query_replace page=number %}">{{ number }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
 
         {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?{{ querystring }}page={{ page_obj.next_page_number }}"
+                <a class="page-link" data-table-nav href="{% query_replace page=page_obj.next_page_number %}"
                    aria-label="{% translate 'Next page' %}">
                     <i class="bi bi-chevron-right" aria-hidden="true"></i>
                 </a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?{{ querystring }}page={{ paginator.num_pages }}"
+                <a class="page-link" data-table-nav href="{% query_replace page=paginator.num_pages %}"
                    aria-label="{% translate 'Last page' %}">
                     <i class="bi bi-chevron-double-right" aria-hidden="true"></i>
                 </a>

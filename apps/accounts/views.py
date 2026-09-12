@@ -88,11 +88,11 @@ class UserListView(TenantListView):
     def get_base_queryset(self):
         return User.objects.all()
 
-    def get_queryset(self):
+    def get_list_queryset(self):
         queryset = User.objects.for_user(self.request.user)
         if self.filter_spec:
             queryset = self.filter_spec.apply(queryset, self.request)
-        return queryset.prefetch_related("role_assignments__role").order_by("username")
+        return queryset.prefetch_related("role_assignments__role")
 
 
 class UserCreateView(TenantCreateView):

@@ -283,7 +283,6 @@ class FiscalPeriodListView(TenantListView):
     model = FiscalPeriod
     required_permission = FINANCE
     create_permission = "finance.add_fiscalperiod"
-    template_name = "finance/period_list.html"
     page_title = _("Fiscal Periods")
     ordering = ["-start_date"]
     create_url_name = "finance:period_create"
@@ -295,6 +294,7 @@ class FiscalPeriodListView(TenantListView):
         {"label": _("End"), "field": "end_date", "type": "date"},
         {"label": _("Closed"), "field": "is_closed", "type": "bool"},
     )
+    row_actions_template = "finance/_period_actions.html"
 
 
 class FiscalPeriodCreateView(TenantCreateView):

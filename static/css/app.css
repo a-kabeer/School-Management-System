@@ -169,6 +169,67 @@ body {
     white-space: nowrap;
 }
 
+/* A sortable header is a link, but it should read as a header: the arrow is
+   the affordance, and it only comes forward on hover. */
+.app-th-sort {
+    cursor: pointer;
+}
+
+.app-th-hint {
+    opacity: 0;
+    transition: opacity .12s ease-in-out;
+}
+
+.app-th-sort:hover .app-th-hint,
+.app-th-sort:focus-visible .app-th-hint {
+    opacity: .6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-th-hint { transition: none; }
+}
+
+/* A long table scrolls its own body so the header stays in view. Sticky only
+   works against a scroll container, and `table-responsive` is one — but only
+   once it has a height to scroll within. */
+.app-table-scroll {
+    max-height: min(70vh, 44rem);
+    overflow-y: auto;
+}
+
+.app-table-scroll > .app-table > thead > tr > th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.app-table-check {
+    width: 1%;
+    white-space: nowrap;
+}
+
+/* The bulk bar hovers above the list it acts on, so the selection and the
+   actions on it stay together while the reader scrolls. */
+.app-bulk-bar {
+    position: sticky;
+    top: calc(var(--app-navbar-height, 3.5rem) + .5rem);
+    z-index: 3;
+}
+
+/* While a sort or a page is in flight the old rows are still on screen; dim
+   them so it is clear they are about to be replaced. */
+[data-table-card].is-loading {
+    opacity: .55;
+    pointer-events: none;
+    transition: opacity .1s linear;
+}
+
+/* Chevrons point the way the reader is going, which reverses with the
+   script. */
+[dir="rtl"] .pagination .bi {
+    transform: scaleX(-1);
+}
+
 /* ----------------------------------------------------------- empty state */
 
 .empty-state-icon {

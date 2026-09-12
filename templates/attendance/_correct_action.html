@@ -1,0 +1,16 @@
+{% load i18n core_extras %}
+{% has_perm "attendance.change_staffattendance" as can_correct %}
+{% if can_correct %}
+    <button type="button" class="btn btn-sm btn-outline-secondary app-icon-btn"
+            data-bs-toggle="modal" data-bs-target="#correct-modal"
+            title="{% translate 'Correct' %}"
+            data-correct-url="{% url 'attendance:staff_correct' object.pk %}"
+            data-correct-name="{{ object.staff.full_name }} · {{ object.date|date:'Y-m-d' }}"
+            data-correct-status="{{ object.status }}"
+            data-correct-in="{{ object.check_in|time:'H:i' }}"
+            data-correct-out="{{ object.check_out|time:'H:i' }}"
+            data-correct-remarks="{{ object.remarks }}">
+        <i class="bi bi-pencil" aria-hidden="true"></i>
+        <span class="visually-hidden">{% translate "Correct" %}</span>
+    </button>
+{% endif %}

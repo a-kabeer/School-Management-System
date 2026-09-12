@@ -754,7 +754,7 @@ msgstr ""
 
 #: .\apps\accounts\views.py:125 .\templates\audit\activity_detail.html:9
 msgid "Role"
-msgstr ""
+msgstr "الدور"
 
 #: .\apps\accounts\views.py:126 .\apps\finance\forms.py:100
 #: .\apps\finance\views.py:169 .\apps\staff\views.py:148
@@ -1026,7 +1026,7 @@ msgstr "الطالب"
 #: .\templates\attendance\session_detail.html:26
 #: .\templates\parents\child_detail.html:19
 msgid "Remarks"
-msgstr ""
+msgstr "ملاحظات"
 
 #: .\apps\attendance\views.py:196 .\apps\core\navigation.py:60
 msgid "Staff Attendance"
@@ -1084,11 +1084,11 @@ msgstr "حذف"
 
 #: .\apps\audit\models.py:52
 msgid "Restore"
-msgstr ""
+msgstr "استعادة"
 
 #: .\apps\audit\models.py:53 .\templates\students\student_list.html:7
 msgid "Export"
-msgstr ""
+msgstr "تصدير"
 
 #: .\apps\audit\models.py:54
 msgid "Import"
@@ -4235,7 +4235,7 @@ msgstr ""
 #: .\apps\reports\registry.py:256 .\apps\reports\registry.py:353
 #: .\apps\staff\views.py:58 .\templates\attendance\staff_list.html:15
 msgid "Employee #"
-msgstr ""
+msgstr "رقم الموظف"
 
 #: .\apps\reports\registry.py:257 .\templates\payroll\run_detail.html:41
 #: .\templates\payroll\run_detail.html:52
@@ -5225,7 +5225,7 @@ msgstr ""
 #: .\templates\audit\activity_list.html:10
 #: .\templates\audit\activity_list.html:18
 msgid "When"
-msgstr ""
+msgstr "متى"
 
 #: .\templates\audit\activity_detail.html:8
 #: .\templates\audit\activity_list.html:10
@@ -5241,13 +5241,13 @@ msgstr ""
 #: .\templates\audit\activity_list.html:11
 #: .\templates\audit\activity_list.html:21
 msgid "Resource"
-msgstr ""
+msgstr "المورد"
 
 #: .\templates\audit\activity_detail.html:14
 #: .\templates\audit\activity_list.html:12
 #: .\templates\audit\activity_list.html:22
 msgid "Object"
-msgstr ""
+msgstr "العنصر"
 
 #: .\templates\audit\activity_detail.html:15
 msgid "Path"
@@ -5272,7 +5272,7 @@ msgstr ""
 #: .\templates\audit\activity_list.html:13
 #: .\templates\audit\activity_list.html:24
 msgid "IP"
-msgstr ""
+msgstr "عنوان IP"
 
 #: .\templates\audit\activity_list.html:25
 msgid "Details"
@@ -5288,7 +5288,7 @@ msgstr "تخطَّ إلى المحتوى"
 
 #: .\templates\components\empty_state.html:8
 msgid "Add the first one"
-msgstr ""
+msgstr "أضف الأول"
 
 #: .\templates\components\filters.html:9
 msgid "Search…"
@@ -6021,3 +6021,103 @@ msgstr ""
 #: .\templates\tenants\branch_list.html:5
 msgid "You can only see branches you have been granted access to."
 msgstr ""
+
+#. Shared table interface: sorting, paging, selection and export.
+
+msgid "No records"
+msgstr "لا توجد سجلات"
+
+msgid "Columns"
+msgstr "الأعمدة"
+
+msgid "Show all columns"
+msgstr "إظهار كل الأعمدة"
+
+msgid "Rows"
+msgstr "الصفوف"
+
+msgid "selected"
+msgstr "محدد"
+
+msgid "Clear"
+msgstr "مسح"
+
+msgid "Select all rows on this page"
+msgstr "تحديد كل صفوف هذه الصفحة"
+
+msgid "Select this row"
+msgstr "تحديد هذا الصف"
+
+msgid "Select"
+msgstr "تحديد"
+
+msgid "sorted ascending"
+msgstr "مرتبة تصاعديًا"
+
+msgid "sorted descending"
+msgstr "مرتبة تنازليًا"
+
+msgid "Clear search"
+msgstr "مسح البحث"
+
+msgid "Reset filters"
+msgstr "إعادة ضبط عوامل التصفية"
+
+msgid "No matching records"
+msgstr "لا توجد سجلات مطابقة"
+
+msgid "Nothing matches the current filters."
+msgstr "لا شيء يطابق عوامل التصفية الحالية."
+
+msgid "Nothing matches “%(term)s” with the current filters."
+msgstr "لا شيء يطابق ”%(term)s“ مع عوامل التصفية الحالية."
+
+msgid "Delete selected"
+msgstr "حذف المحدد"
+
+msgid "Delete the selected records? An administrator can restore them."
+msgstr "حذف السجلات المحددة؟ يمكن للمسؤول استعادتها."
+
+msgid "Delete the selected records permanently?"
+msgstr "حذف السجلات المحددة نهائيًا؟"
+
+msgid "That action is not available here."
+msgstr "هذا الإجراء غير متاح هنا."
+
+msgid "%(count)s records deleted."
+msgstr "تم حذف %(count)s سجلات."
+
+msgid "Nothing was selected."
+msgstr "لم يتم تحديد أي شيء."
+
+msgid "%(count)s records are still in use and were kept."
+msgstr "%(count)s سجلات قيد الاستخدام وتم الاحتفاظ بها."
+
+msgid "You are not allowed to export."
+msgstr "غير مسموح لك بالتصدير."
+
+msgid "Every recorded action, newest first."
+msgstr "كل إجراء مسجل، الأحدث أولاً."
+
+msgid "No activity recorded yet"
+msgstr "لم يُسجل أي نشاط بعد"
+
+msgid "Module"
+msgstr "الوحدة"
+
+msgid "Nothing has been deleted"
+msgstr "لم يُحذف أي شيء"
+
+msgid "Correct"
+msgstr "تصحيح"
+
+#. Shared table interface.
+
+msgid "Nothing here yet"
+msgstr "لا يوجد شيء هنا بعد"
+
+msgid "Records you add will appear here."
+msgstr "ستظهر هنا السجلات التي تضيفها."
+
+msgid "More actions"
+msgstr "إجراءات أخرى"

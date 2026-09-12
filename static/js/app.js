@@ -334,6 +334,252 @@
         });
     }
 
+    /* ------------------------------------------------- the shared table */
+
+    var TABLE_SCROLL_KEY = "sms-table-scroll:";
+
+    function rememberTableScroll() {
+        // Sorting, paging and filtering reload the page. Without this the
+        // reader is thrown back to the top every time they change one thing.
+        try {
+            sessionStorage.setItem(
+                TABLE_SCROLL_KEY + location.pathname,
+                String(window.scrollY)
+            );
+        } catch (error) {
+            /* Private browsing: losing the position is not worth an error. */
+        }
+    }
+
+    function restoreTableScroll() {
+        var key = TABLE_SCROLL_KEY + location.pathname;
+        var saved;
+        try {
+            saved = sessionStorage.getItem(key);
+            sessionStorage.removeItem(key);
+        } catch (error) {
+            return;
+        }
+        if (saved === null) return;
+
+        // Back and Forward restore their own scroll position; only a fresh
+        // navigation from a table control should use the saved one.
+        var entry = performance.getEntriesByType("navigation")[0];
+        if (entry && entry.type !== "navigate") return;
+
+        window.scrollTo(0, parseInt(saved, 10) || 0);
+    }
+
+    function markTableBusy(card) {
+        if (card) card.classList.add("is-loading");
+    }
+
+    function initTableNavigation() {
+        var card = document.querySelector("[data-table-card]");
+
+        document.addEventListener("click", function (event) {
+            var link = event.target.closest("a[data-table-nav]");
+            if (!link) return;
+            rememberTableScroll();
+            markTableBusy(card);
+        });
+
+        var filters = document.querySelector("[data-table-filters]");
+        if (filters) {
+            filters.addEventListener("submit", function () {
+                rememberTableScroll();
+                markTableBusy(card);
+
+                // Keep the address bar to what the reader actually chose: a
+                // GET form otherwise posts every empty box, and the URL they
+                // might share fills up with `&status=&date_from=`.
+                var emptied = [];
+                filters.querySelectorAll("input[name], select[name]").forEach(
+                    function (field) {
+                        if (field.type === "hidden") return;
+                        if (String(field.value).trim()) return;
+                        field.disabled = true;
+                        emptied.push(field);
+                    }
+                );
+                // The browser has already serialised the form by the time this
+                // runs, so re-enabling leaves the page usable if the
+                // navigation is cancelled.
+                window.setTimeout(function () {
+                    emptied.forEach(function (field) { field.disabled = false; });
+                }, 0);
+            });
+        }
+
+        var perPage = document.querySelector("[data-per-page]");
+        if (perPage) {
+            perPage.addEventListener("change", function () {
+                rememberTableScroll();
+                markTableBusy(card);
+                var url = new URL(window.location.href);
+                url.searchParams.set("per_page", perPage.value);
+                // A bigger page means the old page number no longer points at
+                // the same rows, so start again from the first.
+                url.searchParams.delete("page");
+                window.location.assign(url.toString());
+            });
+        }
+
+        // Back and Forward restore the page from cache with the controls as
+        // they were left, which can disagree with the page now on screen.
+        // The markup the server sent is the truth.
+        window.addEventListener("pageshow", function (event) {
+            if (!event.persisted) return;
+            if (perPage) {
+                var chosen = perPage.querySelector("option[selected]");
+                if (chosen) perPage.value = chosen.value;
+            }
+            var search = document.querySelector("[data-table-search]");
+            if (search) search.value = search.defaultValue;
+        });
+
+        restoreTableScroll();
+    }
+
+    function initTableSearch() {
+        var form = document.querySelector("[data-table-filters]");
+        if (!form) return;
+
+        var search = form.querySelector("[data-table-search]");
+        var clear = form.querySelector("[data-search-clear]");
+
+        if (clear && search) {
+            clear.addEventListener("click", function () {
+                search.value = "";
+                form.requestSubmit();
+            });
+        }
+
+        if (!search) return;
+
+        // Search as you type, but only once typing pauses: every submission
+        // is a real query, so one per keystroke would be one too many.
+        var timer = null;
+        var initial = search.value;
+        search.addEventListener("input", function () {
+            window.clearTimeout(timer);
+            timer = window.setTimeout(function () {
+                if (search.value.trim() === initial.trim()) return;
+                rememberTableScroll();
+                form.requestSubmit();
+            }, 500);
+        });
+    }
+
+    function initTableSelection() {
+        var form = document.querySelector("[data-table-form]");
+        if (!form) return;
+
+        var bar = form.querySelector("[data-bulk-bar]");
+        var count = form.querySelector("[data-bulk-count]");
+        var all = form.querySelector("[data-select-all]");
+        if (!bar) return;
+
+        function rows() {
+            return Array.prototype.slice.call(form.querySelectorAll("[data-row-select]"));
+        }
+
+        function sync() {
+            var boxes = rows();
+            var chosen = boxes.filter(function (box) { return box.checked; });
+            bar.classList.toggle("d-none", chosen.length === 0);
+            if (count) count.textContent = chosen.length;
+            if (all) {
+                all.checked = boxes.length > 0 && chosen.length === boxes.length;
+                all.indeterminate = chosen.length > 0 && chosen.length < boxes.length;
+            }
+            boxes.forEach(function (box) {
+                var row = box.closest("tr");
+                if (row) row.classList.toggle("table-active", box.checked);
+            });
+        }
+
+        form.addEventListener("change", function (event) {
+            if (event.target === all) {
+                rows().forEach(function (box) { box.checked = all.checked; });
+            } else if (!event.target.matches("[data-row-select]")) {
+                return;
+            }
+            sync();
+        });
+
+        var clear = form.querySelector("[data-bulk-clear]");
+        if (clear) {
+            clear.addEventListener("click", function () {
+                rows().forEach(function (box) { box.checked = false; });
+                if (all) all.checked = false;
+                sync();
+            });
+        }
+
+        sync();
+        // Restoring from the back/forward cache keeps the old ticks; the bar
+        // has to agree with them.
+        window.addEventListener("pageshow", sync);
+    }
+
+    function initColumnVisibility() {
+        var table = document.querySelector("[data-table-key]");
+        var menu = document.querySelector("[data-column-menu]");
+        if (!table || !menu) return;
+
+        var key = "sms-columns:" + table.getAttribute("data-table-key");
+
+        function apply(hidden) {
+            menu.querySelectorAll("[data-column-toggle]").forEach(function (box) {
+                var index = box.getAttribute("data-column-toggle");
+                var visible = hidden.indexOf(index) === -1;
+                box.checked = visible;
+                table.querySelectorAll('[data-col="' + index + '"]').forEach(function (cell) {
+                    cell.hidden = !visible;
+                });
+            });
+        }
+
+        function read() {
+            try {
+                return JSON.parse(localStorage.getItem(key) || "[]");
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function write(hidden) {
+            try {
+                localStorage.setItem(key, JSON.stringify(hidden));
+            } catch (error) {
+                /* The choice is a convenience; it need not survive. */
+            }
+        }
+
+        menu.addEventListener("change", function (event) {
+            var box = event.target.closest("[data-column-toggle]");
+            if (!box) return;
+            var hidden = read();
+            var index = box.getAttribute("data-column-toggle");
+            var at = hidden.indexOf(index);
+            if (box.checked && at !== -1) hidden.splice(at, 1);
+            if (!box.checked && at === -1) hidden.push(index);
+            write(hidden);
+            apply(hidden);
+        });
+
+        var reset = menu.querySelector("[data-column-reset]");
+        if (reset) {
+            reset.addEventListener("click", function () {
+                write([]);
+                apply([]);
+            });
+        }
+
+        apply(read());
+    }
+
     /* ---------------------------------------------- navbar height var */
 
     function trackNavbarHeight() {
@@ -375,5 +621,9 @@
         initRegisterShortcuts();
         initAttendanceRegister();
         initAttendanceCorrection();
+        initTableNavigation();
+        initTableSearch();
+        initTableSelection();
+        initColumnVisibility();
     });
 })();

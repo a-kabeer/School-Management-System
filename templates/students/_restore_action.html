@@ -1,0 +1,9 @@
+{% load i18n %}
+{% comment %}Submitting through the table's own form rather than a nested one:
+   a form inside a form is dropped by the browser, so the button carries the
+   target instead and rides the table form's CSRF token.{% endcomment %}
+<button type="submit" class="btn btn-sm btn-primary"
+        formaction="{% url 'students:student_restore' object.pk %}"
+        formmethod="post">
+    <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>{% translate "Restore" %}
+</button>

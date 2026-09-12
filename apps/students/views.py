@@ -42,6 +42,7 @@ class StudentListView(TenantListView):
     template_name = "students/student_list.html"
     page_title = _("Students")
     ordering = ["full_name"]
+    exportable = True
     create_url_name = "students:student_create"
     detail_url_name = "students:student_detail"
     update_url_name = "students:student_update"
@@ -61,13 +62,13 @@ class StudentListView(TenantListView):
         {"label": _("Status"), "field": "status", "type": "choice"},
     )
 
-    def get_queryset(self):
+    def get_list_queryset(self):
         queryset = students_for(self.request.user, self.active_branch)
         if self.filter_spec:
             queryset = self.filter_spec.apply(queryset, self.request)
         if self.request.GET.get("school_class"):
             queryset = queryset.filter(enrollments__is_current=True).distinct()
-        return queryset.order_by("full_name")
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -189,6 +190,8 @@ class StudentArchiveListView(TenantListView):
         {"label": _("Deleted"), "field": "deleted_at", "type": "datetime"},
     )
     template_name = "students/archive_list.html"
+    row_actions_template = "students/_restore_action.html"
+    empty_message = _("Nothing has been deleted")
 
     def get_base_queryset(self):
         return Student.all_objects.filter(is_deleted=True)

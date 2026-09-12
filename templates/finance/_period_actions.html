@@ -1,0 +1,12 @@
+{% load i18n core_extras %}
+{% has_perm "finance.change_fiscalperiod" as can_close %}
+{% if can_close and not object.is_closed %}
+    {% comment %}Submitted through the table's own form: a nested form would be
+       dropped by the browser.{% endcomment %}
+    <button type="submit" class="btn btn-sm btn-outline-danger"
+            formaction="{% url 'finance:period_close' object.pk %}"
+            formmethod="post"
+            data-confirm="{% translate 'Close this period? No further entries can be posted into it.' %}">
+        {% translate "Close" %}
+    </button>
+{% endif %}

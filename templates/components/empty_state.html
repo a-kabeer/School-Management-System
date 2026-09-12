@@ -1,21 +1,35 @@
 {% load i18n core_extras %}
-{% comment %}One empty state for the whole application: an icon, a short
-   explanation, and the action that fills the gap. Views can override the
-   icon with `empty_icon` and the message with `empty_message`.{% endcomment %}
-<div class="text-center py-5 px-3">
-    <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
-                 rounded-circle bg-body-tertiary text-body-secondary mb-3">
-        <i class="bi {{ empty_icon|default:'bi-inbox' }} fs-3" aria-hidden="true"></i>
-    </span>
-    <p class="fw-medium mb-1">{{ empty_message|default:_("Nothing here yet") }}</p>
-    {% if filter_search or filter_date_from or filter_date_to %}
+{% comment %}One empty state for the whole application, and it says which of
+   two different things has happened: a list nobody has filled in yet, or a
+   search that matched nothing. The first offers the Add button; the second
+   offers a way back out of the filters. Views can override the icon with
+   `empty_icon` and the message with `empty_message`.{% endcomment %}
+{% if filter_active %}
+    <div class="text-center py-5 px-3">
+        <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
+                     rounded-circle bg-body-tertiary text-body-secondary mb-3">
+            <i class="bi bi-search fs-3" aria-hidden="true"></i>
+        </span>
+        <p class="fw-medium mb-1">{% translate "No matching records" %}</p>
         <p class="text-body-secondary small mb-3">
-            {% translate "No records match the current filters." %}
+            {% if filter_search %}
+                {% blocktranslate with term=filter_search %}Nothing matches “{{ term }}” with the current filters.{% endblocktranslate %}
+            {% else %}
+                {% translate "Nothing matches the current filters." %}
+            {% endif %}
         </p>
-        <a class="btn btn-sm btn-outline-secondary" href="{{ request.path }}">
-            <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{% translate "Clear filters" %}
+        <a class="btn btn-sm btn-outline-secondary"
+           href="{{ request.path }}?per_page={{ per_page }}{% if table_sort %}&sort={{ table_sort }}&dir={{ table_dir }}{% endif %}">
+            <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{% translate "Reset filters" %}
         </a>
-    {% else %}
+    </div>
+{% else %}
+    <div class="text-center py-5 px-3">
+        <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
+                     rounded-circle bg-body-tertiary text-body-secondary mb-3">
+            <i class="bi {{ empty_icon|default:'bi-inbox' }} fs-3" aria-hidden="true"></i>
+        </span>
+        <p class="fw-medium mb-1">{{ empty_message|default:_("Nothing here yet") }}</p>
         <p class="text-body-secondary small mb-3">
             {% translate "Records you add will appear here." %}
         </p>
@@ -27,5 +41,5 @@
                 </a>
             {% endif %}
         {% endif %}
-    {% endif %}
-</div>
+    </div>
+{% endif %}
