@@ -24,7 +24,7 @@
             <caption class="visually-hidden">{{ card.title }}</caption>
             <thead><tr>{% for column in card.columns %}<th scope="col" class="text-nowrap">{{ column }}</th>{% endfor %}</tr></thead>
             <tbody>{% for row in card.rows %}
-                <tr {% if row.url %}class="app-row" data-row-url="{{ row.url }}?return_to={{ request.get_full_path|urlencode }}" tabindex="0" aria-label="{% translate 'View' %} {{ row.cells.0.value }}"{% endif %}>
+                <tr {% if row.url %}class="app-row" data-row-url="{{ row.url }}?return_to={{ request.get_full_path|urlencode }}" tabindex="0" aria-label="{% translate 'View' %} {{ row.cells.0.value|default:card.title }}"{% endif %}>
                     {% for cell in row.cells %}<td data-label="{{ cell.label }}">
                         {% if forloop.first and row.url %}<a href="{{ row.url }}?return_to={{ request.get_full_path|urlencode }}" class="fw-medium text-decoration-none app-row-link">{{ cell.value|default:"—" }}</a>
                         {% elif cell.badge %}<span class="badge rounded-pill text-bg-{{ cell.badge }}-subtle text-{{ cell.badge }}-emphasis border border-{{ cell.badge }}-subtle">{{ cell.value|default:"—" }}</span>
@@ -34,12 +34,12 @@
             {% endfor %}</tbody>
         </table></div>
         {% if card.more %}<div class="card-footer bg-transparent small text-body-secondary">
-            {% blocktranslate with count=card.more %}{{ count }} more not shown.{% endblocktranslate %}
+            {% blocktranslate with count=card.more %}{{ count }} more not shown.{% plural %}{{ count }} more not shown.{% endblocktranslate %}
             {% if card.all_url %}<a href="{{ card.all_url }}{% if '?' in card.all_url %}&{% else %}?{% endif %}return_to={{ request.get_full_path|urlencode }}">{{ card.all_label|default:_("View all") }}</a>{% endif %}
         </div>{% endif %}
     {% else %}
-        <div class="card-body text-center py-4"><span class="empty-state-icon d-inline-flex align-items-center justify-content-center rounded-circle bg-body-tertiary text-body-secondary mb-2"><i class="bi {{ card.icon|default:'bi-inbox' }} fs-5" aria-hidden="true"></i></span>
-            <p class="fw-medium mb-1">{{ card.empty|default:_("Nothing here yet") }}</p>
+        <div class="card-body text-center py-4" role="status"><span class="empty-state-icon d-inline-flex align-items-center justify-content-center rounded-circle bg-body-tertiary text-body-secondary mb-2"><i class="bi {{ card.icon|default:'bi-inbox' }} fs-5" aria-hidden="true"></i></span>
+            <h3 class="h6 fw-medium mb-1">{{ card.empty|default:_("Nothing here yet") }}</h3>
             {% if card.empty_hint %}<p class="text-body-secondary small mb-3">{{ card.empty_hint }}</p>{% endif %}
             {% if card.add_url %}<a class="btn btn-sm btn-primary" href="{{ card.add_url }}" {% if card.add_modal %}data-modal-url="{{ card.add_url }}" data-modal-title="{{ card.add_label }}"{% endif %}><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ card.add_label|default:_("Add") }}</a>{% endif %}
         </div>
