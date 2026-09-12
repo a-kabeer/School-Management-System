@@ -17,6 +17,9 @@
         .document-school { font-size: 15px; font-weight: 700; line-height: 1.25; }
         .document-branch { color: #555; margin-top: 2px; }
         .document-title { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 6px 0 0; }
+        .document-context { margin: 9px 0 13px; text-align: center; }
+        .document-context-name { font-size: 17px; font-weight: 700; }
+        .document-context-subtitle { color: #555; margin-top: 2px; }
         .document-meta { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px 14px; margin-bottom: 13px; }
         .meta-item { break-inside: avoid; }
         .meta-label { color: #666; font-size: 9px; text-transform: uppercase; letter-spacing: .03em; }
@@ -28,11 +31,12 @@
         th { background: #f2f2f2; font-weight: 700; }
         tr { break-inside: avoid; }
         .timetable { table-layout: fixed; }
-        .timetable .time-column { width: 12%; }
-        .timetable-day { width: auto; text-align: center; }
-        .timetable-cell { min-height: 48px; text-align: center; }
+        .timetable .time-column { width: 13%; }
+        .timetable-day { text-align: center; }
+        .timetable-cell { min-height: 54px; text-align: center; }
         .lesson-subject { font-weight: 700; line-height: 1.2; }
-        .lesson-teacher, .lesson-room { color: #555; font-size: 10px; line-height: 1.25; margin-top: 2px; }
+        .lesson-teacher, .lesson-room { color: #555; font-size: 10px; line-height: 1.25; margin-top: 3px; }
+        .lesson-room:before { content: "• "; }
         .lesson-empty { color: #aaa; }
         .document-footer { border-top: 1px solid #bbb; margin-top: 16px; padding-top: 7px; color: #666; font-size: 10px; display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; }
         .document-contact { min-width: 0; }
@@ -43,15 +47,17 @@
             @page { size: A4 landscape; margin: 9mm 10mm 11mm; }
             .print-actions { display: none !important; }
             .document { max-width: none; }
-            .document-header { margin-bottom: 8px; padding-bottom: 7px; }
+            .document-header { margin-bottom: 7px; padding-bottom: 7px; }
             .document-logo { width: 48px; height: 48px; }
             .document-title { font-size: 17px; }
-            .document-meta { margin-bottom: 8px; }
-            .document-section { break-inside: auto; margin-top: 8px; }
+            .document-context { margin: 5px 0 7px; }
+            .document-context-name { font-size: 15px; }
+            .document-meta { margin-bottom: 7px; }
+            .document-section { margin-top: 6px; }
             .document-section h2 { display: none; }
             .timetable th, .timetable td { padding: 4px 5px; }
-            .timetable-cell { min-height: 42px; }
-            .document-footer { margin-top: 9px; }
+            .timetable-cell { min-height: 45px; }
+            .document-footer { margin-top: 8px; }
             a { color: inherit; text-decoration: none; }
         }
         @media (max-width: 575.98px) {
@@ -62,7 +68,7 @@
         }
         [dir="rtl"] { text-align: right; }
         [dir="rtl"] th, [dir="rtl"] td { text-align: right; }
-        [dir="rtl"] .timetable-day, [dir="rtl"] .timetable-cell { text-align: center; }
+        [dir="rtl"] .timetable-day, [dir="rtl"] .timetable-cell, [dir="rtl"] .document-context { text-align: center; }
         [dir="rtl"] .document-generated { text-align: start; }
     </style>
 </head>
@@ -83,6 +89,13 @@
         </div>
     </header>
 
+    {% if document.objects.section %}
+    <div class="document-context">
+        <div class="document-context-name">{{ document.objects.school_class.name }} — {{ document.objects.section.name }}</div>
+        <div class="document-context-subtitle">{% translate "Weekly Timetable" %}</div>
+    </div>
+    {% endif %}
+
     {% if document.metadata %}
     <section class="document-meta" aria-label="{% translate 'Document information' %}">
         {% for item in document.metadata %}<div class="meta-item"><div class="meta-label">{{ item.cells.0 }}</div><div class="meta-value">{{ item.cells.1 }}</div></div>{% endfor %}
@@ -93,20 +106,13 @@
     <section class="document-section">
         {% if section.timetable %}
         <table class="timetable" aria-label="{% translate 'Weekly timetable' %}">
-            <thead><tr><th scope="col" class="time-column">{% translate "Time" %}</th>{% for weekday in section.weekdays %}<th scope="col" class="timetable-day">{{ weekday|date:"l" }}</th>{% endfor %}</tr></thead>
+            <thead><tr><th scope="col" class="time-column">{% translate "Time" %}</th>{% for weekday in section.weekdays %}<th scope="col" class="timetable-day">{{ weekday.label }}</th>{% endfor %}</tr></thead>
             <tbody>
-            {% regroup section.slots by period as period_slots %}
-            {% for period_group in period_slots %}
-                {% with first_slot=period_group.list.0 %}
+            {% for row in section.rows %}
                 <tr>
-                    <th scope="row">P{{ first_slot.period }}<br><span class="fw-normal">{{ first_slot.start_time|time:"H:i" }}–{{ first_slot.end_time|time:"H:i" }}</span></th>
-                    {% for weekday in section.weekdays %}
-                    <td class="timetable-cell">
-                        {% for slot in period_group.list %}{% if slot.weekday == weekday %}<div class="lesson-subject">{{ slot.class_subject.subject.name }}</div>{% if slot.teacher %}<div class="lesson-teacher">{{ slot.teacher.full_name }}</div>{% endif %}{% if slot.room %}<div class="lesson-room">{{ slot.room }}</div>{% endif %}{% endif %}{% endfor %}
-                    </td>
-                    {% endfor %}
+                    <th scope="row">P{{ row.period }}<br><span class="fw-normal">{{ row.start|time:"H:i" }}–{{ row.end|time:"H:i" }}</span></th>
+                    {% for lesson in row.days %}<td class="timetable-cell">{% if lesson.subject %}<div class="lesson-subject">{{ lesson.subject }}</div>{% if lesson.teacher %}<div class="lesson-teacher">{{ lesson.teacher }}</div>{% endif %}{% if lesson.room %}<div class="lesson-room">{{ lesson.room }}</div>{% endif %}{% else %}<span class="lesson-empty">—</span>{% endif %}</td>{% endfor %}
                 </tr>
-                {% endwith %}
             {% empty %}
                 <tr><td colspan="{{ section.weekdays|length|add:'1' }}">{% translate "No timetable lessons found." %}</td></tr>
             {% endfor %}
@@ -120,7 +126,7 @@
 
     <footer class="document-footer">
         <div class="document-contact">{{ active_branch.organization.name }}{% if active_branch.address %} · {{ active_branch.address }}{% elif active_branch.organization.address %} · {{ active_branch.organization.address }}{% endif %}{% if active_branch.phone or active_branch.organization.phone %} · {{ active_branch.phone|default:active_branch.organization.phone }}{% endif %}{% if active_branch.email or active_branch.organization.email %} · {{ active_branch.email|default:active_branch.organization.email }}{% endif %}</div>
-        <div class="document-generated">{% translate "Generated" %}: {{ generated_at|date:"d M Y H:i" }} · {% translate "Page" %} <span class="page-number"></span></div>
+        <div class="document-generated">{% translate "Generated On" %}: {{ generated_at|date:"d M Y H:i" }} · {% translate "Page" %} <span class="page-number"></span></div>
     </footer>
 </main>
 </body>
