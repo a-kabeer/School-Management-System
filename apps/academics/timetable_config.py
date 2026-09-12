@@ -1,8 +1,8 @@
 """Central timetable working-week policy.
 
-Keep the policy in one place so every timetable surface uses the same week.
-The default matches the school's current schedule: Monday through Friday.
-A future deployment can override the setting without changing timetable code.
+The current default is Monday through Friday. A future deployment can
+override ``ACADEMICS_WORKING_WEEKDAYS`` without duplicating weekday checks
+through timetable views and forms.
 """
 
 from django.conf import settings
@@ -11,9 +11,9 @@ DEFAULT_WORKING_WEEKDAYS = (0, 1, 2, 3, 4)
 
 
 def working_weekdays():
-    """Return the configured weekday numbers in fixed Monday-Friday order."""
+    """Return configured weekday numbers in stable calendar order."""
     configured = getattr(settings, "ACADEMICS_WORKING_WEEKDAYS", DEFAULT_WORKING_WEEKDAYS)
-    return tuple(day for day in DEFAULT_WORKING_WEEKDAYS if day in configured)
+    return tuple(sorted({int(day) for day in configured if 0 <= int(day) <= 6}))
 
 
 def is_working_day(weekday):
