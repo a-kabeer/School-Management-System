@@ -9,8 +9,6 @@
  * dark and system themes are handled once rather than per rule.
  */
 
-/* ----------------------------------------------------------- design tokens */
-
 :root {
     --bs-border-radius: .5rem;
     --bs-border-radius-sm: .375rem;
@@ -37,8 +35,6 @@
 body {
     -webkit-font-smoothing: antialiased;
 }
-
-/* --------------------------------------------------------------- layout */
 
 .app-navbar {
     min-height: var(--app-navbar-height);
@@ -74,8 +70,6 @@ body {
     height: 2rem;
 }
 
-/* ------------------------------------------------------------ navigation */
-
 .app-nav-link {
     border-radius: var(--bs-border-radius);
     padding-block: .5rem;
@@ -107,8 +101,6 @@ body {
     border-inline-start: 1px solid var(--bs-border-color);
 }
 
-/* ---------------------------------------------------------------- tables */
-
 .app-table > thead > tr > th {
     background-color: var(--bs-tertiary-bg);
     color: var(--bs-secondary-color);
@@ -124,9 +116,16 @@ body {
 }
 
 /* A clickable row is one clear interaction surface. The record-name cell is
-   plain text; only the row itself owns the View interaction. */
+   plain text and must never inherit link-like underline/bold hover styling. */
 .app-row {
     cursor: pointer;
+}
+
+.app-row > td[data-col="0"],
+.app-row:hover > td[data-col="0"],
+.app-row:focus-visible > td[data-col="0"] {
+    text-decoration: none;
+    font-weight: inherit;
 }
 
 .app-row:focus-visible {
@@ -198,8 +197,6 @@ body {
     transform: scaleX(-1);
 }
 
-/* ------------------------------------------------------- combo selects */
-
 .app-combo {
     position: relative;
 }
@@ -249,8 +246,6 @@ body {
     color: var(--bs-secondary-color);
 }
 
-/* ----------------------------------------------------------- timetable */
-
 .timetable-grid {
     table-layout: fixed;
     min-inline-size: 56rem;
@@ -297,8 +292,6 @@ body {
     color: var(--bs-primary);
 }
 
-/* -------------------------------------------------------- detail screens */
-
 .detail-icon {
     width: 3rem;
     height: 3rem;
@@ -308,14 +301,10 @@ body {
     scrollbar-width: thin;
 }
 
-/* ----------------------------------------------------------- empty state */
-
 .empty-state-icon {
     width: 3.5rem;
     height: 3.5rem;
 }
-
-/* --------------------------------------------------- auto-fit card grids */
 
 .card-grid {
     display: grid;
@@ -343,8 +332,6 @@ body {
     grid-column: 1 / -1;
 }
 
-/* ------------------------------------------------------ definition lists */
-
 .definition-list {
     display: grid;
     grid-template-columns: minmax(7rem, auto) 1fr;
@@ -371,8 +358,6 @@ body {
     grid-column: auto;
 }
 
-/* ------------------------------------------------------ sized fragments */
-
 .avatar {
     width: 2rem;
     height: 2rem;
@@ -385,8 +370,6 @@ body {
     height: 4rem;
     flex: none;
 }
-
-/* ------------------------------------------------------------ bar chart */
 
 .bar-chart {
     height: 8.75rem;
@@ -401,14 +384,10 @@ body {
     opacity: .8;
 }
 
-/* ------------------------------------------------------------ focus ring */
-
 :focus-visible {
     outline: 2px solid var(--bs-primary);
     outline-offset: 2px;
 }
-
-/* ---------------------------------------------------------------- print */
 
 @media print {
     .app-navbar,
@@ -440,8 +419,6 @@ body {
         transition: none;
     }
 }
-
-/* --------------------------------------------------- dashboard fragments */
 
 .kpi-icon {
     width: 2rem;
