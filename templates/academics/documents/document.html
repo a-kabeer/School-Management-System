@@ -35,9 +35,9 @@
         .timetable-day { text-align: center; }
         .timetable-cell { min-height: 54px; text-align: center; }
         .lesson-subject { font-weight: 700; line-height: 1.2; }
+        .lesson-class { font-weight: 600; font-size: 10px; line-height: 1.25; margin-top: 3px; }
         .lesson-teacher, .lesson-room { color: #555; font-size: 10px; line-height: 1.25; margin-top: 3px; }
         .lesson-room:before { content: "• "; }
-        .lesson-empty { color: #aaa; }
         .document-footer { border-top: 1px solid #bbb; margin-top: 16px; padding-top: 7px; color: #666; font-size: 10px; display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; }
         .document-contact { min-width: 0; }
         .document-generated { white-space: nowrap; text-align: end; }
@@ -111,7 +111,7 @@
             {% for row in section.rows %}
                 <tr>
                     <th scope="row">P{{ row.period }}<br><span class="fw-normal">{{ row.start|time:"H:i" }}–{{ row.end|time:"H:i" }}</span></th>
-                    {% for lesson in row.days %}<td class="timetable-cell">{% if lesson.subject %}<div class="lesson-subject">{{ lesson.subject }}</div>{% if lesson.teacher %}<div class="lesson-teacher">{{ lesson.teacher }}</div>{% endif %}{% if lesson.room %}<div class="lesson-room">{{ lesson.room }}</div>{% endif %}{% else %}<span class="lesson-empty">—</span>{% endif %}</td>{% endfor %}
+                    {% for lesson in row.days %}<td class="timetable-cell">{% if lesson.subject %}<div class="lesson-subject">{{ lesson.subject }}</div>{% if lesson.class_section %}<div class="lesson-class">{{ lesson.class_section }}</div>{% endif %}{% if lesson.teacher %}<div class="lesson-teacher">{{ lesson.teacher }}</div>{% endif %}{% if lesson.room %}<div class="lesson-room">{{ lesson.room }}</div>{% endif %}{% else %}<span class="lesson-empty">—</span>{% endif %}</td>{% endfor %}
                 </tr>
             {% empty %}
                 <tr><td colspan="{{ section.weekdays|length|add:'1' }}">{% translate "No timetable lessons found." %}</td></tr>
