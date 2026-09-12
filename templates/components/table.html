@@ -19,7 +19,7 @@ sort, direction, page size and page the reader was using.{% endcomment %}
         </div>
     {% endif %}
     <div class="card mb-3" data-table-card>
-        <div class="table-responsive {% if objects|length > 10 %}app-table-scroll{% endif %}">
+        <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 app-table" data-table {% if table_key %}data-table-key="{{ table_key }}"{% endif %}>
                 <thead><tr>
                     {% if selectable %}<th scope="col" class="app-table-check"><input class="form-check-input" type="checkbox" data-select-all aria-label="{% translate 'Select all rows on this page' %}"></th>{% endif %}
