@@ -39,6 +39,22 @@ def _active_staff_or_selected(queryset, *, selected_id=None):
     return queryset.filter(pk=selected_id) | active
 
 
+def _initial_id(form, name):
+    """Return a contextual FK id supplied by GET, without overriding edits."""
+    if form.instance.pk:
+        return getattr(form.instance, f"{name}_id", None)
+    value = form.initial.get(name)
+    return value or None
+
+
+def _contextual_related_queryset(form, queryset, *, context_field, related_field):
+    """Narrow a related picker when a parent detail page supplied context."""
+    value = _initial_id(form, context_field)
+    if value:
+        return queryset.filter(**{related_field: value})
+    return queryset
+
+
 class AcademicYearForm(TenantModelForm):
     class Meta:
         model = AcademicYear
@@ -180,6 +196,11 @@ class TeacherAssignmentForm(TenantModelForm):
             self.fields["class_subject"].queryset.select_related("school_class", "subject"),
             selected_id=self.instance.class_subject_id,
         )
+        section_id = _initial_id(self, "section")
+        if section_id and not self.instance.pk:
+            section = Section.objects.for_user(self.user, self.branch).filter(pk=section_id).select_related("school_class").first()
+            if section:
+                self.fields["class_subject"].queryset = self.fields["class_subject"].queryset.filter(school_class=section.school_class)
         self.fields["section"].queryset = _active_or_selected(
             self.fields["section"].queryset.select_related("school_class"),
             selected_id=self.instance.section_id,
@@ -220,6 +241,14 @@ class TimetableForm(TenantModelForm):
             self.fields["class_subject"].queryset.select_related("school_class", "subject"),
             selected_id=self.instance.class_subject_id,
         )
+        school_class_id = _initial_id(self, "school_class")
+        section_id = _initial_id(self, "section")
+        if not self.instance.pk and section_id:
+            section = Section.objects.for_user(self.user, self.branch).filter(pk=section_id).select_related("school_class").first()
+            if section:
+                school_class_id = section.school_class_id
+        if school_class_id:
+            self.fields["class_subject"].queryset = self.fields["class_subject"].queryset.filter(school_class_id=school_class_id)
         self.fields["section"].queryset = _active_or_selected(
             self.fields["section"].queryset.select_related("school_class"),
             selected_id=self.instance.section_id,
