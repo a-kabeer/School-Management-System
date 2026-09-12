@@ -1,0 +1,34 @@
+{% load i18n %}
+{% if not resource_key %}
+<div class="modal-body">
+    <div class="mb-3">
+        <p class="text-body-secondary mb-0">{% translate "Choose what you want to add. The same Academics modal workflow is used for every resource." %}</p>
+    </div>
+    <div class="row g-2">
+        {% for key, item in resources.items %}
+            <div class="col-12 col-sm-6">
+                <a class="btn btn-outline-secondary w-100 text-start py-3" href="{% url 'academics:add' %}?resource={{ key }}" data-modal-url="{% url 'academics:add' %}?resource={{ key }}" data-modal-title="{% translate 'Add' %} {{ item.0 }}" data-modal-size="lg">
+                    <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>{{ item.0 }}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<form method="post" action="{% url 'academics:add' %}?resource={{ resource_key }}" enctype="multipart/form-data" novalidate data-modal-form>
+    {% csrf_token %}
+    <input type="hidden" name="resource" value="{{ resource_key }}">
+    <div class="modal-body">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="badge text-bg-primary-subtle text-primary-emphasis">{% translate "Academics" %}</span>
+            <span class="text-body-secondary">{{ resource_label }}</span>
+        </div>
+        {% include "components/form.html" %}
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-outline-secondary" href="{% url 'academics:add' %}" data-modal-url="{% url 'academics:add' %}" data-modal-title="{% translate 'Add New' %}">{% translate "Change type" %}</a>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Save" %}</button>
+    </div>
+</form>
+{% endif %}
