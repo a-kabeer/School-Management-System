@@ -1,11 +1,11 @@
 {% load i18n %}
 <div class="card mb-3">
     <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <p class="fw-semibold mb-0">
+        <h2 class="h6 fw-semibold mb-0">
             {% if card.icon %}<i class="bi {{ card.icon }} me-1 text-body-secondary" aria-hidden="true"></i>{% endif %}
             {{ card.title }}
             {% if card.rows %}<span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary ms-1">{{ card.total|default:card.rows|length }}</span>{% endif %}
-        </p>
+        </h2>
         <div class="d-flex flex-wrap gap-2">
             {% if card.add_url %}
                 <a class="btn btn-sm btn-outline-primary" href="{{ card.add_url }}" {% if card.add_modal %}data-modal-url="{{ card.add_url }}" data-modal-title="{{ card.add_label }}"{% endif %}>
@@ -21,9 +21,10 @@
     </div>
     {% if card.rows %}
         <div class="table-responsive"><table class="table table-hover align-middle mb-0 app-table">
+            <caption class="visually-hidden">{{ card.title }}</caption>
             <thead><tr>{% for column in card.columns %}<th scope="col" class="text-nowrap">{{ column }}</th>{% endfor %}</tr></thead>
             <tbody>{% for row in card.rows %}
-                <tr {% if row.url %}class="app-row" data-row-url="{{ row.url }}?return_to={{ request.get_full_path|urlencode }}"{% endif %}>
+                <tr {% if row.url %}class="app-row" data-row-url="{{ row.url }}?return_to={{ request.get_full_path|urlencode }}" tabindex="0" aria-label="{% translate 'View' %} {{ row.cells.0.value }}"{% endif %}>
                     {% for cell in row.cells %}<td data-label="{{ cell.label }}">
                         {% if forloop.first and row.url %}<a href="{{ row.url }}?return_to={{ request.get_full_path|urlencode }}" class="fw-medium text-decoration-none app-row-link">{{ cell.value|default:"—" }}</a>
                         {% elif cell.badge %}<span class="badge rounded-pill text-bg-{{ cell.badge }}-subtle text-{{ cell.badge }}-emphasis border border-{{ cell.badge }}-subtle">{{ cell.value|default:"—" }}</span>
