@@ -17,12 +17,12 @@ from apps.core.modals import modal_success
 from apps.core.permissions import PermissionRequiredMixin, user_has_permission
 
 from .forms import (
-    AcademicYearForm, ClassSubjectForm, SchoolClassForm, SectionForm,
-    SubjectForm, TeacherAssignmentForm, TermForm, TimetableForm,
+    AcademicYearForm, ClassSubjectForm, SchoolClassForm, SectionForm, SubjectForm,
+    TeacherAssignmentForm, TermForm, TimetableForm,
 )
 from .models import (
-    AcademicYear, ClassSubject, SchoolClass, Section, Subject,
-    TeacherAssignment, Term, Timetable,
+    AcademicYear, ClassSubject, SchoolClass, Section, Subject, TeacherAssignment,
+    Term, Timetable,
 )
 
 RESOURCES = {
@@ -37,14 +37,9 @@ RESOURCES = {
 }
 
 CONTEXT_MODELS = {
-    "year_detail": AcademicYear,
-    "term_detail": Term,
-    "class_detail": SchoolClass,
-    "section_detail": Section,
-    "subject_detail": Subject,
-    "classsubject_detail": ClassSubject,
-    "assignment_detail": TeacherAssignment,
-    "timetable_detail": Timetable,
+    "year_detail": AcademicYear, "term_detail": Term, "class_detail": SchoolClass,
+    "section_detail": Section, "subject_detail": Subject, "classsubject_detail": ClassSubject,
+    "assignment_detail": TeacherAssignment, "timetable_detail": Timetable,
 }
 
 CONTEXT_FIELDS = {
@@ -53,20 +48,12 @@ CONTEXT_FIELDS = {
     "class_detail": {"school_class": "pk"},
     "section_detail": {"school_class": "school_class_id", "section": "pk"},
     "subject_detail": {"subject": "pk"},
-    "classsubject_detail": {
-        "academic_year": "academic_year_id", "school_class": "school_class_id",
-        "subject": "subject_id", "class_subject": "pk",
-    },
-    "assignment_detail": {
-        "academic_year": "academic_year_id", "teacher": "teacher_id",
-        "class_subject": "class_subject_id", "section": "section_id",
-    },
-    "timetable_detail": {
-        "academic_year": "academic_year_id", "section": "section_id",
-        "class_subject": "class_subject_id", "teacher": "teacher_id",
-    },
+    "classsubject_detail": {"academic_year": "academic_year_id", "school_class": "school_class_id", "subject": "subject_id", "class_subject": "pk"},
+    "assignment_detail": {"academic_year": "academic_year_id", "teacher": "teacher_id", "class_subject": "class_subject_id", "section": "section_id"},
+    "timetable_detail": {"academic_year": "academic_year_id", "section": "section_id", "class_subject": "class_subject_id", "teacher": "teacher_id"},
 }
 
+# Only genuinely comprehensive forms use tabs. Short CRUD forms remain one-step.
 FORM_TABS = {
     "teacher_assignment": [
         (_("Assignment"), ["assignment_type", "academic_year", "teacher"]),
@@ -77,10 +64,6 @@ FORM_TABS = {
         (_("Lesson"), ["academic_year", "section", "class_subject", "teacher"]),
         (_("Schedule"), ["weekday", "period", "start_time", "end_time"]),
         (_("Room & Review"), ["room"]),
-    ],
-    "class": [
-        (_("Basic Details"), ["name", "code", "level", "description"]),
-        (_("Settings"), ["is_active"]),
     ],
 }
 
@@ -99,28 +82,18 @@ class AcademicsCreateView(PermissionRequiredMixin, View):
             raise Http404(_("Unknown academic resource."))
 
     def allowed(self, model):
-        return user_has_permission(
-            self.request.user,
-            f"academics.add_{model._meta.model_name}",
-            getattr(self.request, "active_branch", None),
-        )
+        return user_has_permission(self.request.user, f"academics.add_{model._meta.model_name}", getattr(self.request, "active_branch", None))
 
     def get_return_to(self):
         value = self.request.GET.get("return_to") or self.request.POST.get("return_to")
-        if value and url_has_allowed_host_and_scheme(
-            value, allowed_hosts={self.request.get_host()}, require_https=self.request.is_secure()
-        ):
+        if value and url_has_allowed_host_and_scheme(value, allowed_hosts={self.request.get_host()}, require_https=self.request.is_secure()):
             return value
         return None
 
     def get_form(self, form_class):
         model = form_class.Meta.model
         field_names = {field.name for field in model._meta.fields}
-        initial = {
-            key: value for key, value in self.request.GET.items()
-            if key in field_names and value
-        }
-
+        initial = {key: value for key, value in self.request.GET.items() if key in field_names and value}
         return_to = self.get_return_to()
         if return_to:
             try:
@@ -137,22 +110,13 @@ class AcademicsCreateView(PermissionRequiredMixin, View):
                                     initial[field_name] = value
             except Exception:
                 pass
-
-        return form_class(
-            branch=getattr(self.request, "active_branch", None),
-            user=self.request.user,
-            data=self.request.POST or None,
-            files=self.request.FILES or None,
-            initial=initial,
-        )
+        return form_class(branch=getattr(self.request, "active_branch", None), user=self.request.user, data=self.request.POST or None, files=self.request.FILES or None, initial=initial)
 
     def form_sections(self, key, form):
         spec = FORM_TABS.get(key)
         if not spec:
             return []
-        used = set()
-        sections = []
-        first_error_seen = False
+        used, sections, first_error_seen = set(), [], False
         for label, names in spec:
             fields = [form[name] for name in names if name in form.fields]
             used.update(names)
@@ -167,28 +131,19 @@ class AcademicsCreateView(PermissionRequiredMixin, View):
         if remaining:
             has_errors = any(field.errors for field in remaining)
             active = has_errors and not first_error_seen
+            if active:
+                first_error_seen = True
             sections.append({"label": _("Additional"), "fields": remaining, "active": active})
         if sections and not any(section["active"] for section in sections):
             sections[0]["active"] = True
         return sections
 
     def context(self, **extra):
-        available = {
-            key: value for key, value in RESOURCES.items() if self.allowed(value[1])
-        }
+        available = {key: value for key, value in RESOURCES.items() if self.allowed(value[1])}
         return {"resources": available, **extra}
 
     def render_form(self, request, key, label, form, status=None):
-        return TemplateResponse(
-            request, self.template_name,
-            self.context(
-                resource_key=key,
-                resource_label=label,
-                form=form,
-                form_sections=self.form_sections(key, form),
-                return_to=self.get_return_to(),
-            ), status=status,
-        )
+        return TemplateResponse(request, self.template_name, self.context(resource_key=key, resource_label=label, form=form, form_sections=self.form_sections(key, form), return_to=self.get_return_to()), status=status)
 
     def get(self, request, *args, **kwargs):
         key, label, form_class = self.get_resource()
