@@ -14,7 +14,7 @@ NAVIGATION = [
         {"label": _("Overview"), "url_name": "academics:overview"},
         {"label": _("Academic Years"), "url_name": "academics:year_list"},
         {"label": _("Terms"), "url_name": "academics:term_list"},
-        {"label": _("Classes & Sections"), "url_name": "academics:class_list"},
+        {"label": _("Classes & Sections"), "url_name": "academics:class_list", "active_url_names": ["academics:class_list", "academics:section_list"]},
         {"label": _("Subjects"), "url_name": "academics:subject_list"},
         {"label": _("Class Subjects"), "url_name": "academics:classsubject_list"},
         {"label": _("Teacher Assignments"), "url_name": "academics:assignment_list"},
@@ -123,11 +123,14 @@ def visible_navigation(user, branch=None, current_path=""):
             url = _resolve(child.get("url_name"))
             if not url:
                 continue
-            children.append({**child, "url": url, "is_current": url == current_path})
+            active_urls = [_resolve(name) for name in child.get("active_url_names", ())]
+            active_urls = [active_url for active_url in active_urls if active_url]
+            is_current = any(current_path == active_url or current_path.startswith(active_url) for active_url in active_urls) if active_urls else url == current_path
+            children.append({**child, "url": url, "is_current": is_current})
         if item.get("children") and not children:
             continue
         if children:
             entry["children"] = children
-            entry["is_open"] = any(child["is_current"] for child in children) or any(current_path.startswith(child["url"]) for child in children)
+            entry["is_open"] = any(child["is_current"] for child in children)
         visible.append(entry)
     return visible
