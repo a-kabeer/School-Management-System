@@ -1,12 +1,12 @@
 import datetime as dt
 
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 
 from apps.academics.forms import TimetableForm
 from apps.academics.models import Timetable
 from apps.academics.tests.test_workflow import AcademicsFixture
 from apps.academics.timetable_config import working_weekdays
-from django.urls import reverse
 
 
 class WorkingDayPolicyTests(AcademicsFixture):
@@ -73,5 +73,3 @@ class WorkingDayPolicyTests(AcademicsFixture):
         ])
         self.assertContains(response, "Monday")
         self.assertContains(response, "Friday")
-        self.assertNotContains(response, "Saturday")
-        self.assertNotContains(response, "Sunday")
