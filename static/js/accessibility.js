@@ -93,7 +93,7 @@
     }
 
     function enhanceTables() {
-        document.querySelectorAll("table.app-table").forEach(function (table, index) {
+        document.querySelectorAll("table.app-table").forEach(function (table) {
             if (!table.getAttribute("aria-label") && !table.querySelector("caption")) {
                 var caption = document.createElement("caption");
                 caption.className = "visually-hidden";
@@ -103,11 +103,38 @@
         });
     }
 
+    function enhanceFormLoading() {
+        document.querySelectorAll("form[data-app-form]").forEach(function (form) {
+            if (form.getAttribute("data-loading-ready") === "1") return;
+            form.setAttribute("data-loading-ready", "1");
+
+            form.addEventListener("submit", function (event) {
+                if (event.defaultPrevented) return;
+                if (form.getAttribute("data-submitting") === "1") {
+                    event.preventDefault();
+                    return;
+                }
+
+                var button = form.querySelector("[data-submit-button]");
+                if (!button) return;
+
+                form.setAttribute("data-submitting", "1");
+                form.setAttribute("aria-busy", "true");
+                button.disabled = true;
+                var icon = button.querySelector("[data-submit-icon]");
+                var loading = button.querySelector("[data-submit-loading]");
+                if (icon) icon.classList.add("d-none");
+                if (loading) loading.classList.replace("d-none", "d-inline-flex");
+            });
+        });
+    }
+
     function enhance() {
         enhanceForms(document);
         enhanceCombos(document);
         enhanceTables();
         enhanceModals();
+        enhanceFormLoading();
     }
 
     if (document.readyState !== "loading") enhance();
@@ -120,6 +147,7 @@
                 if (node.nodeType !== 1) return;
                 enhanceForms(node);
                 enhanceCombos(node);
+                enhanceFormLoading(node);
             });
         });
     }).observe(document.body, { childList: true, subtree: true });
