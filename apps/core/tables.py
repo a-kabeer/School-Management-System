@@ -1,7 +1,7 @@
 """The shared table's server-side behaviour: sorting, paging and export.
 
 Sorting, filtering and paging all happen in the database. A branch with nine
-thousand students never loads nine thousand rows to show twenty-five of them,
+thousand students never loads nine thousand rows to show ten of them,
 and a sort is an ``ORDER BY`` rather than a JavaScript comparison — which is
 the only arrangement that stays correct once a list is longer than one page.
 
@@ -14,16 +14,16 @@ from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
 
 #: Rows-per-page choices offered by every table.
-PAGE_SIZES = (25, 50, 100, 200, 500)
+PAGE_SIZES = (10, 25, 50, 100, 200, 500)
 
 
 def page_size(request, default=None):
     """The requested rows per page, restricted to the offered choices."""
-    fallback = default or getattr(settings, "PAGE_SIZE", 25)
+    fallback = default or getattr(settings, "PAGE_SIZE", 10)
     try:
         requested = int(request.GET.get("per_page", ""))
     except (TypeError, ValueError):
-        return fallback
+        return fallback if fallback in PAGE_SIZES else PAGE_SIZES[0]
     return requested if requested in PAGE_SIZES else fallback
 
 
