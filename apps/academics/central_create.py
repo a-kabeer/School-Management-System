@@ -53,7 +53,6 @@ CONTEXT_FIELDS = {
     "timetable_detail": {"academic_year": "academic_year_id", "section": "section_id", "class_subject": "class_subject_id", "teacher": "teacher_id"},
 }
 
-# Only genuinely comprehensive forms use tabs. Short CRUD forms remain one-step.
 FORM_TABS = {
     "teacher_assignment": [
         (_("Assignment"), ["assignment_type", "academic_year", "teacher"]),
@@ -75,11 +74,12 @@ class AcademicsCreateView(PermissionRequiredMixin, View):
     def get_resource(self):
         key = self.request.GET.get("resource") or self.request.POST.get("resource")
         if not key:
-            return None, None, None
+            return None, None, None, None
         try:
-            return key, *RESOURCES[key]
+            label, model, form_class = RESOURCES[key]
         except KeyError:
             raise Http404(_("Unknown academic resource."))
+        return key, label, model, form_class
 
     def allowed(self, model):
         return user_has_permission(self.request.user, f"academics.add_{model._meta.model_name}", getattr(self.request, "active_branch", None))
@@ -146,19 +146,17 @@ class AcademicsCreateView(PermissionRequiredMixin, View):
         return TemplateResponse(request, self.template_name, self.context(resource_key=key, resource_label=label, form=form, form_sections=self.form_sections(key, form), return_to=self.get_return_to()), status=status)
 
     def get(self, request, *args, **kwargs):
-        key, label, form_class = self.get_resource()
+        key, label, model, form_class = self.get_resource()
         if not key:
             return TemplateResponse(request, self.template_name, self.context())
-        model = RESOURCES[key][1]
         if not self.allowed(model):
             raise PermissionDenied
         return self.render_form(request, key, label, self.get_form(form_class))
 
     def post(self, request, *args, **kwargs):
-        key, label, form_class = self.get_resource()
+        key, label, model, form_class = self.get_resource()
         if not key:
             raise Http404(_("Choose an academic resource first."))
-        model = RESOURCES[key][1]
         if not self.allowed(model):
             raise PermissionDenied
         form = self.get_form(form_class)
