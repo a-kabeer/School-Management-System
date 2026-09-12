@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import affected_timetable_views, class_structure_views, detail_views, overview_views, timetable_views, views
+from . import affected_timetable_views, class_structure_views, detail_views, overview_views, structure_detail_views, timetable_views, views
 
 app_name = "academics"
 
@@ -23,7 +23,7 @@ urlpatterns = [
     path("classes/<uuid:pk>/delete/", views.SchoolClassDeleteView.as_view(), name="class_delete"),
     path("sections/", views.SectionListView.as_view(), name="section_list"),
     path("sections/new/", views.SectionCreateView.as_view(), name="section_create"),
-    path("sections/<uuid:pk>/", detail_views.SectionDetailView.as_view(), name="section_detail"),
+    path("sections/<uuid:pk>/", structure_detail_views.SectionDetailView.as_view(), name="section_detail"),
     path("sections/<uuid:pk>/edit/", views.SectionUpdateView.as_view(), name="section_update"),
     path("sections/<uuid:pk>/delete/", views.SectionDeleteView.as_view(), name="section_delete"),
     path("subjects/", views.SubjectListView.as_view(), name="subject_list"),
