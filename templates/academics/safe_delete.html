@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="card border-danger-subtle" style="max-width: 46rem;">
+    <div class="card-body">
+        <div class="d-flex align-items-start gap-3">
+            <span class="empty-state-icon d-inline-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning-emphasis flex-shrink-0">
+                <i class="bi bi-exclamation-triangle fs-4" aria-hidden="true"></i>
+            </span>
+            <div class="min-w-0">
+                <h2 class="h5 mb-1">
+                    {% if deletion_blocked %}{% translate "Deletion is blocked" %}{% else %}{% translate "Review before deleting" %}{% endif %}
+                </h2>
+                <p class="mb-0 text-body-secondary">
+                    {% if deletion_blocked %}
+                        {% blocktranslate with name=object %}“{{ name }}” contains or represents academic history. Deleting it is not the safe way to remove it from active workflows.{% endblocktranslate %}
+                    {% else %}
+                        {% blocktranslate with name=object %}You are about to permanently delete “{{ name }}”. Review the impact before continuing.{% endblocktranslate %}
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        {% if dependants %}
+        <div class="alert alert-danger mt-3 mb-0">
+            <p class="fw-semibold mb-1"><i class="bi bi-link-45deg me-1" aria-hidden="true"></i>{% translate "This record is used by" %}</p>
+            <ul class="mb-0 ps-4">
+                {% for item in dependants %}
+                    <li><strong>{{ item.count }}</strong> {{ item.label }}</li>
+                {% endfor %}
+            </ul>
+            <p class="small mb-0 mt-2">{% translate "Deleting it would remove or invalidate related academic data, so the delete action is blocked." %}</p>
+        </div>
+        {% endif %}
+
+        {% if deletion_blocked %}
+        <div class="alert alert-info mt-3 mb-0">
+            <p class="fw-semibold mb-1"><i class="bi bi-archive me-1" aria-hidden="true"></i>{% translate "Safer option" %}</p>
+            <p class="mb-0">{{ archive_explanation }}</p>
+        </div>
+        {% else %}
+        <div class="alert alert-warning mt-3 mb-0">
+            <p class="fw-semibold mb-1"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% translate "What deletion means" %}</p>
+            <p class="mb-0">{% translate "This record has no dependent records detected by the Academics dependency check. Deletion is permanent. If it represents useful history, edit it instead of deleting it." %}</p>
+        </div>
+        {% endif %}
+
+        <form method="post" class="d-flex flex-wrap gap-2 mt-4">
+            {% csrf_token %}
+            {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+            {% if deletion_blocked %}
+                {% if archive_url %}
+                    <a href="{{ archive_url }}{% if return_to %}?return_to={{ return_to|urlencode }}{% endif %}" class="btn btn-primary">
+                        <i class="bi bi-archive me-1" aria-hidden="true"></i>{{ archive_action_label }}
+                    </a>
+                {% endif %}
+            {% else %}
+                <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% translate "Delete permanently" %}</button>
+            {% endif %}
+            {% if return_to %}<a href="{{ return_to }}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>{% else %}<a href="{{ request.META.HTTP_REFERER|default:'..' }}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>{% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}
