@@ -34,7 +34,7 @@
             {% endfor %}</tbody>
         </table></div>
         {% if card.more %}<div class="card-footer bg-transparent small text-body-secondary">
-            {% blocktranslate count count=card.more %}{{ count }} more not shown.{% plural %}{{ count }} more not shown.{% endblocktranslate %}
+            {{ card.more }} {% translate "more not shown." %}
             {% if card.all_url %}<a href="{{ card.all_url }}{% if '?' in card.all_url %}&{% else %}?{% endif %}return_to={{ request.get_full_path|urlencode }}">{{ card.all_label|default:_("View all") }}</a>{% endif %}
         </div>{% endif %}
     {% else %}
