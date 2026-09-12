@@ -1,90 +1,46 @@
 {% load i18n %}
-{% comment %}A block of related records inside a View: what they are, how many
-   there are, a compact table of them, the way through to the full list, and
-   an honest empty state with the action that fills it.
-
-   Driven entirely by a `card` dict, built by
-   `apps.core.detail.related_card()` so every module describes one the same
-   way.{% endcomment %}
 <div class="card mb-3">
     <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
         <p class="fw-semibold mb-0">
             {% if card.icon %}<i class="bi {{ card.icon }} me-1 text-body-secondary" aria-hidden="true"></i>{% endif %}
             {{ card.title }}
-            {% if card.rows %}
-                <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary ms-1">{{ card.total|default:card.rows|length }}</span>
-            {% endif %}
+            {% if card.rows %}<span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary ms-1">{{ card.total|default:card.rows|length }}</span>{% endif %}
         </p>
         <div class="d-flex flex-wrap gap-2">
             {% if card.add_url %}
-                <a class="btn btn-sm btn-outline-primary" href="{{ card.add_url }}"
-                   {% if card.add_modal %}data-modal-url="{{ card.add_url }}" data-modal-title="{{ card.add_label }}"{% endif %}>
+                <a class="btn btn-sm btn-outline-primary" href="{{ card.add_url }}" {% if card.add_modal %}data-modal-url="{{ card.add_url }}" data-modal-title="{{ card.add_label }}"{% endif %}>
                     <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ card.add_label|default:_("Add") }}
                 </a>
             {% endif %}
             {% if card.all_url and card.rows %}
-                <a class="btn btn-sm btn-outline-secondary" href="{{ card.all_url }}">
-                    {{ card.all_label|default:_("View all") }}
-                    <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ card.all_url }}{% if '?' in card.all_url %}&{% else %}?{% endif %}return_to={{ request.get_full_path|urlencode }}">
+                    {{ card.all_label|default:_("View all") }} <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
                 </a>
             {% endif %}
         </div>
     </div>
-
     {% if card.rows %}
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 app-table">
-                <thead>
-                <tr>
-                    {% for column in card.columns %}
-                        <th scope="col" class="text-nowrap">{{ column }}</th>
-                    {% endfor %}
+        <div class="table-responsive"><table class="table table-hover align-middle mb-0 app-table">
+            <thead><tr>{% for column in card.columns %}<th scope="col" class="text-nowrap">{{ column }}</th>{% endfor %}</tr></thead>
+            <tbody>{% for row in card.rows %}
+                <tr {% if row.url %}class="app-row" data-row-url="{{ row.url }}?return_to={{ request.get_full_path|urlencode }}"{% endif %}>
+                    {% for cell in row.cells %}<td data-label="{{ cell.label }}">
+                        {% if forloop.first and row.url %}<a href="{{ row.url }}?return_to={{ request.get_full_path|urlencode }}" class="fw-medium text-decoration-none app-row-link">{{ cell.value|default:"—" }}</a>
+                        {% elif cell.badge %}<span class="badge rounded-pill text-bg-{{ cell.badge }}-subtle text-{{ cell.badge }}-emphasis border border-{{ cell.badge }}-subtle">{{ cell.value|default:"—" }}</span>
+                        {% else %}{{ cell.value|default:"—" }}{% endif %}
+                    </td>{% endfor %}
                 </tr>
-                </thead>
-                <tbody>
-                {% for row in card.rows %}
-                    <tr {% if row.url %}class="app-row" data-row-url="{{ row.url }}"{% endif %}>
-                        {% for cell in row.cells %}
-                            <td data-label="{{ cell.label }}">
-                                {% if forloop.first and row.url %}
-                                    <a href="{{ row.url }}" class="fw-medium text-decoration-none app-row-link">{{ cell.value|default:"—" }}</a>
-                                {% elif cell.badge %}
-                                    <span class="badge rounded-pill text-bg-{{ cell.badge }}-subtle
-                                                 text-{{ cell.badge }}-emphasis border border-{{ cell.badge }}-subtle">
-                                        {{ cell.value|default:"—" }}
-                                    </span>
-                                {% else %}
-                                    {{ cell.value|default:"—" }}
-                                {% endif %}
-                            </td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% if card.more %}
-            <div class="card-footer bg-transparent small text-body-secondary">
-                {% blocktranslate with count=card.more %}{{ count }} more not shown.{% endblocktranslate %}
-                {% if card.all_url %}<a href="{{ card.all_url }}">{{ card.all_label|default:_("View all") }}</a>{% endif %}
-            </div>
-        {% endif %}
+            {% endfor %}</tbody>
+        </table></div>
+        {% if card.more %}<div class="card-footer bg-transparent small text-body-secondary">
+            {% blocktranslate with count=card.more %}{{ count }} more not shown.{% endblocktranslate %}
+            {% if card.all_url %}<a href="{{ card.all_url }}{% if '?' in card.all_url %}&{% else %}?{% endif %}return_to={{ request.get_full_path|urlencode }}">{{ card.all_label|default:_("View all") }}</a>{% endif %}
+        </div>{% endif %}
     {% else %}
-        <div class="card-body text-center py-4">
-            <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
-                         rounded-circle bg-body-tertiary text-body-secondary mb-2">
-                <i class="bi {{ card.icon|default:'bi-inbox' }} fs-5" aria-hidden="true"></i>
-            </span>
+        <div class="card-body text-center py-4"><span class="empty-state-icon d-inline-flex align-items-center justify-content-center rounded-circle bg-body-tertiary text-body-secondary mb-2"><i class="bi {{ card.icon|default:'bi-inbox' }} fs-5" aria-hidden="true"></i></span>
             <p class="fw-medium mb-1">{{ card.empty|default:_("Nothing here yet") }}</p>
-            {% if card.empty_hint %}
-                <p class="text-body-secondary small mb-3">{{ card.empty_hint }}</p>
-            {% endif %}
-            {% if card.add_url %}
-                <a class="btn btn-sm btn-primary" href="{{ card.add_url }}"
-                   {% if card.add_modal %}data-modal-url="{{ card.add_url }}" data-modal-title="{{ card.add_label }}"{% endif %}>
-                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ card.add_label|default:_("Add") }}
-                </a>
-            {% endif %}
+            {% if card.empty_hint %}<p class="text-body-secondary small mb-3">{{ card.empty_hint }}</p>{% endif %}
+            {% if card.add_url %}<a class="btn btn-sm btn-primary" href="{{ card.add_url }}" {% if card.add_modal %}data-modal-url="{{ card.add_url }}" data-modal-title="{{ card.add_label }}"{% endif %}><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ card.add_label|default:_("Add") }}</a>{% endif %}
         </div>
     {% endif %}
 </div>
