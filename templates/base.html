@@ -28,6 +28,7 @@
     {% endif %}
     <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/layout-fixes.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% if user.is_authenticated %}app-shell{% else %}d-flex align-items-center justify-content-center min-vh-100 bg-body-tertiary{% endif %}">
