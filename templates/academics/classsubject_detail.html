@@ -1,54 +1,37 @@
 {% extends "components/detail.html" %}
 {% load i18n core_extras %}
-{% comment %}A class subject is one fact — this class studies this subject
-   this year — plus who teaches it and when. Two cards, no tabs.{% endcomment %}
 
 {% block detail_actions %}
     {% has_perm "academics.change_classsubject" as can_edit %}
     {% if can_edit %}
-        <a class="btn btn-sm btn-primary" href="{% url 'academics:classsubject_update' object.pk %}"
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:classsubject_update' object.pk %}"
            data-modal-url="{% url 'academics:classsubject_update' object.pk %}"
-           data-modal-title="{% translate 'Edit class subject' %}">
-            <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}
-        </a>
+           data-modal-title="{% translate 'Edit class subject' %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>
     {% endif %}
     {% has_perm "academics.add_teacherassignment" as can_assign %}
     {% if can_assign %}
-        <a class="btn btn-sm btn-outline-primary"
-           href="{% url 'academics:assignment_create' %}?class_subject={{ object.pk }}&academic_year={{ object.academic_year_id }}"
+        <a class="btn btn-sm btn-primary" href="{% url 'academics:assignment_create' %}?class_subject={{ object.pk }}&academic_year={{ object.academic_year_id }}"
            data-modal-url="{% url 'academics:assignment_create' %}?class_subject={{ object.pk }}&academic_year={{ object.academic_year_id }}"
-           data-modal-title="{% translate 'Assign a teacher' %}">
-            <i class="bi bi-person-plus me-1" aria-hidden="true"></i>{% translate "Assign teacher" %}
-        </a>
+           data-modal-title="{% translate 'Assign a teacher' %}"><i class="bi bi-person-plus me-1" aria-hidden="true"></i>{% translate "Assign Teacher" %}</a>
     {% endif %}
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:class_detail' object.school_class_id %}"><i class="bi bi-mortarboard me-1" aria-hidden="true"></i>{% translate "Class" %}</a>
 {% endblock %}
 
 {% block detail_body %}
-{% if weekly_periods %}
-    <div class="card mb-3">
-        <div class="card-body py-3">
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                <div>
-                    <p class="text-body-secondary small mb-1">{% translate "Periods a week" %}</p>
-                    <p class="fs-5 fw-semibold mb-0">
-                        {% blocktranslate with scheduled=scheduled_periods planned=weekly_periods %}{{ scheduled }} scheduled of {{ planned }}{% endblocktranslate %}
-                    </p>
-                </div>
-                {% if periods_short %}
-                    <span class="badge text-bg-warning-subtle text-warning-emphasis border border-warning-subtle">
-                        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
-                        {% blocktranslate count counter=periods_short %}{{ counter }} period still to schedule{% plural %}{{ counter }} periods still to schedule{% endblocktranslate %}
-                    </span>
-                {% else %}
-                    <span class="badge text-bg-success-subtle text-success-emphasis border border-success-subtle">
-                        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Fully scheduled" %}
-                    </span>
-                {% endif %}
-            </div>
-        </div>
+<div class="card mb-3"><div class="card-body">
+    <h3 class="h6 mb-3">{% translate "Overview" %}</h3>
+    <div class="row g-3 small">
+        <div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Subject" %}</div><div class="fw-medium">{{ object.subject.name }}</div></div>
+        <div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Class" %}</div><div class="fw-medium">{{ object.school_class.name }}</div></div>
+        <div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Academic Year" %}</div><div class="fw-medium">{{ object.academic_year.name }}</div></div>
+        <div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Weekly Periods" %}</div><div class="fw-medium">{{ weekly_periods }}</div></div>
     </div>
+</div>
+{% if weekly_periods %}
+<div class="card mb-3"><div class="card-body py-3"><div class="d-flex flex-wrap align-items-center justify-content-between gap-3"><div><p class="text-body-secondary small mb-1">{% translate "Timetable coverage" %}</p><p class="fw-semibold mb-0">{% blocktranslate with scheduled=scheduled_periods planned=weekly_periods %}{{ scheduled }} scheduled of {{ planned }}{% endblocktranslate %}</p></div>{% if periods_short %}<span class="badge text-bg-warning-subtle text-warning-emphasis border border-warning-subtle">{% blocktranslate count counter=periods_short %}{{ counter }} period still to schedule{% plural %}{{ counter }} periods still to schedule{% endblocktranslate %}</span>{% else %}<span class="badge text-bg-success-subtle text-success-emphasis border border-success-subtle">{% translate "Fully scheduled" %}</span>{% endif %}</div></div></div>
 {% endif %}
-
-{% include "components/related_card.html" with card=teachers_card %}
-{% include "components/related_card.html" with card=slots_card %}
+<div class="row g-3">
+    <div class="col-12">{% include "components/related_card.html" with card=teachers_card %}</div>
+    <div class="col-12">{% include "components/related_card.html" with card=slots_card %}</div>
+</div>
 {% endblock %}
