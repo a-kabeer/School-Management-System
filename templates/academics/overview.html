@@ -8,6 +8,12 @@
     </p>
 {% endblock %}
 
+{% block page_actions %}
+    <a class="btn btn-primary" href="{% url 'academics:add' %}" data-modal-url="{% url 'academics:add' %}" data-modal-title="{% translate 'Add New' %}">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% translate "Add New" %}
+    </a>
+{% endblock %}
+
 {% block content %}
 <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
     {% for card in academic_cards %}
