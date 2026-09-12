@@ -13,15 +13,15 @@
         </div>
     </div>
 
-    {% comment %}Primary action first and solid; the way back is present but
-       quiet, so the two are never confused.{% endcomment %}
     <div class="d-flex flex-wrap gap-2">
         <button type="submit" class="btn btn-primary">
             <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Save" %}
         </button>
-        <a href="{{ request.META.HTTP_REFERER|default:'..' }}" class="btn btn-outline-secondary">
-            {% translate "Cancel" %}
-        </a>
+        {% if return_to %}
+            <a href="{{ return_to }}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+        {% else %}
+            <a href="{{ request.META.HTTP_REFERER|default:'..' }}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+        {% endif %}
     </div>
 </form>
 {% endblock %}
