@@ -36,8 +36,20 @@ RESOURCES = {
     "timetable": (_("Timetable"), Timetable, TimetableForm),
 }
 
+CONTEXT_MODELS = {
+    "year_detail": AcademicYear,
+    "term_detail": Term,
+    "class_detail": SchoolClass,
+    "section_detail": Section,
+    "subject_detail": Subject,
+    "classsubject_detail": ClassSubject,
+    "assignment_detail": TeacherAssignment,
+    "timetable_detail": Timetable,
+}
+
 CONTEXT_FIELDS = {
     "year_detail": {"academic_year": "pk"},
+    "term_detail": {"academic_year": "academic_year_id"},
     "class_detail": {"school_class": "pk"},
     "section_detail": {"school_class": "school_class_id", "section": "pk"},
     "subject_detail": {"subject": "pk"},
@@ -113,19 +125,9 @@ class AcademicsCreateView(PermissionRequiredMixin, View):
         if return_to:
             try:
                 match = resolve(return_to.split("?", 1)[0])
+                parent_model = CONTEXT_MODELS.get(match.url_name)
                 mapping = CONTEXT_FIELDS.get(match.url_name, {})
-                parent = model.objects.none()
-                parent_model = None
-                # Resolve the originating object from the detail URL without
-                # trusting arbitrary ids across tenant boundaries. The form's
-                # own scoped querysets remain the final security boundary.
-                if mapping and match.kwargs.get("pk"):
-                    for candidate_key in RESOURCES:
-                        candidate_model = RESOURCES[candidate_key][1]
-                        if candidate_model.__name__.lower().replace("school", "") in match.url_name.replace("_", ""):
-                            parent_model = candidate_model
-                            break
-                if parent_model is not None:
+                if parent_model and match.kwargs.get("pk"):
                     parent = parent_model.objects.filter(pk=match.kwargs["pk"]).first()
                     if parent:
                         for field_name, source in mapping.items():
