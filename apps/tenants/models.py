@@ -78,7 +78,7 @@ class Branch(BaseModel):
         _("code"), max_length=50, validators=[MinLengthValidator(2)]
     )
     phone = models.CharField(
-        _("phone"), max_length=40, blank=True, validators=[validate_phone]
+        _("phone"), max_length=40, validators=[validate_phone], blank=True
     )
     email = models.EmailField(_("email"), blank=True)
     address = models.TextField(_("address"), blank=True)
@@ -88,6 +88,10 @@ class Branch(BaseModel):
         _("central administration"), default=False
     )
     opened_on = models.DateField(_("opened on"), null=True, blank=True)
+    working_weekdays = models.JSONField(
+        _("working days"), default=list,
+        help_text=_("Days used by this branch for recurring weekly timetables. Monday=0 through Sunday=6."),
+    )
 
     class Meta:
         verbose_name = _("branch")
