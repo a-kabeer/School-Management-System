@@ -11,11 +11,15 @@
         </a>
     {% endif %}
     <a class="btn btn-sm btn-outline-secondary" href="{{ timetable_url }}">
-        <i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Weekly timetable" %}
+        <i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Timetable" %}
     </a>
     <a class="btn btn-sm btn-outline-secondary"
-       href="{% url 'attendance:mark' %}?school_class={{ object.school_class_id }}&section={{ object.pk }}">
-        <i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>{% translate "Take attendance" %}
+       href="{% url 'students:student_list' %}?section={{ object.pk }}">
+        <i class="bi bi-people me-1" aria-hidden="true"></i>{% translate "Students" %}
+    </a>
+    <a class="btn btn-sm btn-outline-secondary"
+       href="{% url 'academics:assignment_list' %}?section={{ object.pk }}">
+        <i class="bi bi-person-video3 me-1" aria-hidden="true"></i>{% translate "Subject Teachers" %}
     </a>
 {% endblock %}
 
@@ -30,30 +34,20 @@
         </div>
         <div class="col-6 col-lg-3">
             <div class="card h-100"><div class="card-body py-3">
-                <p class="text-body-secondary small mb-1">{% translate "Capacity" %}</p>
-                <p class="fs-4 fw-semibold mb-0">{{ object.capacity|default:"—" }}</p>
-                {% if capacity_used is not None %}
-                    <div class="progress mt-2" style="height: .35rem;" role="progressbar"
-                         aria-valuenow="{{ capacity_used }}" aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar {% if capacity_used > 100 %}bg-danger{% elif capacity_used > 90 %}bg-warning{% endif %}"
-                             style="width: {% if capacity_used > 100 %}100{% else %}{{ capacity_used }}{% endif %}%"></div>
-                    </div>
-                    <p class="small text-body-secondary mb-0 mt-1">
-                        {% blocktranslate with percent=capacity_used %}{{ percent }}% full{% endblocktranslate %}
-                    </p>
-                {% endif %}
+                <p class="text-body-secondary small mb-1">{% translate "Class Teacher" %}</p>
+                <p class="fs-6 fw-semibold mb-0">{% if object.class_teacher %}{{ object.class_teacher.full_name }}{% else %}—{% endif %}</p>
             </div></div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="card h-100"><div class="card-body py-3">
-                <p class="text-body-secondary small mb-1">{% translate "Subjects" %}</p>
+                <p class="text-body-secondary small mb-1">{% translate "Class Subjects" %}</p>
                 <p class="fs-4 fw-semibold mb-0">{{ subjects_card.total }}</p>
             </div></div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="card h-100"><div class="card-body py-3">
-                <p class="text-body-secondary small mb-1">{% translate "Timetable slots" %}</p>
-                <p class="fs-4 fw-semibold mb-0">{{ slots_card.total }}</p>
+                <p class="text-body-secondary small mb-1">{% translate "Subject Teachers" %}</p>
+                <p class="fs-4 fw-semibold mb-0">{{ teachers_card.total }}</p>
             </div></div>
         </div>
     </div>
@@ -61,7 +55,7 @@
     {% if not object.class_teacher %}
         <div class="alert alert-warning d-flex gap-2" role="status">
             <i class="bi bi-person-exclamation mt-1" aria-hidden="true"></i>
-            <span>{% translate "This section has no class teacher. Attendance and day-to-day messages have nobody to sit with." %}</span>
+            <span>{% translate "This section has no class teacher." %}</span>
         </div>
     {% endif %}
 
