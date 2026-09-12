@@ -152,14 +152,24 @@ class AcademicsCreateView(PermissionRequiredMixin, View):
             return []
         used = set()
         sections = []
+        first_error_seen = False
         for label, names in spec:
             fields = [form[name] for name in names if name in form.fields]
             used.update(names)
-            if fields:
-                sections.append({"label": label, "fields": fields})
+            if not fields:
+                continue
+            has_errors = any(field.errors for field in fields)
+            active = has_errors and not first_error_seen
+            if active:
+                first_error_seen = True
+            sections.append({"label": label, "fields": fields, "active": active})
         remaining = [form[name] for name in form.fields if name not in used]
         if remaining:
-            sections.append({"label": _("Additional"), "fields": remaining})
+            has_errors = any(field.errors for field in remaining)
+            active = has_errors and not first_error_seen
+            sections.append({"label": _("Additional"), "fields": remaining, "active": active})
+        if sections and not any(section["active"] for section in sections):
+            sections[0]["active"] = True
         return sections
 
     def context(self, **extra):
