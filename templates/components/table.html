@@ -2,8 +2,7 @@
 {% comment %}The application's one data table.
 
    Interaction rules this encodes, so every list behaves the same way:
-   - the first column is the record's name and is a proper link, not a tiny
-     one inside a wall of text;
+   - the first column is plain record text; the whole row is the View target;
    - a column header sorts in the database, not in the browser, and says
      which way it is sorted;
    - View and Edit are icon buttons with real labels for screen readers;
@@ -81,8 +80,8 @@
                 <tbody>
                 {% for object in objects %}
                     {% url_or_blank detail_url_name object.pk as open_url %}
-                    {% comment %}Clicking or keyboard-activating the row opens the
-                       record; the Actions column keeps its own behaviour.{% endcomment %}
+                    {% comment %}The whole row is the View target. Action controls
+                       remain independent and are excluded by the shared row-click JS.{% endcomment %}
                     <tr {% if open_url %}class="app-row" data-row-url="{{ open_url }}"
                         tabindex="0" aria-label="{% translate 'View' %} {{ object }}"{% endif %}>
                         {% if selectable %}
@@ -96,11 +95,7 @@
                             <td data-col="{{ forloop.counter0 }}"
                                 class="{% if column.type == 'money' %}text-end font-monospace{% endif %}"
                                 data-label="{{ column.label }}">
-                                {% if forloop.first and open_url %}
-                                    <a href="{{ open_url }}" class="text-decoration-none app-row-link">
-                                        {{ object|attr:column.field|default:"—" }}
-                                    </a>
-                                {% elif column.type == 'bool' %}
+                                {% if column.type == 'bool' %}
                                     {% if object|attr:column.field %}
                                         <span class="badge rounded-pill text-bg-success-subtle text-success-emphasis border border-success-subtle">
                                             <i class="bi bi-check-lg" aria-hidden="true"></i> {% translate "Yes" %}
@@ -183,7 +178,7 @@
                                                     </a>
                                                 </li>
                                             </ul>
-                                        </div>
+                                        </td>
                                     {% endif %}
                                 </div>
                             </td>
