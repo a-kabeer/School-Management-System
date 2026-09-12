@@ -11,10 +11,10 @@ from .permissions import user_has_permission
 NAVIGATION = [
     {"label": _("Dashboard"), "url_name": "core:dashboard", "icon": "bi-grid-1x2", "permission": "core.access_dashboard"},
     {"label": _("Academics"), "icon": "bi-journal-bookmark", "permission": "core.access_academics", "children": [
+        {"label": _("Overview"), "url_name": "academics:overview"},
         {"label": _("Academic Years"), "url_name": "academics:year_list"},
         {"label": _("Terms"), "url_name": "academics:term_list"},
-        {"label": _("Classes"), "url_name": "academics:class_list"},
-        {"label": _("Sections"), "url_name": "academics:section_list"},
+        {"label": _("Classes & Sections"), "url_name": "academics:class_list"},
         {"label": _("Subjects"), "url_name": "academics:subject_list"},
         {"label": _("Class Subjects"), "url_name": "academics:classsubject_list"},
         {"label": _("Teacher Assignments"), "url_name": "academics:assignment_list"},
