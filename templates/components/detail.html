@@ -10,7 +10,13 @@
    harmless when there are none.{% endcomment %}
 
 {% block page_subtitle %}
-    {% if back_url %}
+    {% if request.GET.return_to and request.GET.return_to|slice:":11" == "/academics/" %}
+        <p class="mb-0 mt-1">
+            <a class="text-decoration-none small" href="{{ request.GET.return_to }}">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{{ back_label|default:_("Back") }}
+            </a>
+        </p>
+    {% elif back_url %}
         <p class="mb-0 mt-1">
             <a class="text-decoration-none small" href="{{ back_url }}">
                 <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{{ back_label|default:_("Back") }}
