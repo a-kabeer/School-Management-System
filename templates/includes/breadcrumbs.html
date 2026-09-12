@@ -1,15 +1,62 @@
 {% load i18n %}
-{% if breadcrumbs %}
+{% if breadcrumbs or request.resolver_match.app_name == 'academics' %}
 <nav aria-label="{% translate 'Breadcrumb' %}">
-    <ol class="breadcrumb small">
+    <ol class="breadcrumb small mb-3">
         <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% translate "Dashboard" %}</a></li>
-        {% for crumb in breadcrumbs %}
-            {% if crumb.url and not forloop.last %}
-                <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.label }}</a></li>
-            {% else %}
-                <li class="breadcrumb-item active" aria-current="page">{{ crumb.label }}</li>
-            {% endif %}
-        {% endfor %}
+        {% if request.resolver_match.app_name == 'academics' %}
+            {% with view_name=request.resolver_match.url_name %}
+                {% if view_name == 'year_detail' %}
+                    <li class="breadcrumb-item"><a href="{% url 'academics:year_list' %}">{% translate "Academic Years" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.name }}</li>
+                {% elif view_name == 'term_detail' %}
+                    <li class="breadcrumb-item"><a href="{% url 'academics:term_list' %}">{% translate "Terms" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'academics:year_detail' object.academic_year.pk %}">{{ object.academic_year.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.name }}</li>
+                {% elif view_name == 'class_detail' %}
+                    <li class="breadcrumb-item"><a href="{% url 'academics:class_list' %}">{% translate "Classes" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.name }}</li>
+                {% elif view_name == 'section_detail' %}
+                    <li class="breadcrumb-item"><a href="{% url 'academics:class_list' %}">{% translate "Classes" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'academics:class_detail' object.school_class.pk %}">{{ object.school_class.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.name }}</li>
+                {% elif view_name == 'subject_detail' %}
+                    <li class="breadcrumb-item"><a href="{% url 'academics:subject_list' %}">{% translate "Subjects" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.name }}</li>
+                {% elif view_name == 'classsubject_detail' %}
+                    <li class="breadcrumb-item"><a href="{% url 'academics:classsubject_list' %}">{% translate "Class Subjects" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'academics:class_detail' object.school_class.pk %}">{{ object.school_class.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.subject.name }}</li>
+                {% elif view_name == 'assignment_detail' %}
+                    <li class="breadcrumb-item"><a href="{% url 'academics:assignment_list' %}">{% translate "Teacher Assignments" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'academics:class_detail' object.class_subject.school_class.pk %}">{{ object.class_subject.school_class.name }}</a></li>
+                    {% if object.section %}
+                        <li class="breadcrumb-item"><a href="{% url 'academics:section_detail' object.section.pk %}">{{ object.section.name }}</a></li>
+                    {% endif %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.teacher.full_name }} · {{ object.class_subject.subject.name }}</li>
+                {% elif view_name == 'timetable_detail' %}
+                    <li class="breadcrumb-item"><a href="{% url 'academics:timetable' %}">{% translate "Timetable" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'academics:class_detail' object.section.school_class.pk %}">{{ object.section.school_class.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'academics:section_detail' object.section.pk %}">{{ object.section.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.class_subject.subject.name }}</li>
+                {% elif breadcrumbs %}
+                    {% for crumb in breadcrumbs %}
+                        {% if crumb.url and not forloop.last %}
+                            <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.label }}</a></li>
+                        {% else %}
+                            <li class="breadcrumb-item active" aria-current="page">{{ crumb.label }}</li>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        {% else %}
+            {% for crumb in breadcrumbs %}
+                {% if crumb.url and not forloop.last %}
+                    <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.label }}</a></li>
+                {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ crumb.label }}</li>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
     </ol>
 </nav>
 {% endif %}
