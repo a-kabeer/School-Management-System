@@ -24,6 +24,14 @@
     }
     return null;
   }
+  function centralAddUrl(resource) {
+    var url = new URL(window.location.href);
+    var marker = "/academics/";
+    var at = url.pathname.indexOf(marker);
+    url.pathname = (at >= 0 ? url.pathname.slice(0, at) : "") + "/academics/add/";
+    url.search = resource ? "?resource=" + encodeURIComponent(resource) : "";
+    return url.href;
+  }
 
   function load(url, title) {
     var el = document.getElementById("app-modal");
@@ -37,14 +45,9 @@
     m.show();
 
     fetch(url, { headers: { "X-Modal": "1" }, credentials: "same-origin" })
-      .then(function (response) {
-        return response.text().then(function (html) { return { response: response, html: html }; });
-      })
+      .then(function (response) { return response.text().then(function (html) { return { response: response, html: html }; }); })
       .then(function (result) {
         var html = result.html;
-        /* Existing form views already return modal fragments. Existing detail
-           and safe-delete views return full pages; extract only #main so a
-           document is never nested inside the dialog. */
         if (/<!doctype|<html[\s>]/i.test(html)) {
           var doc = new DOMParser().parseFromString(html, "text/html");
           var main = doc.querySelector("#main");
@@ -74,9 +77,6 @@
            /\/academics\/(years|terms|classes|sections|subjects|class-subjects|assignments|timetable)\/[^/]+\/$/.test(path);
   }
 
-  /* Capture phase intentionally runs before the generic app-modal handler so
-     Academics can normalize legacy full-page detail/delete responses without
-     changing the global modal architecture. */
   document.addEventListener("click", function (event) {
     var target = event.target.closest("a[href], tr[data-row-url]");
     if (!target) return;
@@ -94,7 +94,6 @@
     var isDetail = isCrudPath(path) && !isEdit && !isDelete;
     var isAddButton = target.matches("a[href$='/new/'], a.btn.btn-primary") && isCreate;
     var isRow = target.matches("tr[data-row-url]");
-
     if (!(isCreate || isEdit || isDelete || isDetail || isRow || isAddButton)) return;
 
     event.preventDefault();
@@ -102,15 +101,27 @@
 
     var modalUrl = url.href;
     var title = isEdit ? "Edit" : isDelete ? "Delete" : (isDetail || isRow) ? "View details" : "Add New";
-
     if (isCreate || isAddButton) {
       var resource = resourceForPath(path) || currentResource;
-      modalUrl = new URL("/academics/add/", window.location.origin);
-      if (resource) modalUrl.searchParams.set("resource", resource);
-      modalUrl = modalUrl.href;
+      modalUrl = centralAddUrl(resource);
       title = resource ? "Add " + resource.replace(/_/g, " ") : "Add New";
     }
     load(modalUrl, title);
+  }, true);
+
+  /* Keyboard activation mirrors the shared clickable-row behavior, but opens
+     the same Academics detail modal instead of navigating away. */
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    var row = event.target.closest("tr[data-row-url]");
+    if (!row || event.target !== row) return;
+    var href = row.getAttribute("data-row-url");
+    var url;
+    try { url = new URL(href, window.location.href); } catch (e) { return; }
+    if (!isAcademics(url)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    load(url.href, "View details");
   }, true);
 
   document.addEventListener("submit", function (event) {
@@ -151,8 +162,6 @@
         if (html !== null && content) content.innerHTML = html;
         if (submit) submit.disabled = false;
       })
-      .catch(function () {
-        if (submit) submit.disabled = false;
-      });
+      .catch(function () { if (submit) submit.disabled = false; });
   }, true);
 })();
