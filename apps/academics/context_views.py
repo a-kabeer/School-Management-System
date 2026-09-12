@@ -1,10 +1,12 @@
 """Context-aware wrappers for Academics update/delete workflows.
 
 The existing CRUD views remain the source of truth. These wrappers only add
-safe return-to-list behavior when a user arrived with explicit list context.
+safe return-to-list behavior and consistent success feedback.
 """
 
+from django.contrib import messages
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext_lazy as _
 
 from . import views
 
@@ -35,35 +37,46 @@ class PreserveReturnContextMixin:
         return context
 
 
-class AcademicYearUpdateView(PreserveReturnContextMixin, views.AcademicYearUpdateView):
+class AcademicsUpdateFeedbackMixin:
+    """Show one consistent success message after a valid Academics edit."""
+
+    success_message = _("Changes saved successfully.")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, self.success_message)
+        return response
+
+
+class AcademicYearUpdateView(AcademicsUpdateFeedbackMixin, PreserveReturnContextMixin, views.AcademicYearUpdateView):
     pass
 class AcademicYearDeleteView(PreserveReturnContextMixin, views.AcademicYearDeleteView):
     pass
-class TermUpdateView(PreserveReturnContextMixin, views.TermUpdateView):
+class TermUpdateView(AcademicsUpdateFeedbackMixin, PreserveReturnContextMixin, views.TermUpdateView):
     pass
 class TermDeleteView(PreserveReturnContextMixin, views.TermDeleteView):
     pass
-class SchoolClassUpdateView(PreserveReturnContextMixin, views.SchoolClassUpdateView):
+class SchoolClassUpdateView(AcademicsUpdateFeedbackMixin, PreserveReturnContextMixin, views.SchoolClassUpdateView):
     pass
 class SchoolClassDeleteView(PreserveReturnContextMixin, views.SchoolClassDeleteView):
     pass
-class SectionUpdateView(PreserveReturnContextMixin, views.SectionUpdateView):
+class SectionUpdateView(AcademicsUpdateFeedbackMixin, PreserveReturnContextMixin, views.SectionUpdateView):
     pass
 class SectionDeleteView(PreserveReturnContextMixin, views.SectionDeleteView):
     pass
-class SubjectUpdateView(PreserveReturnContextMixin, views.SubjectUpdateView):
+class SubjectUpdateView(AcademicsUpdateFeedbackMixin, PreserveReturnContextMixin, views.SubjectUpdateView):
     pass
 class SubjectDeleteView(PreserveReturnContextMixin, views.SubjectDeleteView):
     pass
-class ClassSubjectUpdateView(PreserveReturnContextMixin, views.ClassSubjectUpdateView):
+class ClassSubjectUpdateView(AcademicsUpdateFeedbackMixin, PreserveReturnContextMixin, views.ClassSubjectUpdateView):
     pass
 class ClassSubjectDeleteView(PreserveReturnContextMixin, views.ClassSubjectDeleteView):
     pass
-class TeacherAssignmentUpdateView(PreserveReturnContextMixin, views.TeacherAssignmentUpdateView):
+class TeacherAssignmentUpdateView(AcademicsUpdateFeedbackMixin, PreserveReturnContextMixin, views.TeacherAssignmentUpdateView):
     pass
 class TeacherAssignmentDeleteView(PreserveReturnContextMixin, views.TeacherAssignmentDeleteView):
     pass
-class TimetableUpdateView(PreserveReturnContextMixin, views.TimetableUpdateView):
+class TimetableUpdateView(AcademicsUpdateFeedbackMixin, PreserveReturnContextMixin, views.TimetableUpdateView):
     pass
 class TimetableDeleteView(PreserveReturnContextMixin, views.TimetableDeleteView):
     pass
