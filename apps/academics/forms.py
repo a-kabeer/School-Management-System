@@ -97,7 +97,19 @@ class ClassSubjectForm(TenantModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.allow_quick_add("subject", "academics:subject_create", _("Add subject"), "academics.add_subject")
-        self.allow_quick_add("school_class", "academics:class_create", _("Add class"), "academics.add_schoolclass")
+
+    def clean(self):
+        cleaned = super().clean()
+        year = cleaned.get("academic_year")
+        school_class = cleaned.get("school_class")
+        subject = cleaned.get("subject")
+        if year and school_class and subject:
+            duplicate = ClassSubject.objects.filter(
+                academic_year=year, school_class=school_class, subject=subject
+            ).exclude(pk=self.instance.pk).exists()
+            if duplicate:
+                self.add_error("subject", _("That subject is already assigned to this class for this academic year."))
+        return cleaned
 
 
 class TeacherAssignmentForm(TenantModelForm):
@@ -142,7 +154,7 @@ class TimetableForm(TenantModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["weekday"].choices = [
-            (day, Timetable.Weekday(day).label) for day in working_weekdays()
+            (day, Timetable.Weekday(day).label) for day in working_weekdays(self.branch)
         ]
         self.fields["class_subject"].queryset = self.fields["class_subject"].queryset.select_related("school_class", "subject")
         self.fields["section"].queryset = self.fields["section"].queryset.select_related("school_class")
@@ -161,8 +173,8 @@ class TimetableForm(TenantModelForm):
         period = cleaned.get("period")
         teacher = cleaned.get("teacher")
 
-        if weekday is not None and weekday not in working_weekdays():
-            self.add_error("weekday", _("Timetable lessons can only be scheduled on working days (Monday–Friday)."))
+        if weekday is not None and weekday not in working_weekdays(self.branch):
+            self.add_error("weekday", _("This day is not configured as a working day for the branch."))
         if section and class_subject and section.school_class_id != class_subject.school_class_id:
             self.add_error("section", _("That section belongs to a different class."))
         if year and class_subject and class_subject.academic_year_id != year.pk:
