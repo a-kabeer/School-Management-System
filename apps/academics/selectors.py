@@ -42,7 +42,7 @@ def slots_for(user, branch, **filters):
     from .models import Timetable
     return (
         Timetable.objects.for_user(user, branch)
-        .filter(weekday__in=working_weekdays(), **filters)
+        .filter(weekday__in=working_weekdays(branch), **filters)
         .select_related("teacher", "section__school_class", "class_subject__subject", "academic_year")
         .order_by("weekday", "period")
     )
