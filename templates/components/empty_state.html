@@ -5,12 +5,12 @@
    offers a way back out of the filters. Views can override the icon with
    `empty_icon` and the message with `empty_message`.{% endcomment %}
 {% if filter_active %}
-    <div class="text-center py-5 px-3">
+    <div class="text-center py-5 px-3" role="status" aria-live="polite">
         <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
                      rounded-circle bg-body-tertiary text-body-secondary mb-3">
             <i class="bi bi-search fs-3" aria-hidden="true"></i>
         </span>
-        <p class="fw-medium mb-1">{% translate "No matching records" %}</p>
+        <h2 class="h6 fw-medium mb-1">{% translate "No matching records" %}</h2>
         <p class="text-body-secondary small mb-3">
             {% if filter_search %}
                 {% blocktranslate with term=filter_search %}Nothing matches “{{ term }}” with the current filters.{% endblocktranslate %}
@@ -24,12 +24,12 @@
         </a>
     </div>
 {% else %}
-    <div class="text-center py-5 px-3">
+    <div class="text-center py-5 px-3" role="status" aria-live="polite">
         <span class="empty-state-icon d-inline-flex align-items-center justify-content-center
                      rounded-circle bg-body-tertiary text-body-secondary mb-3">
             <i class="bi {{ empty_icon|default:'bi-inbox' }} fs-3" aria-hidden="true"></i>
         </span>
-        <p class="fw-medium mb-1">{{ empty_message|default:_("Nothing here yet") }}</p>
+        <h2 class="h6 fw-medium mb-1">{{ empty_message|default:_("Nothing here yet") }}</h2>
         <p class="text-body-secondary small mb-3">
             {% translate "Records you add will appear here." %}
         </p>
