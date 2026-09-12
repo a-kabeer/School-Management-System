@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import affected_timetable_views, class_structure_views, context_views, detail_views, overview_views, structure_detail_views, timetable_views, views
+from . import affected_timetable_views, class_structure_views, context_views, destructive_views, detail_views, overview_views, structure_detail_views, timetable_views, views
 
 app_name = "academics"
 
@@ -10,7 +10,7 @@ urlpatterns = [
     path("years/new/", views.AcademicYearCreateView.as_view(), name="year_create"),
     path("years/<uuid:pk>/", detail_views.AcademicYearDetailView.as_view(), name="year_detail"),
     path("years/<uuid:pk>/edit/", context_views.AcademicYearUpdateView.as_view(), name="year_update"),
-    path("years/<uuid:pk>/delete/", context_views.AcademicYearDeleteView.as_view(), name="year_delete"),
+    path("years/<uuid:pk>/delete/", destructive_views.AcademicYearSafeDeleteView.as_view(), name="year_delete"),
     path("terms/", views.TermListView.as_view(), name="term_list"),
     path("terms/new/", views.TermCreateView.as_view(), name="term_create"),
     path("terms/<uuid:pk>/", detail_views.TermDetailView.as_view(), name="term_detail"),
@@ -20,7 +20,7 @@ urlpatterns = [
     path("classes/new/", views.SchoolClassCreateView.as_view(), name="class_create"),
     path("classes/<uuid:pk>/", detail_views.SchoolClassDetailView.as_view(), name="class_detail"),
     path("classes/<uuid:pk>/edit/", context_views.SchoolClassUpdateView.as_view(), name="class_update"),
-    path("classes/<uuid:pk>/delete/", context_views.SchoolClassDeleteView.as_view(), name="class_delete"),
+    path("classes/<uuid:pk>/delete/", destructive_views.SchoolClassSafeDeleteView.as_view(), name="class_delete"),
     path("sections/", views.SectionListView.as_view(), name="section_list"),
     path("sections/new/", views.SectionCreateView.as_view(), name="section_create"),
     path("sections/<uuid:pk>/", structure_detail_views.SectionDetailView.as_view(), name="section_detail"),
@@ -30,22 +30,22 @@ urlpatterns = [
     path("subjects/new/", views.SubjectCreateView.as_view(), name="subject_create"),
     path("subjects/<uuid:pk>/", detail_views.SubjectDetailView.as_view(), name="subject_detail"),
     path("subjects/<uuid:pk>/edit/", context_views.SubjectUpdateView.as_view(), name="subject_update"),
-    path("subjects/<uuid:pk>/delete/", context_views.SubjectDeleteView.as_view(), name="subject_delete"),
+    path("subjects/<uuid:pk>/delete/", destructive_views.SubjectSafeDeleteView.as_view(), name="subject_delete"),
     path("class-subjects/", views.ClassSubjectListView.as_view(), name="classsubject_list"),
     path("class-subjects/new/", views.ClassSubjectCreateView.as_view(), name="classsubject_create"),
     path("class-subjects/<uuid:pk>/", detail_views.ClassSubjectDetailView.as_view(), name="classsubject_detail"),
     path("class-subjects/<uuid:pk>/edit/", context_views.ClassSubjectUpdateView.as_view(), name="classsubject_update"),
-    path("class-subjects/<uuid:pk>/delete/", context_views.ClassSubjectDeleteView.as_view(), name="classsubject_delete"),
+    path("class-subjects/<uuid:pk>/delete/", destructive_views.ClassSubjectSafeDeleteView.as_view(), name="classsubject_delete"),
     path("assignments/", views.TeacherAssignmentListView.as_view(), name="assignment_list"),
     path("assignments/new/", views.TeacherAssignmentCreateView.as_view(), name="assignment_create"),
     path("assignments/<uuid:pk>/", detail_views.TeacherAssignmentDetailView.as_view(), name="assignment_detail"),
     path("assignments/<uuid:pk>/edit/", context_views.TeacherAssignmentUpdateView.as_view(), name="assignment_update"),
-    path("assignments/<uuid:pk>/delete/", context_views.TeacherAssignmentDeleteView.as_view(), name="assignment_delete"),
+    path("assignments/<uuid:pk>/delete/", destructive_views.TeacherAssignmentSafeDeleteView.as_view(), name="assignment_delete"),
     path("timetable/", timetable_views.TimetableWorkbenchView.as_view(), name="timetable"),
     path("timetable/affected/", affected_timetable_views.AffectedTimetableSlotsView.as_view(), name="timetable_affected"),
     path("timetable/slots/", views.TimetableListView.as_view(), name="timetable_list"),
     path("timetable/new/", views.TimetableCreateView.as_view(), name="timetable_create"),
     path("timetable/<uuid:pk>/", detail_views.TimetableDetailView.as_view(), name="timetable_detail"),
     path("timetable/<uuid:pk>/edit/", context_views.TimetableUpdateView.as_view(), name="timetable_update"),
-    path("timetable/<uuid:pk>/delete/", context_views.TimetableDeleteView.as_view(), name="timetable_delete"),
+    path("timetable/<uuid:pk>/delete/", destructive_views.TimetableSafeDeleteView.as_view(), name="timetable_delete"),
 ]
