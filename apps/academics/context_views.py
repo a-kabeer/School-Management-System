@@ -4,10 +4,7 @@ The existing CRUD views remain the source of truth. These wrappers only add
 safe return-to-list behavior when a user arrived with explicit list context.
 """
 
-from django.http import HttpResponseRedirect
-from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.generic import View
 
 from . import views
 
@@ -40,63 +37,33 @@ class PreserveReturnContextMixin:
 
 class AcademicYearUpdateView(PreserveReturnContextMixin, views.AcademicYearUpdateView):
     pass
-
-
 class AcademicYearDeleteView(PreserveReturnContextMixin, views.AcademicYearDeleteView):
     pass
-
-
 class TermUpdateView(PreserveReturnContextMixin, views.TermUpdateView):
     pass
-
-
 class TermDeleteView(PreserveReturnContextMixin, views.TermDeleteView):
     pass
-
-
 class SchoolClassUpdateView(PreserveReturnContextMixin, views.SchoolClassUpdateView):
     pass
-
-
 class SchoolClassDeleteView(PreserveReturnContextMixin, views.SchoolClassDeleteView):
     pass
-
-
 class SectionUpdateView(PreserveReturnContextMixin, views.SectionUpdateView):
     pass
-
-
 class SectionDeleteView(PreserveReturnContextMixin, views.SectionDeleteView):
     pass
-
-
 class SubjectUpdateView(PreserveReturnContextMixin, views.SubjectUpdateView):
     pass
-
-
 class SubjectDeleteView(PreserveReturnContextMixin, views.SubjectDeleteView):
     pass
-
-
 class ClassSubjectUpdateView(PreserveReturnContextMixin, views.ClassSubjectUpdateView):
     pass
-
-
 class ClassSubjectDeleteView(PreserveReturnContextMixin, views.ClassSubjectDeleteView):
     pass
-
-
 class TeacherAssignmentUpdateView(PreserveReturnContextMixin, views.TeacherAssignmentUpdateView):
     pass
-
-
 class TeacherAssignmentDeleteView(PreserveReturnContextMixin, views.TeacherAssignmentDeleteView):
     pass
-
-
 class TimetableUpdateView(PreserveReturnContextMixin, views.TimetableUpdateView):
     pass
-
-
 class TimetableDeleteView(PreserveReturnContextMixin, views.TimetableDeleteView):
     pass
