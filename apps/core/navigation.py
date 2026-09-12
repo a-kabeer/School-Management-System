@@ -1,8 +1,7 @@
 """The sidebar, declared once.
 
-Academics is grouped by the way staff actually work: orient first, maintain
-the academic structure second, then teach and schedule. Each entry still
-resolves to the existing screens; no duplicate pages are introduced.
+Each entry names the permission that reveals it, so the menu and the view
+enforce the same rule and cannot drift apart.
 """
 
 from django.utils.translation import gettext_lazy as _
@@ -10,62 +9,41 @@ from django.utils.translation import gettext_lazy as _
 from .permissions import user_has_permission
 
 NAVIGATION = [
-    {
-        "label": _("Dashboard"), "url_name": "core:dashboard", "icon": "bi-grid-1x2",
-        "permission": "core.access_dashboard",
-    },
-    {
-        "label": _("Academics"), "icon": "bi-journal-bookmark", "permission": "core.access_academics",
-        "children": [
-            {"label": _("Academics Overview"), "url_name": "academics:overview"},
-            {"label": _("Academic Structure"), "group": True, "children": [
-                {"label": _("Academic Years"), "url_name": "academics:year_list"},
-                {"label": _("Terms & Periods"), "url_name": "academics:term_list"},
-                {"label": _("Classes & Sections"), "url_name": "academics:class_list"},
-                {"label": _("Subjects"), "url_name": "academics:subject_list"},
-                {"label": _("Class Subjects"), "url_name": "academics:classsubject_list"},
-            ]},
-            {"label": _("Teaching"), "group": True, "children": [
-                {"label": _("Teacher Assignments"), "url_name": "academics:assignment_list"},
-            ]},
-            {"label": _("Timetable"), "url_name": "academics:timetable"},
-        ],
-    },
-    {
-        "label": _("Students"), "icon": "bi-people", "permission": "core.access_students",
-        "children": [
-            {"label": _("All Students"), "url_name": "students:student_list"},
-            {"label": _("Admission"), "url_name": "students:student_create"},
-            {"label": _("Guardians"), "url_name": "students:guardian_list"},
-            {"label": _("Enrollments"), "url_name": "students:enrollment_list"},
-        ],
-    },
-    {
-        "label": _("Staff"), "icon": "bi-person-badge", "permission": "core.access_staff",
-        "children": [
-            {"label": _("All Staff"), "url_name": "staff:staff_list"},
-            {"label": _("Departments"), "url_name": "staff:department_list"},
-            {"label": _("Designations"), "url_name": "staff:designation_list"},
-        ],
-    },
-    {
-        "label": _("ID Cards"), "icon": "bi-person-vcard", "children": [
-            {"label": _("Student Cards"), "url_name": "core:student_cards", "permission": "core.access_students"},
-            {"label": _("Staff Cards"), "url_name": "core:staff_cards", "permission": "core.access_staff"},
-        ],
-    },
-    {
-        "label": _("Attendance"), "icon": "bi-calendar-check", "permission": "core.access_attendance",
-        "children": [
-            {"label": _("Today's Classes"), "url_name": "attendance:today"},
-            {"label": _("Mark Attendance"), "url_name": "attendance:mark"},
-            {"label": _("Attendance Sessions"), "url_name": "attendance:session_list"},
-            {"label": _("Student Records"), "url_name": "attendance:record_list"},
-            {"label": _("Check In / Out"), "url_name": "attendance:clock"},
-            {"label": _("Staff Attendance"), "url_name": "attendance:staff_list"},
-            {"label": _("Staff Monthly Report"), "url_name": "attendance:staff_month"},
-        ],
-    },
+    {"label": _("Dashboard"), "url_name": "core:dashboard", "icon": "bi-grid-1x2", "permission": "core.access_dashboard"},
+    {"label": _("Academics"), "icon": "bi-journal-bookmark", "permission": "core.access_academics", "children": [
+        {"label": _("Academic Years"), "url_name": "academics:year_list"},
+        {"label": _("Terms"), "url_name": "academics:term_list"},
+        {"label": _("Classes"), "url_name": "academics:class_list"},
+        {"label": _("Sections"), "url_name": "academics:section_list"},
+        {"label": _("Subjects"), "url_name": "academics:subject_list"},
+        {"label": _("Class Subjects"), "url_name": "academics:classsubject_list"},
+        {"label": _("Teacher Assignments"), "url_name": "academics:assignment_list"},
+        {"label": _("Timetable"), "url_name": "academics:timetable"},
+    ]},
+    {"label": _("Students"), "icon": "bi-people", "permission": "core.access_students", "children": [
+        {"label": _("All Students"), "url_name": "students:student_list"},
+        {"label": _("Admission"), "url_name": "students:student_create"},
+        {"label": _("Guardians"), "url_name": "students:guardian_list"},
+        {"label": _("Enrollments"), "url_name": "students:enrollment_list"},
+    ]},
+    {"label": _("Staff"), "icon": "bi-person-badge", "permission": "core.access_staff", "children": [
+        {"label": _("All Staff"), "url_name": "staff:staff_list"},
+        {"label": _("Departments"), "url_name": "staff:department_list"},
+        {"label": _("Designations"), "url_name": "staff:designation_list"},
+    ]},
+    {"label": _("ID Cards"), "icon": "bi-person-vcard", "children": [
+        {"label": _("Student Cards"), "url_name": "core:student_cards", "permission": "core.access_students"},
+        {"label": _("Staff Cards"), "url_name": "core:staff_cards", "permission": "core.access_staff"},
+    ]},
+    {"label": _("Attendance"), "icon": "bi-calendar-check", "permission": "core.access_attendance", "children": [
+        {"label": _("Today's Classes"), "url_name": "attendance:today"},
+        {"label": _("Mark Attendance"), "url_name": "attendance:mark"},
+        {"label": _("Attendance Sessions"), "url_name": "attendance:session_list"},
+        {"label": _("Student Records"), "url_name": "attendance:record_list"},
+        {"label": _("Check In / Out"), "url_name": "attendance:clock"},
+        {"label": _("Staff Attendance"), "url_name": "attendance:staff_list"},
+        {"label": _("Staff Monthly Report"), "url_name": "attendance:staff_month"},
+    ]},
     {"label": _("Hifz"), "icon": "bi-book", "permission": "core.access_hifz", "children": [
         {"label": _("Hifz Students"), "url_name": "hifz:profile_list"},
         {"label": _("Daily Progress"), "url_name": "hifz:progress_list"},
@@ -97,9 +75,7 @@ NAVIGATION = [
         {"label": _("Grading Scale"), "url_name": "exams:grade_list"},
         {"label": _("Results"), "url_name": "exams:result_list"},
     ]},
-    {"label": _("Parents"), "icon": "bi-person-hearts", "permission": "core.access_parents", "children": [
-        {"label": _("Parent Accounts"), "url_name": "parents:guardian_list"},
-    ]},
+    {"label": _("Parents"), "icon": "bi-person-hearts", "permission": "core.access_parents", "children": [{"label": _("Parent Accounts"), "url_name": "parents:guardian_list"}]},
     {"label": _("Notifications"), "url_name": "notifications:list", "icon": "bi-bell", "permission": "core.access_notifications"},
     {"label": _("Reports"), "url_name": "reports:index", "icon": "bi-bar-chart-line", "permission": "core.access_reports"},
     {"label": _("Subscription"), "url_name": "subscriptions:detail", "icon": "bi-box-seam", "permission": "core.access_subscriptions"},
@@ -130,7 +106,7 @@ def _resolve(url_name):
 def visible_navigation(user, branch=None, current_path=""):
     if user is None or not getattr(user, "is_authenticated", False):
         return []
-    source = PARENT_NAVIGATION if getattr(user, "is_parent_account", False) else NAVIGATION
+    source = NAVIGATION if not getattr(user, "is_parent_account", False) else PARENT_NAVIGATION
     visible = []
     for item in source:
         permission = item.get("permission")
@@ -144,15 +120,6 @@ def visible_navigation(user, branch=None, current_path=""):
             child_permission = child.get("permission")
             if child_permission and not user_has_permission(user, child_permission, branch):
                 continue
-            if child.get("group"):
-                nested = []
-                for grandchild in child.get("children", ()):
-                    url = _resolve(grandchild.get("url_name"))
-                    if url:
-                        nested.append({**grandchild, "url": url, "is_current": url == current_path})
-                if nested:
-                    children.append({**child, "children": nested, "is_open": any(x["is_current"] for x in nested)})
-                continue
             url = _resolve(child.get("url_name"))
             if not url:
                 continue
@@ -161,9 +128,6 @@ def visible_navigation(user, branch=None, current_path=""):
             continue
         if children:
             entry["children"] = children
-            entry["is_open"] = any(
-                child.get("is_current") or any(g.get("is_current") for g in child.get("children", ()))
-                for child in children
-            ) or any(current_path.startswith(child["url"]) for child in children if child.get("url"))
+            entry["is_open"] = any(child["is_current"] for child in children) or any(current_path.startswith(child["url"]) for child in children)
         visible.append(entry)
     return visible
