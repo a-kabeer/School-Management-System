@@ -58,8 +58,10 @@ class TimetableWorkbenchView(
         year, section = selection["year"], selection["section"]
         context.update(selection)
         context["can_edit"] = user_has_permission(user, "academics.add_timetable", branch)
-        context["working_weekdays"] = working_weekdays()
-        context["working_day_schedule"] = _("Monday–Friday")
+        context["working_weekdays"] = working_weekdays(branch)
+        context["working_day_schedule"] = ", ".join(
+            str(Timetable.Weekday(day).label) for day in working_weekdays(branch)
+        )
         context["page_subtitle"] = (
             _("%(section)s · %(year)s") % {"section": section, "year": year.name if year else "—"}
             if section else _("Choose a section to build its week.")
@@ -71,8 +73,8 @@ class TimetableWorkbenchView(
             return context
 
         slots = list(selectors.slots_for(user, branch, section=section, academic_year=year))
-        working_days = working_weekdays()
-        visible_slots = [slot for slot in slots if is_working_day(slot.weekday)]
+        working_days = working_weekdays(branch)
+        visible_slots = [slot for slot in slots if is_working_day(slot.weekday, branch)]
         context["slots"] = visible_slots
         context["slot_count"] = len(visible_slots)
         context["weekend_slot_count"] = len(slots) - len(visible_slots)
@@ -124,7 +126,7 @@ class TimetableWorkbenchView(
         ).exclude(section_id=slots[0].section_id)
         booked = {}
         for other in elsewhere:
-            if is_working_day(other.weekday):
+            if is_working_day(other.weekday, branch):
                 booked.setdefault((other.teacher_id, other.weekday, other.period), other)
         conflicts = {}
         for slot in slots:
