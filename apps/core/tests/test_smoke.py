@@ -38,6 +38,7 @@ INDEX_PAGES = [
     "academics:classsubject_create",
     "academics:assignment_list",
     "academics:assignment_create",
+    "academics:timetable",
     "academics:timetable_list",
     "academics:timetable_create",
     "students:student_list",

@@ -80,7 +80,10 @@
                 </thead>
                 <tbody>
                 {% for object in objects %}
-                    <tr>
+                    {% url_or_blank detail_url_name object.pk as open_url %}
+                    {% comment %}Clicking the row opens the record; the Actions
+                       column keeps its own behaviour.{% endcomment %}
+                    <tr {% if open_url %}class="app-row" data-row-url="{{ open_url }}"{% endif %}>
                         {% if selectable %}
                             <td class="app-table-check" data-label="{% translate 'Select' %}">
                                 <input class="form-check-input" type="checkbox" name="selected"
@@ -92,15 +95,10 @@
                             <td data-col="{{ forloop.counter0 }}"
                                 class="{% if column.type == 'money' %}text-end font-monospace{% endif %}"
                                 data-label="{{ column.label }}">
-                                {% if forloop.first and detail_url_name %}
-                                    {% url_or_blank detail_url_name object.pk as row_url %}
-                                    {% if row_url %}
-                                        <a href="{{ row_url }}" class="fw-medium text-decoration-none app-row-link">
-                                            {{ object|attr:column.field|default:"—" }}
-                                        </a>
-                                    {% else %}
+                                {% if forloop.first and open_url %}
+                                    <a href="{{ open_url }}" class="fw-medium text-decoration-none app-row-link">
                                         {{ object|attr:column.field|default:"—" }}
-                                    {% endif %}
+                                    </a>
                                 {% elif column.type == 'bool' %}
                                     {% if object|attr:column.field %}
                                         <span class="badge rounded-pill text-bg-success-subtle text-success-emphasis border border-success-subtle">
@@ -132,7 +130,6 @@
                         {% endfor %}
 
                         {% if detail_url_name or update_url_name or delete_url_name or row_actions_template %}
-                            {% url_or_blank detail_url_name object.pk as detail_url %}
                             {% url_or_blank update_url_name object.pk as update_url %}
                             {% url_or_blank delete_url_name object.pk as delete_url %}
                             <td class="text-end text-nowrap">
@@ -145,8 +142,8 @@
                                     {% if row_actions_template %}
                                         {% include row_actions_template %}
                                     {% endif %}
-                                    {% if detail_url %}
-                                        <a class="btn btn-sm btn-outline-secondary app-icon-btn" href="{{ detail_url }}"
+                                    {% if open_url %}
+                                        <a class="btn btn-sm btn-outline-secondary app-icon-btn" href="{{ open_url }}"
                                            title="{% translate 'View' %}">
                                             <i class="bi bi-eye" aria-hidden="true"></i>
                                             <span class="visually-hidden">{% translate "View" %}</span>
@@ -168,9 +165,9 @@
                                                 <span class="visually-hidden">{% translate "More actions" %}</span>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                                {% if detail_url %}
+                                                {% if open_url %}
                                                     <li>
-                                                        <a class="dropdown-item d-flex align-items-center gap-2" href="{{ detail_url }}">
+                                                        <a class="dropdown-item d-flex align-items-center gap-2" href="{{ open_url }}">
                                                             <i class="bi bi-eye" aria-hidden="true"></i>{% translate "View" %}
                                                         </a>
                                                     </li>

@@ -1,0 +1,23 @@
+{% extends "components/detail.html" %}
+{% load i18n core_extras %}
+{% comment %}A term is dates and a place in the year — two facts and a list.
+   Tabs would be decoration, so there are none.{% endcomment %}
+
+{% block detail_actions %}
+    {% has_perm "academics.change_term" as can_edit %}
+    {% if can_edit %}
+        <a class="btn btn-sm btn-primary" href="{% url 'academics:term_update' object.pk %}"
+           data-modal-url="{% url 'academics:term_update' object.pk %}"
+           data-modal-title="{% translate 'Edit term' %}">
+            <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}
+        </a>
+    {% endif %}
+    <a class="btn btn-sm btn-outline-secondary"
+       href="{% url 'academics:year_detail' object.academic_year_id %}">
+        <i class="bi bi-calendar-range me-1" aria-hidden="true"></i>{{ object.academic_year.name }}
+    </a>
+{% endblock %}
+
+{% block detail_body %}
+{% include "components/related_card.html" with card=siblings_card %}
+{% endblock %}

@@ -17,6 +17,21 @@
             </div>
         </div>
 
+        {% if dependants %}
+            {% comment %}Say what else is attached before it goes, not after.{% endcomment %}
+            <div class="alert alert-warning mt-3 mb-0">
+                <p class="fw-medium mb-1">
+                    <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+                    {% translate "Other records depend on this one" %}
+                </p>
+                <ul class="mb-0 ps-4">
+                    {% for item in dependants %}
+                        <li>{{ item.count }} {{ item.label }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
         <form method="post" class="d-flex flex-wrap gap-2 mt-4">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">

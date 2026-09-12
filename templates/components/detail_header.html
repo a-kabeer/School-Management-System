@@ -1,0 +1,67 @@
+{% load i18n %}
+{% comment %}The head of every View screen: what this record is, what state it
+   is in, and the few facts that identify it. Everything here comes from the
+   view as `detail_*` context, so one piece of markup serves every module and
+   the screens cannot drift apart.{% endcomment %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap align-items-start gap-3">
+            {% if detail_icon %}
+                <span class="detail-icon d-inline-flex align-items-center justify-content-center
+                             rounded bg-primary-subtle text-primary flex-shrink-0" aria-hidden="true">
+                    <i class="bi {{ detail_icon }} fs-4"></i>
+                </span>
+            {% endif %}
+
+            <div class="min-w-0 flex-grow-1">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h2 class="h5 fw-semibold mb-0 text-break">{{ detail_title }}</h2>
+                    {% for badge in detail_badges %}
+                        <span class="badge rounded-pill text-bg-{{ badge.variant|default:'secondary' }}-subtle
+                                     text-{{ badge.variant|default:'secondary' }}-emphasis border
+                                     border-{{ badge.variant|default:'secondary' }}-subtle">
+                            {% if badge.icon %}<i class="bi {{ badge.icon }} me-1" aria-hidden="true"></i>{% endif %}
+                            {{ badge.label }}
+                        </span>
+                    {% endfor %}
+                </div>
+                {% if detail_subtitle %}
+                    <p class="text-body-secondary mb-0 mt-1 text-break">{{ detail_subtitle }}</p>
+                {% endif %}
+
+                {% if detail_meta %}
+                    <dl class="row g-2 mt-2 mb-0 small">
+                        {% for item in detail_meta %}
+                            <div class="col-6 col-md-4 col-xl-3">
+                                <dt class="text-body-secondary fw-normal">
+                                    {% if item.icon %}<i class="bi {{ item.icon }} me-1" aria-hidden="true"></i>{% endif %}
+                                    {{ item.label }}
+                                </dt>
+                                <dd class="fw-medium mb-0 text-break">
+                                    {% if item.url %}
+                                        <a href="{{ item.url }}" class="text-decoration-none">{{ item.value|default:"—" }}</a>
+                                    {% else %}
+                                        {{ item.value|default:"—" }}
+                                    {% endif %}
+                                </dd>
+                            </div>
+                        {% endfor %}
+                    </dl>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if detail_timestamps %}
+        <div class="card-footer bg-transparent small text-body-secondary d-flex flex-wrap gap-3">
+            <span>
+                <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>
+                {% blocktranslate with when=object.created_at|date:"Y-m-d H:i" %}Created {{ when }}{% endblocktranslate %}
+            </span>
+            <span>
+                <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>
+                {% blocktranslate with when=object.updated_at|date:"Y-m-d H:i" %}Updated {{ when }}{% endblocktranslate %}
+            </span>
+        </div>
+    {% endif %}
+</div>

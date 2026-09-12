@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from apps.core.forms import DateInput, TenantModelForm, TimeInput
+from apps.core.forms import DateInput, RelatedCombo, TenantModelForm, TimeInput
 
 from .models import (
     AcademicYear,
@@ -50,6 +50,35 @@ class TermForm(TenantModelForm):
         ]
         widgets = {"start_date": DateInput(), "end_date": DateInput()}
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allow_quick_add(
+            "academic_year",
+            "academics:year_create",
+            _("Add academic year"),
+            "academics.add_academicyear",
+        )
+
+    def clean(self):
+        cleaned = super().clean()
+        year = cleaned.get("academic_year")
+        start, end = cleaned.get("start_date"), cleaned.get("end_date")
+        if start and end and end < start:
+            self.add_error("end_date", _("End date cannot be before the start date."))
+        # A term outside its own year is a data-entry slip, and one that only
+        # shows up much later when a register or a report looks wrong.
+        if year and start and start < year.start_date:
+            self.add_error(
+                "start_date",
+                _("This term starts before %(year)s does.") % {"year": year.name},
+            )
+        if year and end and end > year.end_date:
+            self.add_error(
+                "end_date",
+                _("This term ends after %(year)s does.") % {"year": year.name},
+            )
+        return cleaned
+
     def save(self, commit=True):
         instance = super().save(commit=commit)
         if commit and instance.is_current:
@@ -76,6 +105,12 @@ class SectionForm(TenantModelForm):
         self.fields["class_teacher"].queryset = teachers.filter(
             staff_type="teacher", status="active"
         )
+        self.allow_quick_add(
+            "school_class",
+            "academics:class_create",
+            _("Add class"),
+            "academics.add_schoolclass",
+        )
 
 
 class SubjectForm(TenantModelForm):
@@ -95,11 +130,37 @@ class ClassSubjectForm(TenantModelForm):
             "is_active",
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allow_quick_add(
+            "subject", "academics:subject_create", _("Add subject"), "academics.add_subject"
+        )
+        self.allow_quick_add(
+            "school_class",
+            "academics:class_create",
+            _("Add class"),
+            "academics.add_schoolclass",
+        )
+
 
 class TeacherAssignmentForm(TenantModelForm):
     class Meta:
         model = TeacherAssignment
         fields = ["academic_year", "teacher", "class_subject", "section", "is_active"]
+        widgets = {
+            # The chain the reader actually follows: pick the year, and only
+            # that year's subjects remain; pick the subject, and only its
+            # class's sections remain.
+            "class_subject": RelatedCombo(
+                parent_field="academic_year_id",
+                key_field="school_class_id",
+                parent_selector="#id_academic_year",
+            ),
+            "section": RelatedCombo(
+                parent_field="school_class_id",
+                parent_selector="#id_class_subject",
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -109,13 +170,28 @@ class TeacherAssignmentForm(TenantModelForm):
         self.fields["class_subject"].queryset = self.fields[
             "class_subject"
         ].queryset.select_related("school_class", "subject")
+        self.fields["section"].queryset = self.fields["section"].queryset.select_related(
+            "school_class"
+        )
+        self.allow_quick_add(
+            "class_subject",
+            "academics:classsubject_create",
+            _("Add class subject"),
+            "academics.add_classsubject",
+        )
 
     def clean(self):
         cleaned = super().clean()
         section = cleaned.get("section")
         class_subject = cleaned.get("class_subject")
+        year = cleaned.get("academic_year")
+
         if section and class_subject and section.school_class_id != class_subject.school_class_id:
             self.add_error("section", _("That section belongs to a different class."))
+        if year and class_subject and class_subject.academic_year_id != year.pk:
+            self.add_error(
+                "class_subject", _("That subject is taught in a different academic year.")
+            )
         return cleaned
 
 
@@ -133,7 +209,31 @@ class TimetableForm(TenantModelForm):
             "end_time",
             "room",
         ]
-        widgets = {"start_time": TimeInput(), "end_time": TimeInput()}
+        widgets = {
+            "start_time": TimeInput(),
+            "end_time": TimeInput(),
+            "class_subject": RelatedCombo(
+                parent_field="academic_year_id",
+                key_field="school_class_id",
+                parent_selector="#id_academic_year",
+            ),
+            "section": RelatedCombo(
+                parent_field="school_class_id",
+                parent_selector="#id_class_subject",
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["class_subject"].queryset = self.fields[
+            "class_subject"
+        ].queryset.select_related("school_class", "subject")
+        self.fields["section"].queryset = self.fields["section"].queryset.select_related(
+            "school_class"
+        )
+        self.fields["teacher"].queryset = self.fields["teacher"].queryset.filter(
+            staff_type="teacher", status="active"
+        )
 
     def clean(self):
         cleaned = super().clean()
@@ -141,16 +241,54 @@ class TimetableForm(TenantModelForm):
         if start and end and end <= start:
             self.add_error("end_time", _("End time must be after the start time."))
 
-        teacher = cleaned.get("teacher")
+        year = cleaned.get("academic_year")
+        section = cleaned.get("section")
+        class_subject = cleaned.get("class_subject")
         weekday = cleaned.get("weekday")
         period = cleaned.get("period")
-        year = cleaned.get("academic_year")
-        if teacher and weekday is not None and period and year:
-            clash = Timetable.objects.filter(
-                academic_year=year, teacher=teacher, weekday=weekday, period=period
-            ).exclude(pk=self.instance.pk)
-            if clash.exists():
+        teacher = cleaned.get("teacher")
+
+        if section and class_subject and section.school_class_id != class_subject.school_class_id:
+            self.add_error("section", _("That section belongs to a different class."))
+        if year and class_subject and class_subject.academic_year_id != year.pk:
+            self.add_error(
+                "class_subject", _("That subject is taught in a different academic year.")
+            )
+
+        # Two ways the same slot can clash: the room full of students already
+        # has a lesson, or the teacher is already standing in another room.
+        if year and section and weekday is not None and period:
+            taken = (
+                Timetable.objects.filter(
+                    academic_year=year, section=section, weekday=weekday, period=period
+                )
+                .exclude(pk=self.instance.pk)
+                .select_related("class_subject__subject")
+                .first()
+            )
+            if taken is not None:
                 self.add_error(
-                    "teacher", _("This teacher already has a class in that period.")
+                    "period",
+                    _("%(section)s already has %(subject)s in that period.")
+                    % {
+                        "section": section,
+                        "subject": taken.class_subject.subject.name,
+                    },
+                )
+
+        if teacher and weekday is not None and period and year:
+            clash = (
+                Timetable.objects.filter(
+                    academic_year=year, teacher=teacher, weekday=weekday, period=period
+                )
+                .exclude(pk=self.instance.pk)
+                .select_related("section__school_class")
+                .first()
+            )
+            if clash is not None:
+                self.add_error(
+                    "teacher",
+                    _("%(teacher)s already teaches %(section)s in that period.")
+                    % {"teacher": teacher.full_name, "section": clash.section},
                 )
         return cleaned

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% comment %}The shell every View screen is built from: a header that says what
+   the record is, optional tabs when there is genuinely more than one thing to
+   read, and the panes themselves. A module fills the blocks; it does not
+   rebuild the chrome.
+
+   A record with nothing to tab through fills `detail_body` with plain cards:
+   `tab-content` styles only its `tab-pane` children, so the wrapper is
+   harmless when there are none.{% endcomment %}
+
+{% block page_subtitle %}
+    {% if back_url %}
+        <p class="mb-0 mt-1">
+            <a class="text-decoration-none small" href="{{ back_url }}">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{{ back_label|default:_("Back") }}
+            </a>
+        </p>
+    {% elif page_subtitle %}
+        <p class="text-body-secondary mb-0 mt-1">{{ page_subtitle }}</p>
+    {% endif %}
+{% endblock %}
+
+{% block page_actions %}{% block detail_actions %}{% endblock %}{% endblock %}
+
+{% block content %}
+    {% include "components/detail_header.html" %}
+
+    {% if detail_tabs %}
+        <ul class="nav nav-tabs mb-3 flex-nowrap overflow-x-auto" role="tablist">
+            {% for tab in detail_tabs %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-nowrap {% if forloop.first %}active{% endif %}"
+                            id="tab-{{ tab.id }}" data-bs-toggle="tab" data-bs-target="#pane-{{ tab.id }}"
+                            type="button" role="tab" aria-controls="pane-{{ tab.id }}"
+                            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                        {% if tab.icon %}<i class="bi {{ tab.icon }} me-1" aria-hidden="true"></i>{% endif %}
+                        {{ tab.label }}
+                        {% if tab.count is not None %}
+                            <span class="badge rounded-pill text-bg-secondary-subtle text-body-secondary ms-1">{{ tab.count }}</span>
+                        {% endif %}
+                    </button>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="tab-content">{% block detail_body %}{% endblock %}</div>
+{% endblock %}

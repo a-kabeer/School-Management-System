@@ -1,0 +1,20 @@
+{% extends "components/detail.html" %}
+{% load i18n core_extras %}
+
+{% block detail_actions %}
+    {% has_perm "academics.change_timetable" as can_edit %}
+    {% if can_edit %}
+        <a class="btn btn-sm btn-primary" href="{% url 'academics:timetable_update' object.pk %}"
+           data-modal-url="{% url 'academics:timetable_update' object.pk %}"
+           data-modal-title="{% translate 'Edit lesson' %}">
+            <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}
+        </a>
+    {% endif %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ grid_url }}">
+        <i class="bi bi-grid-3x3 me-1" aria-hidden="true"></i>{% translate "Weekly grid" %}
+    </a>
+{% endblock %}
+
+{% block detail_body %}
+{% include "components/related_card.html" with card=day_card %}
+{% endblock %}

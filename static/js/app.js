@@ -580,6 +580,345 @@
         apply(read());
     }
 
+    /* ------------------------------------------- row click opens the row */
+
+    function initRowClick() {
+        document.addEventListener("click", function (event) {
+            var row = event.target.closest("[data-row-url]");
+            if (!row) return;
+
+            // The Actions column keeps its own behaviour, and so does anything
+            // else a reader can operate: a row click is for the space between
+            // the controls, not for the controls.
+            if (event.target.closest("a, button, input, label, select, textarea, .dropdown-menu")) {
+                return;
+            }
+            // Selecting text in a row is reading, not navigating.
+            if (window.getSelection && String(window.getSelection())) return;
+
+            var url = row.getAttribute("data-row-url");
+            if (event.metaKey || event.ctrlKey) {
+                window.open(url, "_blank", "noopener");
+            } else {
+                window.location.assign(url);
+            }
+        });
+    }
+
+    /* -------------------------------------------------- the shared modal */
+
+    function initAppModal() {
+        var element = document.getElementById("app-modal");
+        if (!element || !window.bootstrap) return;
+
+        var modal = window.bootstrap.Modal.getOrCreateInstance(element);
+        var content = element.querySelector("[data-modal-content]");
+        var heading = element.querySelector("[data-modal-title]");
+        var dialog = element.querySelector(".modal-dialog");
+        var trigger = null;
+
+        function busy() {
+            content.innerHTML =
+                '<div class="modal-body text-center py-5 text-body-secondary">' +
+                '<div class="spinner-border" role="status"></div></div>';
+        }
+
+        function load(url) {
+            busy();
+            fetch(url, {
+                headers: { "X-Modal": "1" },
+                credentials: "same-origin",
+            })
+                .then(function (response) { return response.text(); })
+                .then(function (html) {
+                    content.innerHTML = html;
+                    initComboBoxes();
+                    var first = content.querySelector(
+                        "input:not([type=hidden]):not([readonly]), select, textarea"
+                    );
+                    if (first) first.focus();
+                })
+                .catch(function () {
+                    content.innerHTML =
+                        '<div class="modal-body"><div class="alert alert-danger mb-0">' +
+                        (element.getAttribute("data-error-text") || "Could not load.") +
+                        "</div></div>";
+                });
+        }
+
+        document.addEventListener("click", function (event) {
+            var link = event.target.closest("[data-modal-url]");
+            if (!link) return;
+            event.preventDefault();
+            trigger = link;
+            if (heading) heading.textContent = link.getAttribute("data-modal-title") || "";
+            if (dialog) {
+                dialog.classList.toggle(
+                    "modal-lg", link.getAttribute("data-modal-size") !== "sm"
+                );
+            }
+            modal.show();
+            load(link.getAttribute("data-modal-url"));
+        });
+
+        element.addEventListener("submit", function (event) {
+            var form = event.target.closest("form");
+            if (!form) return;
+            event.preventDefault();
+
+            var submit = form.querySelector('[type="submit"]');
+            if (submit) submit.disabled = true;
+
+            fetch(form.getAttribute("action") || window.location.href, {
+                method: "POST",
+                body: new FormData(form),
+                headers: { "X-Modal": "1" },
+                credentials: "same-origin",
+            })
+                .then(function (response) {
+                    if (response.headers.get("X-Modal-Success") === "1") {
+                        modal.hide();
+                        finish(response);
+                        return null;
+                    }
+                    return response.text();
+                })
+                .then(function (html) {
+                    if (html === null) return;
+                    // The form came back with errors: the fields the reader
+                    // already filled in come back with it.
+                    content.innerHTML = html;
+                    initComboBoxes();
+                })
+                .catch(function () {
+                    if (submit) submit.disabled = false;
+                });
+        });
+
+        function finish(response) {
+            var id = response.headers.get("X-Modal-Object-Id");
+            var label = response.headers.get("X-Modal-Object-Label") || "";
+            var target = trigger && trigger.getAttribute("data-modal-select");
+
+            if (target && id) {
+                // A quick-add started from a combo box: select what was just
+                // created and carry on, rather than reloading the form the
+                // reader is halfway through.
+                var select = document.querySelector(target);
+                if (select) {
+                    var option = document.createElement("option");
+                    option.value = id;
+                    option.textContent = decodeURIComponent(label);
+                    select.appendChild(option);
+                    select.value = id;
+                    select.dispatchEvent(new Event("change", { bubbles: true }));
+                    return;
+                }
+            }
+            window.location.reload();
+        }
+    }
+
+    /* ------------------------------------------ searchable combo selects */
+
+    function initComboBoxes() {
+        document.querySelectorAll("select[data-combo]").forEach(build);
+
+        function build(select) {
+            if (select.dataset.comboReady === "1") return;
+            select.dataset.comboReady = "1";
+
+            var wrapper = document.createElement("div");
+            wrapper.className = "app-combo";
+            select.parentNode.insertBefore(wrapper, select);
+            wrapper.appendChild(select);
+            // The select still carries the value and still posts it; it is
+            // simply not what the reader operates.
+            select.classList.add("visually-hidden");
+            select.setAttribute("tabindex", "-1");
+            select.setAttribute("aria-hidden", "true");
+
+            var input = document.createElement("input");
+            input.type = "text";
+            input.className = "form-control app-combo-input";
+            input.autocomplete = "off";
+            input.setAttribute("role", "combobox");
+            input.setAttribute("aria-expanded", "false");
+            input.setAttribute("aria-autocomplete", "list");
+            input.placeholder = select.getAttribute("data-combo-placeholder") || "";
+            if (select.disabled) input.disabled = true;
+            var label = document.querySelector('label[for="' + select.id + '"]');
+            if (label) input.setAttribute("aria-label", label.textContent.trim());
+
+            var menu = document.createElement("div");
+            menu.className = "app-combo-menu d-none";
+            menu.setAttribute("role", "listbox");
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(menu);
+
+            var addUrl = select.getAttribute("data-combo-add-url");
+            var addLabel = select.getAttribute("data-combo-add-label") || "";
+            var parentSelector = select.getAttribute("data-combo-parent");
+            var parent = parentSelector ? document.querySelector(parentSelector) : null;
+            var active = -1;
+            var shown = [];
+
+            function options() {
+                return Array.prototype.slice.call(select.options);
+            }
+
+            function parentKey() {
+                if (!parent || !parent.value) return "";
+                // A parent option may advertise something other than its own
+                // id: a class subject advertises its class, which is what the
+                // section picker beside it narrows by.
+                var chosen = parent.options[parent.selectedIndex];
+                return (chosen && chosen.getAttribute("data-key")) || parent.value;
+            }
+
+            function allowed(option) {
+                var key = parentKey();
+                if (!key) return true;
+                var owner = option.getAttribute("data-parent");
+                // An option that names no parent belongs to all of them.
+                return !owner || owner === key;
+            }
+
+            function render(term) {
+                var needle = (term || "").trim().toLowerCase();
+                shown = options().filter(function (option) {
+                    if (!allowed(option)) return false;
+                    if (!needle) return true;
+                    return option.textContent.toLowerCase().indexOf(needle) !== -1;
+                });
+
+                menu.innerHTML = "";
+                shown.forEach(function (option, index) {
+                    var item = document.createElement("button");
+                    item.type = "button";
+                    item.className = "app-combo-item";
+                    item.setAttribute("role", "option");
+                    item.textContent = option.textContent.trim() || "—";
+                    item.addEventListener("mousedown", function (event) {
+                        event.preventDefault();
+                        choose(index);
+                    });
+                    menu.appendChild(item);
+                });
+
+                if (!shown.length) {
+                    var none = document.createElement("p");
+                    none.className = "app-combo-empty";
+                    none.textContent = select.getAttribute("data-combo-empty") || "No matches";
+                    menu.appendChild(none);
+                }
+
+                if (addUrl) {
+                    var add = document.createElement("button");
+                    add.type = "button";
+                    add.className = "app-combo-add";
+                    add.innerHTML = '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>';
+                    add.appendChild(document.createTextNode(addLabel));
+                    add.setAttribute("data-modal-url", addUrl);
+                    add.setAttribute("data-modal-title", addLabel);
+                    add.setAttribute("data-modal-select", "#" + select.id);
+                    add.addEventListener("mousedown", function () { close(); });
+                    menu.appendChild(add);
+                }
+
+                highlight(shown.length ? 0 : -1);
+            }
+
+            function highlight(index) {
+                active = index;
+                Array.prototype.slice.call(menu.querySelectorAll(".app-combo-item"))
+                    .forEach(function (item, position) {
+                        item.classList.toggle("is-active", position === index);
+                        if (position === index) item.scrollIntoView({ block: "nearest" });
+                    });
+            }
+
+            function open() {
+                menu.classList.remove("d-none");
+                input.setAttribute("aria-expanded", "true");
+            }
+
+            function close() {
+                menu.classList.add("d-none");
+                input.setAttribute("aria-expanded", "false");
+            }
+
+            function choose(index) {
+                var option = shown[index];
+                if (!option) return;
+                select.value = option.value;
+                select.dispatchEvent(new Event("change", { bubbles: true }));
+                sync();
+                close();
+            }
+
+            function sync() {
+                var option = select.options[select.selectedIndex];
+                input.value = option ? option.textContent.trim() : "";
+            }
+
+            input.addEventListener("focus", function () {
+                render("");
+                open();
+                input.select();
+            });
+
+            input.addEventListener("input", function () {
+                render(input.value);
+                open();
+            });
+
+            input.addEventListener("blur", function () {
+                // Whatever is in the box has to agree with what is selected;
+                // half-typed text is not a value.
+                window.setTimeout(function () { sync(); close(); }, 120);
+            });
+
+            input.addEventListener("keydown", function (event) {
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                    event.preventDefault();
+                    if (menu.classList.contains("d-none")) { render(input.value); open(); }
+                    var next = active + (event.key === "ArrowDown" ? 1 : -1);
+                    if (next < 0) next = shown.length - 1;
+                    if (next >= shown.length) next = 0;
+                    highlight(next);
+                } else if (event.key === "Enter") {
+                    if (!menu.classList.contains("d-none") && active >= 0) {
+                        event.preventDefault();
+                        choose(active);
+                    }
+                } else if (event.key === "Escape") {
+                    sync();
+                    close();
+                }
+            });
+
+            select.addEventListener("change", sync);
+
+            if (parent) {
+                parent.addEventListener("change", function () {
+                    var current = select.options[select.selectedIndex];
+                    if (current && current.value && !allowed(current)) {
+                        // The chosen child no longer belongs to the chosen
+                        // parent, so it cannot stay selected.
+                        select.value = "";
+                        select.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                    render(input.value);
+                    sync();
+                });
+            }
+
+            sync();
+        }
+    }
+
     /* ---------------------------------------------- navbar height var */
 
     function trackNavbarHeight() {
@@ -625,5 +964,8 @@
         initTableSearch();
         initTableSelection();
         initColumnVisibility();
+        initRowClick();
+        initAppModal();
+        initComboBoxes();
     });
 })();

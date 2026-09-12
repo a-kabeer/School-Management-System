@@ -20,6 +20,7 @@ from django.views.generic import (
 
 from . import tables
 from .filters import FilterSpec
+from .modals import ModalFormMixin
 from .pagination import querystring_without_page
 from .permissions import PermissionRequiredMixin, user_has_permission
 
@@ -422,6 +423,21 @@ class AuditedFormMixin:
 class TenantFormViewMixin(AuditedFormMixin, ActiveBranchMixin, BreadcrumbMixin):
     template_name = "components/object_form.html"
 
+    def get_initial(self):
+        """Let a link pre-fill the form it opens.
+
+        Adding a lesson from an empty cell in the timetable grid should not
+        ask which day and period the reader just clicked. Anything arriving
+        this way is still only a suggested starting value: the field's own
+        queryset decides whether it is acceptable.
+        """
+        initial = super().get_initial()
+        fields = self.get_form_class().base_fields
+        initial.update(
+            {key: value for key, value in self.request.GET.items() if key in fields}
+        )
+        return initial
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
@@ -435,14 +451,28 @@ class TenantFormViewMixin(AuditedFormMixin, ActiveBranchMixin, BreadcrumbMixin):
 
 
 class TenantCreateView(
-    PermissionRequiredMixin, TenantFormViewMixin, TenantQuerysetMixin, CreateView
+    PermissionRequiredMixin,
+    ModalFormMixin,
+    TenantFormViewMixin,
+    TenantQuerysetMixin,
+    CreateView,
 ):
+    """Create a record — on its own page, or in the shared dialog.
+
+    Both render the same form through the same view, so a field, a rule or a
+    permission cannot be present in one and missing from the other.
+    """
+
     def get_success_message(self):
         return _("%(name)s created.") % {"name": self.model._meta.verbose_name.title()}
 
 
 class TenantUpdateView(
-    PermissionRequiredMixin, TenantFormViewMixin, TenantQuerysetMixin, UpdateView
+    PermissionRequiredMixin,
+    ModalFormMixin,
+    TenantFormViewMixin,
+    TenantQuerysetMixin,
+    UpdateView,
 ):
     def get_success_message(self):
         return _("%(name)s updated.") % {"name": self.model._meta.verbose_name.title()}
@@ -452,6 +482,26 @@ class TenantDeleteView(
     PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, DeleteView
 ):
     template_name = "components/object_confirm_delete.html"
+    #: ``(related_name, label)`` pairs to count before asking. Deleting a
+    #: class that still holds sections and enrolments is rarely what someone
+    #: means, and the confirmation is the last place to say so.
+    dependants = ()
+
+    def get_dependants(self):
+        found = []
+        for name, label in self.dependants:
+            manager = getattr(self.object, name, None)
+            if manager is None:
+                continue
+            count = manager.count()
+            if count:
+                found.append({"label": label, "count": count})
+        return found
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["dependants"] = self.get_dependants()
+        return context
 
     def form_valid(self, form):
         from apps.audit.services import log_activity, snapshot

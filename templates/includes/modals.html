@@ -22,3 +22,21 @@
         </div>
     </div>
 </div>
+
+{% comment %}The application's one working dialog. Anything with
+   data-modal-url loads into it: a quick view, an add, an edit, an assignment.
+   The view behind the URL renders a fragment for the dialog and a full page
+   for a direct visit, so nothing here is a second implementation.{% endcomment %}
+<div class="modal fade" id="app-modal" tabindex="-1" aria-labelledby="app-modal-title"
+     aria-hidden="true" data-error-text="{% translate 'Could not load that. Please try again.' %}">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h6" id="app-modal-title" data-modal-title></h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="{% translate 'Close' %}"></button>
+            </div>
+            <div data-modal-content></div>
+        </div>
+    </div>
+</div>

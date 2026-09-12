@@ -1,0 +1,19 @@
+{% load i18n %}
+{% comment %}A form rendered as a modal fragment. The same view renders this
+   and the full page, so the fields, the validation and the permissions are
+   the same either way — only the chrome differs.{% endcomment %}
+<form method="post" action="{{ request.path }}" enctype="multipart/form-data" novalidate
+      data-modal-form>
+    {% csrf_token %}
+    <div class="modal-body">
+        {% include "components/form.html" %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            {% translate "Cancel" %}
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Save" %}
+        </button>
+    </div>
+</form>

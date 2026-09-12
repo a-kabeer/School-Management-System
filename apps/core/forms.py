@@ -66,6 +66,17 @@ class TenantModelForm(forms.ModelForm):
                 continue
             if isinstance(widget, forms.Select):
                 widget.attrs.setdefault("class", "form-select")
+                if isinstance(field, forms.ModelChoiceField) and not isinstance(
+                    widget, forms.SelectMultiple
+                ):
+                    # A picker over records is searchable: a branch has one
+                    # subject list and four hundred students, and scrolling a
+                    # native dropdown for either is the same bad experience.
+                    widget.attrs.setdefault("data-combo", "1")
+                    widget.attrs.setdefault(
+                        "data-combo-placeholder", str(_("Search or select…"))
+                    )
+                    widget.attrs.setdefault("data-combo-empty", str(_("No matches")))
             elif isinstance(widget, (forms.DateInput, forms.DateTimeInput)):
                 widget.attrs.setdefault("class", "form-control")
                 widget.input_type = "date"
@@ -73,6 +84,28 @@ class TenantModelForm(forms.ModelForm):
                 widget.attrs.setdefault("class", "form-control")
             if field.required:
                 widget.attrs.setdefault("required", "required")
+
+    def allow_quick_add(self, field_name, url_name, label, permission):
+        """Offer creating a missing related record without leaving this form.
+
+        Only offered when the reader could create one on its own screen: the
+        shortcut must not become a way around a permission.
+        """
+        from django.urls import NoReverseMatch, reverse
+
+        from .permissions import user_has_permission
+
+        field = self.fields.get(field_name)
+        if field is None or self.user is None:
+            return
+        if not user_has_permission(self.user, permission, self.branch):
+            return
+        try:
+            url = reverse(url_name)
+        except NoReverseMatch:
+            return
+        field.widget.attrs["data-combo-add-url"] = url
+        field.widget.attrs["data-combo-add-label"] = str(label)
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -90,6 +123,44 @@ class TenantModelForm(forms.ModelForm):
             instance.save()
             self.save_m2m()
         return instance
+
+
+class RelatedCombo(forms.Select):
+    """A searchable picker whose options know which parent they belong to.
+
+    ``parent_field`` names an attribute on each option's record; the option
+    carries it, and the picker narrows itself when the parent picker changes.
+    ``key_field`` is the other half: it lets a parent option advertise
+    something other than its own id — a class subject advertises its class, so
+    the section picker beside it can narrow to that class.
+
+    The narrowing is a convenience. What makes a posted id acceptable is still
+    the field's queryset, which is scoped to the branch.
+    """
+
+    def __init__(
+        self, *args, parent_field=None, key_field=None, parent_selector=None, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.parent_field = parent_field
+        self.key_field = key_field
+        if parent_selector:
+            self.attrs.setdefault("data-combo-parent", parent_selector)
+
+    def create_option(self, name, value, *args, **kwargs):
+        option = super().create_option(name, value, *args, **kwargs)
+        instance = getattr(value, "instance", None)
+        if instance is None:
+            return option
+        if self.parent_field:
+            owner = getattr(instance, self.parent_field, None)
+            if owner is not None:
+                option["attrs"]["data-parent"] = str(owner)
+        if self.key_field:
+            key = getattr(instance, self.key_field, None)
+            if key is not None:
+                option["attrs"]["data-key"] = str(key)
+        return option
 
 
 class DateInput(forms.DateInput):

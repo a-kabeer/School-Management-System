@@ -25,8 +25,9 @@ NAVIGATION = [
             {"label": _("Classes"), "url_name": "academics:class_list"},
             {"label": _("Sections"), "url_name": "academics:section_list"},
             {"label": _("Subjects"), "url_name": "academics:subject_list"},
+            {"label": _("Class Subjects"), "url_name": "academics:classsubject_list"},
             {"label": _("Teacher Assignments"), "url_name": "academics:assignment_list"},
-            {"label": _("Timetable"), "url_name": "academics:timetable_list"},
+            {"label": _("Timetable"), "url_name": "academics:timetable"},
         ],
     },
     {

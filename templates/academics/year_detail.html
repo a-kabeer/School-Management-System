@@ -1,0 +1,77 @@
+{% extends "components/detail.html" %}
+{% load i18n core_extras %}
+
+{% block detail_actions %}
+    {% has_perm "academics.change_academicyear" as can_edit %}
+    {% if can_edit %}
+        <a class="btn btn-sm btn-primary" href="{% url 'academics:year_update' object.pk %}"
+           data-modal-url="{% url 'academics:year_update' object.pk %}"
+           data-modal-title="{% translate 'Edit academic year' %}">
+            <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}
+        </a>
+    {% endif %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ timetable_url }}">
+        <i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Timetable" %}
+    </a>
+    <a class="btn btn-sm btn-outline-secondary"
+       href="{% url 'academics:classsubject_list' %}?academic_year={{ object.pk }}">
+        <i class="bi bi-journal-text me-1" aria-hidden="true"></i>{% translate "Class subjects" %}
+    </a>
+{% endblock %}
+
+{% block detail_body %}
+<div class="tab-pane fade show active" id="pane-overview" role="tabpanel" aria-labelledby="tab-overview">
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-lg-3">
+            <div class="card h-100"><div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Terms" %}</p>
+                <p class="fs-4 fw-semibold mb-0">{{ term_count }}</p>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100"><div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Class subjects" %}</p>
+                <p class="fs-4 fw-semibold mb-0">{{ subjects_card.total }}</p>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100"><div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Teacher assignments" %}</p>
+                <p class="fs-4 fw-semibold mb-0">{{ assignments_card.total }}</p>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100"><div class="card-body py-3">
+                <p class="text-body-secondary small mb-1">{% translate "Timetable slots" %}</p>
+                <p class="fs-4 fw-semibold mb-0">{{ slot_count }}</p>
+            </div></div>
+        </div>
+    </div>
+
+    {% if object.is_closed %}
+        <div class="alert alert-secondary d-flex gap-2" role="status">
+            <i class="bi bi-lock mt-1" aria-hidden="true"></i>
+            <span>{% translate "This year is closed. Records belonging to it stay readable, but it is no longer the year new work is filed under." %}</span>
+        </div>
+    {% elif not object.is_current %}
+        <div class="alert alert-info d-flex gap-2" role="status">
+            <i class="bi bi-info-circle mt-1" aria-hidden="true"></i>
+            <span>{% translate "This is not the current academic year. New enrolments and registers are filed under the current one." %}</span>
+        </div>
+    {% endif %}
+
+    {% include "components/related_card.html" with card=terms_card %}
+</div>
+
+<div class="tab-pane fade" id="pane-terms" role="tabpanel" aria-labelledby="tab-terms">
+    {% include "components/related_card.html" with card=terms_card %}
+</div>
+
+<div class="tab-pane fade" id="pane-subjects" role="tabpanel" aria-labelledby="tab-subjects">
+    {% include "components/related_card.html" with card=subjects_card %}
+</div>
+
+<div class="tab-pane fade" id="pane-teaching" role="tabpanel" aria-labelledby="tab-teaching">
+    {% include "components/related_card.html" with card=assignments_card %}
+</div>
+{% endblock %}

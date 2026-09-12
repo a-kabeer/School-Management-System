@@ -209,7 +209,9 @@ class ListPageTests(EnglishLabelMixin, TestCase):
         user = build_admin(empty.branch, username="empty_admin")
         self.client.force_login(user)
         response = self.client.get(reverse("academics:subject_list"))
-        self.assertContains(response, "Nothing here yet")
+        # The view's own wording, and the action that fills the gap.
+        self.assertContains(response, "No subjects yet")
+        self.assertContains(response, "Add the first one")
 
     def test_sorting_is_done_by_the_database(self):
         # The ordering has to reach SQL; sorting a page in the browser would
