@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import selectors
 from .models import AcademicYear, ClassSubject, SchoolClass, Section, TeacherAssignment, Timetable
+from .timetable_config import working_weekdays
 
 
 @dataclass(frozen=True)
@@ -41,12 +42,26 @@ def _table(title, columns, rows):
     return {"title": title, "columns": columns, "rows": [{"cells": row} for row in rows]}
 
 
-def _timetable_rows(slots):
-    return [[slot.get_weekday_display(), f"P{slot.period}", slot.start_time.strftime("%H:%M"), slot.end_time.strftime("%H:%M"), slot.class_subject.subject.name, slot.teacher.full_name if slot.teacher else "—", slot.section.name, slot.room or "—"] for slot in slots]
-
-
 def _slots(request, *, section=None, teacher=None, year=None):
     return list(selectors.slots_for(request.user, request.active_branch, academic_year=year, section=section, teacher=teacher).select_related("section__school_class", "class_subject__subject", "teacher"))
+
+
+def _timetable_document(request, year, slots, **objects):
+    metadata = [_row(_("Academic Year"), year.name)]
+    if objects.get("school_class"):
+        metadata.append(_row(_("Class"), objects["school_class"].name))
+    if objects.get("section"):
+        metadata.append(_row(_("Section"), objects["section"].name))
+    if objects.get("teacher"):
+        metadata.append(_row(_("Teacher"), objects["teacher"].full_name))
+    return {"metadata": metadata, "document_layout": "timetable", "sections": [{
+        "title": _("Weekly Schedule"),
+        "columns": [_('Time'), _('Day')],
+        "rows": [],
+        "timetable": True,
+        "weekdays": [day for day in working_weekdays(request.active_branch)],
+        "slots": slots,
+    }], "objects": objects}
 
 
 def class_timetable(request):
@@ -75,15 +90,8 @@ def teacher_timetable(request):
     return _timetable_document(request, year, _slots(request, year=year, teacher=teacher), teacher=teacher)
 
 
-def _timetable_document(request, year, slots, **objects):
-    metadata = [_row(_("Academic Year"), year.name)]
-    if objects.get("school_class"):
-        metadata.append(_row(_("Class"), objects["school_class"].name))
-    if objects.get("section"):
-        metadata.append(_row(_("Section"), objects["section"].name))
-    if objects.get("teacher"):
-        metadata.append(_row(_("Teacher"), objects["teacher"].full_name))
-    return {"metadata": metadata, "sections": [_table(_("Weekly Schedule"), [_('Day'), _('Period'), _('Start'), _('End'), _('Subject'), _('Teacher'), _('Section'), _('Room')], _timetable_rows(slots))], "objects": objects}
+def _timetable_rows(slots):
+    return [[slot.get_weekday_display(), f"P{slot.period}", slot.start_time.strftime("%H:%M"), slot.end_time.strftime("%H:%M"), slot.class_subject.subject.name, slot.teacher.full_name if slot.teacher else "—", slot.section.name, slot.room or "—"] for slot in slots]
 
 
 def class_summary(request):
