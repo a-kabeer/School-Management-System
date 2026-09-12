@@ -59,7 +59,6 @@ body { -webkit-font-smoothing: antialiased; }
 [data-table-card].is-loading { opacity: .55; pointer-events: none; transition: opacity .1s linear; }
 [dir="rtl"] .pagination .bi { transform: scaleX(-1); }
 
-/* Shared searchable-combobox menu: keep it inside the viewport on phones. */
 .app-combo { position: relative; min-width: 0; }
 .app-combo-menu { position: absolute; inset-inline: 0; top: calc(100% + .25rem); z-index: 1056; max-height: 16rem; overflow-y: auto; overflow-x: hidden; padding: .25rem; background-color: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); box-shadow: 0 .5rem 1rem rgb(0 0 0 / .15); }
 .app-combo-item, .app-combo-add { display: block; inline-size: 100%; min-height: 2.75rem; padding: .625rem .625rem; border: 0; border-radius: calc(var(--bs-border-radius) - .125rem); background: transparent; color: var(--bs-body-color); text-align: start; overflow-wrap: anywhere; }
@@ -67,16 +66,21 @@ body { -webkit-font-smoothing: antialiased; }
 .app-combo-add { margin-block-start: .25rem; border-top: 1px solid var(--bs-border-color); border-radius: 0; color: var(--bs-primary); font-weight: 500; }
 .app-combo-empty { margin: 0; padding: .75rem; color: var(--bs-secondary-color); }
 
-/* Standard data tables are responsive and use the available card width.
-   Cells wrap instead of expanding the table to the longest value. Only the
-   dedicated timetable grid keeps its intentional fixed scheduling canvas. */
+/* Global data-table sizing: standard tables fit their container instead of
+   expanding to the longest value. The dedicated timetable grid is excluded. */
 .app-table-card, .app-table-form { min-width: 0; }
-.app-table-scroll-x, .table-responsive { max-width: 100%; }
-.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.app-table { width: 100%; min-width: 0; table-layout: auto; }
-.app-table td, .app-table th { max-width: 18rem; overflow-wrap: anywhere; word-break: normal; }
-.app-table .text-nowrap { white-space: nowrap; }
-.app-table > thead .text-nowrap { white-space: normal; }
+.table-responsive { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.app-table:not(.timetable-grid) { display: table; width: 100% !important; min-width: 0 !important; max-width: 100%; table-layout: fixed; }
+.app-table:not(.timetable-grid) > thead > tr > th,
+.app-table:not(.timetable-grid) > tbody > tr > td { min-width: 0; max-width: 100%; overflow-wrap: anywhere; word-break: normal; white-space: normal; }
+.app-table:not(.timetable-grid) .text-nowrap { white-space: normal !important; }
+.app-table:not(.timetable-grid) .app-table-check { width: 2.5rem; min-width: 2.5rem; max-width: 2.5rem; white-space: nowrap !important; }
+.app-table:not(.timetable-grid) .app-table-actions { width: 7rem; min-width: 7rem; max-width: 7rem; white-space: nowrap !important; }
+.app-table:not(.timetable-grid) .app-table-column-money,
+.app-table:not(.timetable-grid) .app-table-cell-money { white-space: nowrap !important; }
+.app-table:not(.timetable-grid) .app-table-column-date,
+.app-table:not(.timetable-grid) .app-table-column-datetime,
+.app-table:not(.timetable-grid) .app-table-column-time { width: 7.5rem; }
 
 .timetable-grid { table-layout: fixed; min-inline-size: 56rem; width: 56rem; }
 .timetable-grid > thead > tr > th { background-color: var(--bs-tertiary-bg); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
@@ -106,7 +110,6 @@ body { -webkit-font-smoothing: antialiased; }
 .bar-chart > div:hover .bar { opacity: .8; }
 :focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 2px; }
 
-/* Mobile: stack controls rather than compressing them into tiny tap targets. */
 @media (max-width: 575.98px) {
     .app-main { overflow-x: clip; }
     .app-main > header { gap: .75rem !important; }
@@ -124,8 +127,11 @@ body { -webkit-font-smoothing: antialiased; }
     .breadcrumb-item { max-width: 100%; }
     .breadcrumb-item a, .breadcrumb-item.active { overflow-wrap: anywhere; }
     .table-responsive { border-radius: inherit; }
-    .app-table { min-width: 0; }
-    .app-table td, .app-table th { max-width: 14rem; }
+    .app-table:not(.timetable-grid) { min-width: 0 !important; width: 100% !important; table-layout: fixed; }
+    .app-table:not(.timetable-grid) .app-table-actions { width: 6rem; min-width: 6rem; max-width: 6rem; }
+    .app-table:not(.timetable-grid) .app-table-column-date,
+    .app-table:not(.timetable-grid) .app-table-column-datetime,
+    .app-table:not(.timetable-grid) .app-table-column-time { width: auto; }
     .timetable-grid { min-width: 56rem; width: 56rem; }
 }
 
