@@ -1,4 +1,4 @@
-/* Academics: unify create/view/edit/delete links around the existing app modal. */
+/* Academics modal UX: normalize CRUD around the existing global app modal. */
 (function () {
   "use strict";
 
@@ -24,13 +24,19 @@
     }
     return null;
   }
-  function centralAddUrl(resource) {
-    var url = new URL(window.location.href);
+  function centralAddUrl(resource, returnTo, sourceUrl) {
+    var url = new URL(sourceUrl || window.location.href, window.location.href);
     var marker = "/academics/";
     var at = url.pathname.indexOf(marker);
     url.pathname = (at >= 0 ? url.pathname.slice(0, at) : "") + "/academics/add/";
-    url.search = resource ? "?resource=" + encodeURIComponent(resource) : "";
+    url.search = "";
+    if (resource) url.searchParams.set("resource", resource);
+    if (returnTo) url.searchParams.set("return_to", returnTo);
     return url.href;
+  }
+
+  function notifyModalContentLoaded() {
+    document.dispatchEvent(new CustomEvent("app:modal-content-loaded"));
   }
 
   function load(url, title) {
@@ -41,13 +47,17 @@
     if (!m) return false;
     var heading = el.querySelector("[data-modal-title]");
     if (heading) heading.textContent = title || "Academics";
-    content.innerHTML = '<div class="modal-body text-center py-5 text-body-secondary"><div class="spinner-border" role="status"></div></div>';
+    content.innerHTML = '<div class="modal-body text-center py-5 text-body-secondary"><div class="spinner-border" role="status" aria-label="Loading"></div></div>';
     m.show();
 
     fetch(url, { headers: { "X-Modal": "1" }, credentials: "same-origin" })
-      .then(function (response) { return response.text().then(function (html) { return { response: response, html: html }; }); })
-      .then(function (result) {
-        var html = result.html;
+      .then(function (response) {
+        return response.text().then(function (html) {
+          if (!response.ok && response.status !== 422) throw new Error("HTTP " + response.status);
+          return html;
+        });
+      })
+      .then(function (html) {
         if (/<!doctype|<html[\s>]/i.test(html)) {
           var doc = new DOMParser().parseFromString(html, "text/html");
           var main = doc.querySelector("#main");
@@ -63,11 +73,12 @@
           }
         }
         content.innerHTML = html;
+        notifyModalContentLoaded();
         var first = content.querySelector("input:not([type=hidden]):not([readonly]), select, textarea, button, a");
         if (first) first.focus();
       })
       .catch(function () {
-        content.innerHTML = '<div class="modal-body"><div class="alert alert-danger mb-0">Could not load that. Please try again.</div></div>';
+        content.innerHTML = '<div class="modal-body"><div class="alert alert-danger mb-0" role="alert">Could not load that. Please try again.</div></div>';
       });
     return true;
   }
@@ -92,25 +103,25 @@
     var isEdit = /\/edit\/$/.test(path);
     var isDelete = /\/delete\/$/.test(path);
     var isDetail = isCrudPath(path) && !isEdit && !isDelete;
-    var isAddButton = target.matches("a[href$='/new/'], a.btn.btn-primary") && isCreate;
     var isRow = target.matches("tr[data-row-url]");
-    if (!(isCreate || isEdit || isDelete || isDetail || isRow || isAddButton)) return;
+    if (!(isCreate || isEdit || isDelete || isDetail || isRow)) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
 
     var modalUrl = url.href;
-    var title = isEdit ? "Edit" : isDelete ? "Delete" : (isDetail || isRow) ? "View details" : "Add New";
-    if (isCreate || isAddButton) {
+    var title = isEdit ? "Edit" : isDelete ? "Delete" : "View details";
+
+    if (isCreate) {
       var resource = resourceForPath(path) || currentResource;
-      modalUrl = centralAddUrl(resource);
+      var returnTo = window.location.pathname + window.location.search;
+      modalUrl = centralAddUrl(resource, returnTo, url.href);
       title = resource ? "Add " + resource.replace(/_/g, " ") : "Add New";
     }
+
     load(modalUrl, title);
   }, true);
 
-  /* Keyboard activation mirrors the shared clickable-row behavior, but opens
-     the same Academics detail modal instead of navigating away. */
   document.addEventListener("keydown", function (event) {
     if (event.key !== "Enter" && event.key !== " ") return;
     var row = event.target.closest("tr[data-row-url]");
@@ -147,6 +158,7 @@
     })
       .then(function (response) {
         if (/\/delete\/$/.test(action.pathname)) {
+          if (!response.ok) return response.text().then(function (html) { return { html: html, keepOpen: true }; });
           if (m) m.hide();
           window.location.reload();
           return null;
@@ -156,12 +168,21 @@
           window.location.reload();
           return null;
         }
-        return response.text();
+        return response.text().then(function (html) { return { html: html, keepOpen: true }; });
       })
-      .then(function (html) {
-        if (html !== null && content) content.innerHTML = html;
+      .then(function (result) {
+        if (!result || !result.keepOpen) return;
+        if (content) content.innerHTML = result.html;
+        notifyModalContentLoaded();
+        var first = content && content.querySelector(".is-invalid, input:not([type=hidden]):not([readonly]), select, textarea");
+        if (first) first.focus();
         if (submit) submit.disabled = false;
       })
-      .catch(function () { if (submit) submit.disabled = false; });
+      .catch(function () {
+        if (submit) submit.disabled = false;
+        if (content) {
+          content.insertAdjacentHTML("afterbegin", '<div class="alert alert-danger m-3" role="alert">Could not save your changes. Please try again.</div>');
+        }
+      });
   }, true);
 })();
