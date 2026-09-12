@@ -46,22 +46,48 @@ def _slots(request, *, section=None, teacher=None, year=None):
     return list(selectors.slots_for(request.user, request.active_branch, academic_year=year, section=section, teacher=teacher).select_related("section__school_class", "class_subject__subject", "teacher"))
 
 
+def _timetable_rows(slots, weekdays, include_section=False):
+    periods = {}
+    for slot in slots:
+        periods.setdefault(slot.period, {"period": slot.period, "start": slot.start_time, "end": slot.end_time, "days": {}})
+        periods[slot.period]["days"][slot.weekday] = {
+            "subject": slot.class_subject.subject.name,
+            "teacher": slot.teacher.full_name if slot.teacher else "",
+            "room": slot.room or "",
+            "section": slot.section.name if include_section else "",
+        }
+    rows = []
+    for period in sorted(periods):
+        item = periods[period]
+        rows.append({"period": item["period"], "start": item["start"], "end": item["end"], "days": [item["days"].get(day, {}) for day in weekdays]})
+    return rows
+
+
 def _timetable_document(request, year, slots, **objects):
+    weekdays = list(working_weekdays(request.active_branch))
     metadata = [_row(_("Academic Year"), year.name)]
     if objects.get("school_class"):
         metadata.append(_row(_("Class"), objects["school_class"].name))
     if objects.get("section"):
-        metadata.append(_row(_("Section"), objects["section"].name))
+        section = objects["section"]
+        metadata.append(_row(_("Section"), section.name))
+        if section.class_teacher:
+            metadata.append(_row(_("Class Teacher"), section.class_teacher.full_name))
     if objects.get("teacher"):
         metadata.append(_row(_("Teacher"), objects["teacher"].full_name))
-    return {"metadata": metadata, "document_layout": "timetable", "sections": [{
-        "title": _("Weekly Schedule"),
-        "columns": [_('Time'), _('Day')],
-        "rows": [],
-        "timetable": True,
-        "weekdays": [day for day in working_weekdays(request.active_branch)],
-        "slots": slots,
-    }], "objects": objects}
+    metadata.append(_row(_("Working Days"), [Timetable.Weekday(day).label for day in weekdays]))
+    metadata.append(_row(_("Effective From"), year.start_date))
+    return {
+        "metadata": metadata,
+        "document_layout": "timetable",
+        "sections": [{
+            "title": _("Weekly Timetable"),
+            "timetable": True,
+            "weekdays": [{"value": day, "label": Timetable.Weekday(day).label} for day in weekdays],
+            "rows": _timetable_rows(slots, weekdays, include_section=bool(objects.get("school_class") and not objects.get("section"))),
+        }],
+        "objects": objects,
+    }
 
 
 def class_timetable(request):
@@ -78,7 +104,7 @@ def section_timetable(request):
     section = Section.objects.for_user(request.user, request.active_branch).select_related("school_class", "class_teacher").filter(pk=request.GET.get("section")).first()
     if not year or not section:
         raise Http404(_("Choose an academic year and section first."))
-    return _timetable_document(request, year, _slots(request, year=year, section=section), section=section)
+    return _timetable_document(request, year, _slots(request, year=year, section=section), school_class=section.school_class, section=section)
 
 
 def teacher_timetable(request):
@@ -88,10 +114,6 @@ def teacher_timetable(request):
     if not year or not teacher:
         raise Http404(_("Choose an academic year and teacher first."))
     return _timetable_document(request, year, _slots(request, year=year, teacher=teacher), teacher=teacher)
-
-
-def _timetable_rows(slots):
-    return [[slot.get_weekday_display(), f"P{slot.period}", slot.start_time.strftime("%H:%M"), slot.end_time.strftime("%H:%M"), slot.class_subject.subject.name, slot.teacher.full_name if slot.teacher else "—", slot.section.name, slot.room or "—"] for slot in slots]
 
 
 def class_summary(request):
