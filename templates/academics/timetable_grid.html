@@ -123,7 +123,7 @@
     <div class="card-footer bg-transparent d-flex flex-wrap gap-3 small text-body-secondary">
         <span>{% blocktranslate count counter=slot_count %}{{ counter }} lesson this week{% plural %}{{ counter }} lessons this week{% endblocktranslate %}</span>
         <span class="flex-grow-1"></span>
-        {% if section %}<a href="{% url 'academics:section_detail' section.pk %"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% translate "Open this section" %}</a>{% endif %}
+        {% if section %}<a href="{% url 'academics:section_detail' section.pk %}"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% translate "Open this section" %}</a>{% endif %}
     </div>
 </div>
 {% endif %}
