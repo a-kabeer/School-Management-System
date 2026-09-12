@@ -91,10 +91,10 @@ class TimetableWorkbenchView(PermissionRequiredMixin, ActiveBranchMixin, Breadcr
         context["slot_count"] = len(slots)
         context["conflicts"] = conflicts
         context["teacher_conflict_count"] = sum(
-            1 for item in conflicts.values() if item["type"] == "teacher"
+            1 for items in conflicts.values() if any(item["type"] == "teacher" for item in items)
         )
         context["room_conflict_count"] = sum(
-            1 for item in conflicts.values() if item["type"] == "room"
+            1 for items in conflicts.values() if any(item["type"] == "room" for item in items)
         )
 
         by_cell = {}
@@ -142,21 +142,23 @@ class TimetableWorkbenchView(PermissionRequiredMixin, ActiveBranchMixin, Breadcr
             "slots": slots,
             "add_url": "",
             "label": _("Add lesson"),
-            "conflicts": [conflicts.get(slot.pk) for slot in slots if conflicts.get(slot.pk)],
+            "conflicts": [
+                conflict
+                for slot in slots
+                for conflict in conflicts.get(slot.pk, [])
+            ],
         }
 
     def find_conflicts(self, user, branch, year, slots):
-        """Surface existing conflicts without turning the workbench into CRUD.
-
-        New conflicts are prevented by model validation/DB constraints. This
-        view also detects legacy or externally-created conflicts so an admin
-        can see and correct them from the scheduling workspace.
-        """
+        """Surface existing teacher/room conflicts without turning the workbench into CRUD."""
         if not slots:
             return {}
 
         selected_ids = {slot.pk for slot in slots}
         conflicts = {}
+
+        def add_conflict(slot_id, conflict_type, clash):
+            conflicts.setdefault(slot_id, []).append({"type": conflict_type, "slot": clash})
 
         teachers = {slot.teacher_id for slot in slots if slot.teacher_id}
         if teachers:
@@ -171,13 +173,11 @@ class TimetableWorkbenchView(PermissionRequiredMixin, ActiveBranchMixin, Breadcr
             for slot in slots:
                 clash = booked.get((slot.teacher_id, slot.weekday, slot.period))
                 if clash is not None:
-                    conflicts[slot.pk] = {"type": "teacher", "slot": clash}
+                    add_conflict(slot.pk, "teacher", clash)
 
         rooms = {slot.room.strip().lower() for slot in slots if slot.room and slot.room.strip()}
         if rooms:
-            elsewhere = selectors.slots_for(
-                user, branch, academic_year=year
-            )
+            elsewhere = selectors.slots_for(user, branch, academic_year=year)
             booked_rooms = {}
             for other in elsewhere:
                 if other.pk in selected_ids or not other.room or not other.room.strip():
@@ -190,6 +190,6 @@ class TimetableWorkbenchView(PermissionRequiredMixin, ActiveBranchMixin, Breadcr
                     continue
                 clash = booked_rooms.get((slot.room.strip().lower(), slot.weekday, slot.period))
                 if clash is not None:
-                    conflicts[slot.pk] = {"type": "room", "slot": clash}
+                    add_conflict(slot.pk, "room", clash)
 
         return conflicts
