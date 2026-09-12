@@ -18,11 +18,9 @@
        href="{% url 'students:student_list' %}?school_class={{ object.pk }}">
         <i class="bi bi-people me-1" aria-hidden="true"></i>{% translate "Students" %}
     </a>
-    {% if sections_card.rows %}
-        <a class="btn btn-sm btn-outline-secondary" href="{{ timetable_url }}">
-            <i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Timetable" %}
-        </a>
-    {% endif %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ timetable_url }}">
+        <i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Timetable" %}
+    </a>
 {% endblock %}
 
 {% block detail_body %}
@@ -49,13 +47,13 @@
         </div>
         <div class="col-6 col-lg-3">
             <div class="card h-100"><div class="card-body py-3">
-                <p class="text-body-secondary small mb-1">{% translate "Subjects" %}</p>
+                <p class="text-body-secondary small mb-1">{% translate "Class Subjects" %}</p>
                 <p class="fs-4 fw-semibold mb-0">{{ subjects_card.total }}</p>
             </div></div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="card h-100"><div class="card-body py-3">
-                <p class="text-body-secondary small mb-1">{% translate "Teachers" %}</p>
+                <p class="text-body-secondary small mb-1">{% translate "Subject Teachers" %}</p>
                 <p class="fs-4 fw-semibold mb-0">{{ teachers_card.total }}</p>
             </div></div>
         </div>
@@ -73,6 +71,10 @@
 </div>
 
 <div class="tab-pane fade" id="pane-teachers" role="tabpanel" aria-labelledby="tab-teachers">
+    <div class="alert alert-info d-flex gap-2 mb-3" role="status">
+        <i class="bi bi-info-circle mt-1" aria-hidden="true"></i>
+        <span>{% translate "These are subject-teacher assignments. Class teachers are shown with their sections." %}</span>
+    </div>
     {% include "components/related_card.html" with card=teachers_card %}
 </div>
 {% endblock %}
