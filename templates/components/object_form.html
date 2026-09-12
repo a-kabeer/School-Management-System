@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block content %}
-<form method="post" enctype="multipart/form-data" novalidate>
+<form method="post" enctype="multipart/form-data" novalidate data-app-form>
     {% csrf_token %}
     <div class="card mb-3">
         <div class="card-header bg-transparent">
@@ -14,8 +14,13 @@
     </div>
 
     <div class="d-flex flex-wrap gap-2">
-        <button type="submit" class="btn btn-primary">
-            <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Save" %}
+        <button type="submit" class="btn btn-primary" data-submit-button>
+            <span class="d-inline-flex align-items-center" data-submit-icon>
+                <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Save" %}
+            </span>
+            <span class="d-none align-items-center" data-submit-loading aria-live="polite">
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>{% translate "Saving…" %}
+            </span>
         </button>
         {% if return_to %}
             <a href="{{ return_to }}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
