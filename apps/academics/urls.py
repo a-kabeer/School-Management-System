@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import detail_views, timetable_views, views
+from . import affected_timetable_views, detail_views, timetable_views, views
 
 app_name = "academics"
 
@@ -10,46 +10,38 @@ urlpatterns = [
     path("years/<uuid:pk>/", detail_views.AcademicYearDetailView.as_view(), name="year_detail"),
     path("years/<uuid:pk>/edit/", views.AcademicYearUpdateView.as_view(), name="year_update"),
     path("years/<uuid:pk>/delete/", views.AcademicYearDeleteView.as_view(), name="year_delete"),
-
     path("terms/", views.TermListView.as_view(), name="term_list"),
     path("terms/new/", views.TermCreateView.as_view(), name="term_create"),
     path("terms/<uuid:pk>/", detail_views.TermDetailView.as_view(), name="term_detail"),
     path("terms/<uuid:pk>/edit/", views.TermUpdateView.as_view(), name="term_update"),
     path("terms/<uuid:pk>/delete/", views.TermDeleteView.as_view(), name="term_delete"),
-
     path("classes/", views.SchoolClassListView.as_view(), name="class_list"),
     path("classes/new/", views.SchoolClassCreateView.as_view(), name="class_create"),
     path("classes/<uuid:pk>/", detail_views.SchoolClassDetailView.as_view(), name="class_detail"),
     path("classes/<uuid:pk>/edit/", views.SchoolClassUpdateView.as_view(), name="class_update"),
     path("classes/<uuid:pk>/delete/", views.SchoolClassDeleteView.as_view(), name="class_delete"),
-
     path("sections/", views.SectionListView.as_view(), name="section_list"),
     path("sections/new/", views.SectionCreateView.as_view(), name="section_create"),
     path("sections/<uuid:pk>/", detail_views.SectionDetailView.as_view(), name="section_detail"),
     path("sections/<uuid:pk>/edit/", views.SectionUpdateView.as_view(), name="section_update"),
     path("sections/<uuid:pk>/delete/", views.SectionDeleteView.as_view(), name="section_delete"),
-
     path("subjects/", views.SubjectListView.as_view(), name="subject_list"),
     path("subjects/new/", views.SubjectCreateView.as_view(), name="subject_create"),
     path("subjects/<uuid:pk>/", detail_views.SubjectDetailView.as_view(), name="subject_detail"),
     path("subjects/<uuid:pk>/edit/", views.SubjectUpdateView.as_view(), name="subject_update"),
     path("subjects/<uuid:pk>/delete/", views.SubjectDeleteView.as_view(), name="subject_delete"),
-
     path("class-subjects/", views.ClassSubjectListView.as_view(), name="classsubject_list"),
     path("class-subjects/new/", views.ClassSubjectCreateView.as_view(), name="classsubject_create"),
     path("class-subjects/<uuid:pk>/", detail_views.ClassSubjectDetailView.as_view(), name="classsubject_detail"),
     path("class-subjects/<uuid:pk>/edit/", views.ClassSubjectUpdateView.as_view(), name="classsubject_update"),
     path("class-subjects/<uuid:pk>/delete/", views.ClassSubjectDeleteView.as_view(), name="classsubject_delete"),
-
     path("assignments/", views.TeacherAssignmentListView.as_view(), name="assignment_list"),
     path("assignments/new/", views.TeacherAssignmentCreateView.as_view(), name="assignment_create"),
     path("assignments/<uuid:pk>/", detail_views.TeacherAssignmentDetailView.as_view(), name="assignment_detail"),
     path("assignments/<uuid:pk>/edit/", views.TeacherAssignmentUpdateView.as_view(), name="assignment_update"),
     path("assignments/<uuid:pk>/delete/", views.TeacherAssignmentDeleteView.as_view(), name="assignment_delete"),
-
-    # The week as a grid is the way a timetable is actually built; the list of
-    # slots is the way it is searched.
     path("timetable/", timetable_views.TimetableWorkbenchView.as_view(), name="timetable"),
+    path("timetable/affected/", affected_timetable_views.AffectedTimetableSlotsView.as_view(), name="timetable_affected"),
     path("timetable/slots/", views.TimetableListView.as_view(), name="timetable_list"),
     path("timetable/new/", views.TimetableCreateView.as_view(), name="timetable_create"),
     path("timetable/<uuid:pk>/", detail_views.TimetableDetailView.as_view(), name="timetable_detail"),
