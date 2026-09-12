@@ -13,11 +13,25 @@ class WorkingDayPolicyTests(AcademicsFixture):
     def test_default_working_week_is_monday_to_friday(self):
         self.assertEqual(working_weekdays(), (0, 1, 2, 3, 4))
 
-    def test_timetable_form_only_offers_monday_to_friday(self):
-        form = TimetableForm(branch=self.fixture.branch)
-        self.assertEqual([value for value, _ in form.fields["weekday"].choices], [0, 1, 2, 3, 4])
+    def test_branch_can_configure_monday_through_saturday(self):
+        self.fixture.branch.working_weekdays = [0, 1, 2, 3, 4, 5]
+        self.fixture.branch.save(update_fields=["working_weekdays"])
+        self.assertEqual(working_weekdays(self.fixture.branch), (0, 1, 2, 3, 4, 5))
 
-    def test_weekend_is_rejected_by_the_form(self):
+        form = TimetableForm(branch=self.fixture.branch)
+        self.assertEqual(
+            [value for value, _ in form.fields["weekday"].choices],
+            [0, 1, 2, 3, 4, 5],
+        )
+
+    def test_timetable_form_only_offers_configured_working_days(self):
+        form = TimetableForm(branch=self.fixture.branch)
+        self.assertEqual(
+            [value for value, _ in form.fields["weekday"].choices],
+            [0, 1, 2, 3, 4],
+        )
+
+    def test_weekend_is_rejected_by_the_form_when_not_configured(self):
         form = TimetableForm(
             data={
                 "academic_year": self.year.pk,
@@ -33,7 +47,7 @@ class WorkingDayPolicyTests(AcademicsFixture):
         self.assertFalse(form.is_valid())
         self.assertIn("weekday", form.errors)
 
-    def test_model_rejects_direct_weekend_writes(self):
+    def test_model_rejects_direct_non_working_day_writes(self):
         with self.assertRaises(ValidationError):
             Timetable.objects.create(
                 branch=self.fixture.branch,
@@ -47,7 +61,23 @@ class WorkingDayPolicyTests(AcademicsFixture):
                 end_time=dt.time(9, 40),
             )
 
-    def test_existing_weekend_record_is_preserved_and_hidden_from_grid(self):
+    def test_configured_saturday_can_be_scheduled(self):
+        self.fixture.branch.working_weekdays = [0, 1, 2, 3, 4, 5]
+        self.fixture.branch.save(update_fields=["working_weekdays"])
+        slot = Timetable.objects.create(
+            branch=self.fixture.branch,
+            organization=self.fixture.organization,
+            academic_year=self.year,
+            section=self.section,
+            class_subject=self.class_subject,
+            weekday=5,
+            period=2,
+            start_time=dt.time(9, 0),
+            end_time=dt.time(9, 40),
+        )
+        self.assertEqual(slot.weekday, 5)
+
+    def test_existing_non_working_day_record_is_preserved_and_hidden_from_grid(self):
         Timetable.objects.filter(pk=self.slot.pk).update(weekday=5)
         response = self.client.get(
             reverse("academics:timetable"),
@@ -55,11 +85,11 @@ class WorkingDayPolicyTests(AcademicsFixture):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["weekend_slot_count"], 1)
-        self.assertContains(response, "existing weekend lesson")
+        self.assertContains(response, "existing non-working-day lesson")
         self.assertNotContains(response, self.subject.name)
         self.assertTrue(Timetable.objects.filter(pk=self.slot.pk, weekday=5).exists())
 
-    def test_grid_has_exactly_five_working_day_columns(self):
+    def test_grid_has_exactly_configured_working_day_columns(self):
         response = self.client.get(
             reverse("academics:timetable"),
             {"academic_year": str(self.year.pk), "section": str(self.section.pk)},
