@@ -88,11 +88,7 @@ def _timetable_document(request, year, slots, **objects):
             "title": _("Weekly Timetable"),
             "timetable": True,
             "weekdays": [{"value": day, "label": Timetable.Weekday(day).label} for day in weekdays],
-            "rows": _timetable_rows(
-                slots,
-                weekdays,
-                include_section=bool(objects.get("teacher") or (objects.get("school_class") and not objects.get("section"))),
-            ),
+            "rows": _timetable_rows(slots, weekdays, include_section=bool(objects.get("teacher") or (objects.get("school_class") and not objects.get("section")))),
         }],
         "objects": objects,
     }
@@ -124,6 +120,19 @@ def teacher_timetable(request):
     return _timetable_document(request, year, _slots(request, year=year, teacher=teacher), teacher=teacher)
 
 
+def _subject_rows(subjects, assignments):
+    assignment_by_subject = {}
+    for assignment in assignments:
+        assignment_by_subject.setdefault(assignment.class_subject_id, []).append(
+            assignment.teacher.full_name if assignment.teacher else ""
+        )
+    rows = []
+    for class_subject in subjects:
+        teachers = sorted({name for name in assignment_by_subject.get(class_subject.pk, []) if name}, key=str.lower)
+        rows.append([class_subject.subject.name, ", ".join(teachers) or "—", class_subject.weekly_periods])
+    return rows
+
+
 def class_summary(request):
     year = _year(request)
     klass = SchoolClass.objects.for_user(request.user, request.active_branch).filter(pk=request.GET.get("school_class")).first()
@@ -132,7 +141,21 @@ def class_summary(request):
     sections = list(klass.sections.filter(is_active=True).select_related("class_teacher").order_by("name"))
     subjects = list(klass.class_subjects.filter(academic_year=year, is_active=True).select_related("subject"))
     assignments = list(TeacherAssignment.objects.for_user(request.user, request.active_branch).filter(academic_year=year, class_subject__school_class=klass, is_active=True).select_related("teacher", "class_subject__subject", "section"))
-    return {"metadata": [_row(_("Academic Year"), year.name), _row(_("Class"), klass.name)], "sections": [_table(_("Sections"), [_('Section'), _('Capacity'), _('Class Teacher')], [[s.name, s.capacity or "—", s.class_teacher.full_name if s.class_teacher else "—"] for s in sections]), _table(_("Class Subjects"), [_('Subject'), _('Weekly Periods')], [[cs.subject.name, cs.weekly_periods] for cs in subjects]), _table(_("Subject Teachers"), [_('Teacher'), _('Subject'), _('Section')], [[a.teacher.full_name, a.class_subject.subject.name, a.section.name if a.section else _('All sections')] for a in assignments])]}
+    capacities = [s.capacity for s in sections if s.capacity is not None]
+    metadata = [_row(_("Academic Year"), year.name), _row(_("Class"), klass.name)]
+    if sections:
+        metadata.append(_row(_("Sections"), len(sections)))
+    if capacities:
+        metadata.append(_row(_("Student Capacity"), sum(capacities)))
+    return {
+        "metadata": metadata,
+        "document_layout": "summary",
+        "objects": {"school_class": klass},
+        "sections": [
+            _table(_("Subjects"), [_('Subject'), _('Teacher'), _('Weekly Periods')], _subject_rows(subjects, assignments)),
+            _table(_("Sections"), [_('Section'), _('Capacity'), _('Class Teacher')], [[s.name, s.capacity if s.capacity is not None else "—", s.class_teacher.full_name if s.class_teacher else "—"] for s in sections]),
+        ],
+    }
 
 
 def section_summary(request):
@@ -140,9 +163,19 @@ def section_summary(request):
     section = Section.objects.for_user(request.user, request.active_branch).select_related("school_class", "class_teacher").filter(pk=request.GET.get("section")).first()
     if not year or not section:
         raise Http404(_("Choose an academic year and section first."))
-    assignments = TeacherAssignment.objects.for_user(request.user, request.active_branch).filter(academic_year=year, section=section, is_active=True).select_related("teacher", "class_subject__subject")
-    slots = _slots(request, year=year, section=section)
-    return {"metadata": [_row(_("Academic Year"), year.name), _row(_("Class"), section.school_class.name), _row(_("Section"), section.name)], "sections": [_table(_("Subject Teachers"), [_('Teacher'), _('Subject')], [[a.teacher.full_name, a.class_subject.subject.name] for a in assignments]), _table(_("Timetable"), [_('Day'), _('Period'), _('Subject'), _('Teacher'), _('Room')], [[s.get_weekday_display(), f"P{s.period}", s.class_subject.subject.name, s.teacher.full_name if s.teacher else "—", s.room or "—"] for s in slots])]}
+    subjects = list(section.school_class.class_subjects.filter(academic_year=year, is_active=True).select_related("subject"))
+    assignments = list(TeacherAssignment.objects.for_user(request.user, request.active_branch).filter(academic_year=year, is_active=True, class_subject__school_class=section.school_class).filter(section=section).select_related("teacher", "class_subject__subject"))
+    metadata = [_row(_("Academic Year"), year.name), _row(_("Class"), section.school_class.name), _row(_("Section"), section.name)]
+    if section.class_teacher:
+        metadata.append(_row(_("Class Teacher"), section.class_teacher.full_name))
+    if section.capacity is not None:
+        metadata.append(_row(_("Student Capacity"), section.capacity))
+    return {
+        "metadata": metadata,
+        "document_layout": "summary",
+        "objects": {"school_class": section.school_class, "section": section},
+        "sections": [_table(_("Subjects"), [_('Subject'), _('Teacher'), _('Weekly Periods')], _subject_rows(subjects, assignments))],
+    }
 
 
 def teacher_assignments(request):
