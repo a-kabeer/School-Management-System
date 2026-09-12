@@ -2,7 +2,6 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import DateInput, RelatedCombo, TenantModelForm, TimeInput
-
 from .models import AcademicYear, ClassSubject, SchoolClass, Section, Subject, TeacherAssignment, Term, Timetable
 from .timetable_config import working_weekdays
 
@@ -14,36 +13,30 @@ def _current_year(form):
 
 
 def _set_current_year(form):
-    if form.instance.pk or "academic_year" not in form.fields:
-        return
-    if form.initial.get("academic_year"):
+    if form.instance.pk or "academic_year" not in form.fields or form.initial.get("academic_year"):
         return
     year = _current_year(form)
     if year:
         form.initial["academic_year"] = year.pk
 
 
-def _active_or_selected(queryset, instance, selected_id=None):
-    """Show active records on create and retain an inactive selected record on edit."""
+def _active_or_selected(queryset, *, selected_id=None, create_only=False):
+    """Show active records on create and retain the selected record on edit."""
     if not hasattr(queryset.model, "is_active"):
         return queryset
     active = queryset.filter(is_active=True)
-    if not instance.pk:
+    if create_only or not selected_id:
         return active
-    selected_id = selected_id or getattr(instance, "pk", None)
-    if selected_id and not active.filter(pk=selected_id).exists():
-        return queryset.filter(pk=selected_id) | active
-    return active
+    if active.filter(pk=selected_id).exists():
+        return active
+    return queryset.filter(pk=selected_id) | active
 
 
-def _active_staff_or_selected(queryset, instance, selected_id=None):
+def _active_staff_or_selected(queryset, *, selected_id=None):
     active = queryset.filter(staff_type="teacher", status="active")
-    if not instance.pk:
+    if not selected_id or active.filter(pk=selected_id).exists():
         return active
-    selected_id = selected_id or getattr(instance, "pk", None)
-    if selected_id and not active.filter(pk=selected_id).exists():
-        return queryset.filter(pk=selected_id) | active
-    return active
+    return queryset.filter(pk=selected_id) | active
 
 
 class AcademicYearForm(TenantModelForm):
@@ -112,9 +105,14 @@ class SectionForm(TenantModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["school_class"].queryset = _active_or_selected(self.fields["school_class"].queryset, self.instance).order_by("level", "name")
-        teachers = self.fields["class_teacher"].queryset
-        self.fields["class_teacher"].queryset = _active_staff_or_selected(teachers, self.instance, self.instance.class_teacher_id).order_by("full_name")
+        self.fields["school_class"].queryset = _active_or_selected(
+            self.fields["school_class"].queryset,
+            selected_id=self.instance.school_class_id,
+        ).order_by("level", "name")
+        self.fields["class_teacher"].queryset = _active_staff_or_selected(
+            self.fields["class_teacher"].queryset,
+            selected_id=self.instance.class_teacher_id,
+        ).order_by("full_name")
         self.fields["class_teacher"].label = _("Class Teacher")
         self.fields["class_teacher"].help_text = _("Assign the teacher responsible for this entire section. This is a Class Teacher assignment, not a subject-teaching assignment.")
         self.allow_quick_add("school_class", "academics:class_create", _("Add class"), "academics.add_schoolclass")
@@ -130,9 +128,6 @@ class ClassSubjectForm(TenantModelForm):
     class Meta:
         model = ClassSubject
         fields = ["academic_year", "school_class", "subject", "weekly_periods", "is_active"]
-        widgets = {
-            "class_subject": forms.Select(),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -140,8 +135,14 @@ class ClassSubjectForm(TenantModelForm):
         if self.instance.pk and self.instance.academic_year_id:
             self.fields["academic_year"].queryset = self.fields["academic_year"].queryset | AcademicYear.objects.filter(pk=self.instance.academic_year_id)
         _set_current_year(self)
-        self.fields["school_class"].queryset = _active_or_selected(self.fields["school_class"].queryset, self.instance).order_by("level", "name")
-        self.fields["subject"].queryset = _active_or_selected(self.fields["subject"].queryset, self.instance).order_by("name")
+        self.fields["school_class"].queryset = _active_or_selected(
+            self.fields["school_class"].queryset,
+            selected_id=self.instance.school_class_id,
+        ).order_by("level", "name")
+        self.fields["subject"].queryset = _active_or_selected(
+            self.fields["subject"].queryset,
+            selected_id=self.instance.subject_id,
+        ).order_by("name")
         self.allow_quick_add("subject", "academics:subject_create", _("Add subject"), "academics.add_subject")
 
     def clean(self):
@@ -171,10 +172,18 @@ class TeacherAssignmentForm(TenantModelForm):
         if self.instance.pk and self.instance.academic_year_id:
             self.fields["academic_year"].queryset = self.fields["academic_year"].queryset | AcademicYear.objects.filter(pk=self.instance.academic_year_id)
         _set_current_year(self)
-        teachers = self.fields["teacher"].queryset
-        self.fields["teacher"].queryset = _active_staff_or_selected(teachers, self.instance, self.instance.teacher_id).order_by("full_name")
-        self.fields["class_subject"].queryset = _active_or_selected(self.fields["class_subject"].queryset.select_related("school_class", "subject"), self.instance)
-        self.fields["section"].queryset = _active_or_selected(self.fields["section"].queryset.select_related("school_class"), self.instance)
+        self.fields["teacher"].queryset = _active_staff_or_selected(
+            self.fields["teacher"].queryset,
+            selected_id=self.instance.teacher_id,
+        ).order_by("full_name")
+        self.fields["class_subject"].queryset = _active_or_selected(
+            self.fields["class_subject"].queryset.select_related("school_class", "subject"),
+            selected_id=self.instance.class_subject_id,
+        )
+        self.fields["section"].queryset = _active_or_selected(
+            self.fields["section"].queryset.select_related("school_class"),
+            selected_id=self.instance.section_id,
+        )
         self.fields["section"].label = _("Section Scope")
         self.fields["section"].help_text = _("Choose a section for a section-specific Subject Teacher, or leave empty for All Sections.")
         self.allow_quick_add("class_subject", "academics:classsubject_create", _("Add class subject"), "academics.add_classsubject")
@@ -207,10 +216,18 @@ class TimetableForm(TenantModelForm):
             self.fields["academic_year"].queryset = self.fields["academic_year"].queryset | AcademicYear.objects.filter(pk=self.instance.academic_year_id)
         _set_current_year(self)
         self.fields["weekday"].choices = [(day, Timetable.Weekday(day).label) for day in working_weekdays(self.branch)]
-        self.fields["class_subject"].queryset = _active_or_selected(self.fields["class_subject"].queryset.select_related("school_class", "subject"), self.instance)
-        self.fields["section"].queryset = _active_or_selected(self.fields["section"].queryset.select_related("school_class"), self.instance)
-        teachers = self.fields["teacher"].queryset
-        self.fields["teacher"].queryset = _active_staff_or_selected(teachers, self.instance, self.instance.teacher_id).order_by("full_name")
+        self.fields["class_subject"].queryset = _active_or_selected(
+            self.fields["class_subject"].queryset.select_related("school_class", "subject"),
+            selected_id=self.instance.class_subject_id,
+        )
+        self.fields["section"].queryset = _active_or_selected(
+            self.fields["section"].queryset.select_related("school_class"),
+            selected_id=self.instance.section_id,
+        )
+        self.fields["teacher"].queryset = _active_staff_or_selected(
+            self.fields["teacher"].queryset,
+            selected_id=self.instance.teacher_id,
+        ).order_by("full_name")
 
     def clean(self):
         cleaned = super().clean()
