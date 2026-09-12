@@ -46,10 +46,6 @@
             <main id="main" class="col app-main px-3 px-lg-4 py-3 py-lg-4" tabindex="-1">
                 {% include "includes/breadcrumbs.html" %}
 
-                {% comment %}One page header for the whole application: title, an
-                   optional line of context, and the page's primary actions.
-                   It lives here rather than in an include because template
-                   blocks only resolve through {% templatetag openblock %} extends {% templatetag closeblock %}.{% endcomment %}
                 <header class="d-flex flex-wrap align-items-start justify-content-between gap-2 gap-lg-3 mb-3 mb-lg-4">
                     <div class="min-w-0">
                         <h1 class="h4 fw-semibold mb-0 text-break">
@@ -83,6 +79,7 @@
 <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'js/app.js' %}" defer></script>
 <script src="{% static 'js/table-row-a11y.js' %}" defer></script>
+<script src="{% static 'js/academics-validation.js' %}" defer></script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>
