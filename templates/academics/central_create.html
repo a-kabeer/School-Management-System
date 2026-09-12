@@ -1,34 +1,89 @@
 {% load i18n %}
 {% if not resource_key %}
 <div class="modal-body">
-    <div class="mb-3">
-        <p class="text-body-secondary mb-0">{% translate "Choose what you want to add. The same Academics modal workflow is used for every resource." %}</p>
+    <div class="d-flex align-items-start gap-3 mb-4">
+        <span class="d-inline-flex align-items-center justify-content-center rounded bg-primary-subtle text-primary p-3 flex-shrink-0" aria-hidden="true">
+            <i class="bi bi-plus-circle fs-4"></i>
+        </span>
+        <div>
+            <h3 class="h6 mb-1">{% translate "Add academic record" %}</h3>
+            <p class="text-body-secondary mb-0 small">{% translate "Choose what you want to create. You can change the type without leaving this modal." %}</p>
+        </div>
     </div>
-    <div class="row g-2">
+    <div class="row g-2" role="list">
         {% for key, item in resources.items %}
-            <div class="col-12 col-sm-6">
-                <a class="btn btn-outline-secondary w-100 text-start py-3" href="{% url 'academics:add' %}?resource={{ key }}" data-modal-url="{% url 'academics:add' %}?resource={{ key }}" data-modal-title="{% translate 'Add' %} {{ item.0 }}" data-modal-size="lg">
-                    <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>{{ item.0 }}
+            <div class="col-12 col-sm-6" role="listitem">
+                <a class="btn btn-outline-secondary w-100 text-start d-flex align-items-center gap-3 py-3" href="{% url 'academics:add' %}?resource={{ key }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}" data-modal-url="{% url 'academics:add' %}?resource={{ key }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}" data-modal-title="{% translate 'Add' %} {{ item.0 }}" data-modal-size="lg">
+                    <i class="bi bi-plus-circle text-primary" aria-hidden="true"></i>
+                    <span class="fw-medium">{{ item.0 }}</span>
+                    <i class="bi bi-chevron-right ms-auto text-body-secondary" aria-hidden="true"></i>
                 </a>
             </div>
         {% endfor %}
     </div>
 </div>
 {% else %}
-<form method="post" action="{% url 'academics:add' %}?resource={{ resource_key }}" enctype="multipart/form-data" novalidate data-modal-form>
+<form method="post" action="{% url 'academics:add' %}?resource={{ resource_key }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}" enctype="multipart/form-data" novalidate data-modal-form>
     {% csrf_token %}
     <input type="hidden" name="resource" value="{{ resource_key }}">
+    {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+
     <div class="modal-body">
         <div class="d-flex align-items-center gap-2 mb-3">
-            <span class="badge text-bg-primary-subtle text-primary-emphasis">{% translate "Academics" %}</span>
-            <span class="text-body-secondary">{{ resource_label }}</span>
+            <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis">{% translate "Academics" %}</span>
+            <span class="text-body-secondary small">{{ resource_label }}</span>
         </div>
-        {% include "components/form.html" %}
+
+        {% if form_sections %}
+            <ul class="nav nav-tabs flex-nowrap overflow-x-auto mb-3" role="tablist">
+                {% for section in form_sections %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-nowrap {% if forloop.first %}active{% endif %}" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#academic-create-pane-{{ forloop.counter }}" aria-controls="academic-create-pane-{{ forloop.counter }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                            {{ section.label }}
+                        </button>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="tab-content">
+                {% for section in form_sections %}
+                    <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="academic-create-pane-{{ forloop.counter }}" role="tabpanel" tabindex="0">
+                        <div class="row g-3">
+                            {% for field in section.fields %}
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check mt-md-2">
+                                            {{ field }}
+                                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                                            {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}</label>
+                                        {{ field }}
+                                        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                                        {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            {% include "components/form.html" %}
+        {% endif %}
     </div>
-    <div class="modal-footer">
-        <a class="btn btn-outline-secondary" href="{% url 'academics:add' %}" data-modal-url="{% url 'academics:add' %}" data-modal-title="{% translate 'Add New' %}">{% translate "Change type" %}</a>
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Save" %}</button>
+
+    <div class="modal-footer d-flex justify-content-between gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'academics:add' %}{% if return_to %}?return_to={{ return_to|urlencode }}{% endif %}" data-modal-url="{% url 'academics:add' %}{% if return_to %}?return_to={{ return_to|urlencode }}{% endif %}" data-modal-title="{% translate 'Add New' %}">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{% translate "Change type" %}
+        </a>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+            <button type="submit" class="btn btn-primary" data-modal-submit><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% translate "Save" %}</button>
+        </div>
     </div>
 </form>
 {% endif %}
