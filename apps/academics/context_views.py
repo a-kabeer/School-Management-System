@@ -4,8 +4,6 @@ The existing CRUD views remain the source of truth. These wrappers only add
 safe return-to-origin behavior, contextual defaults, and consistent feedback.
 """
 
-from urllib.parse import parse_qs, urlparse
-
 from django.contrib import messages
 from django.urls import resolve
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -41,13 +39,17 @@ class PreserveReturnContextMixin:
 
 
 class AcademicsCreateContextMixin(PreserveReturnContextMixin):
-    """Carry the parent record into a create form when launched contextually.
+    """Carry the parent record into a create form launched from its View."""
 
-    Explicit query-string values win; otherwise the originating Academics
-    detail page supplies the relevant parent IDs. This keeps contextual Add
-    actions out of generic-list navigation without duplicating create views.
-    """
-
+    contextual_models = {
+        "year_detail": views.AcademicYear,
+        "class_detail": views.SchoolClass,
+        "section_detail": views.Section,
+        "subject_detail": views.Subject,
+        "classsubject_detail": views.ClassSubject,
+        "assignment_detail": views.TeacherAssignment,
+        "timetable_detail": views.Timetable,
+    }
     contextual_fields = {
         "year_detail": {"academic_year": "pk"},
         "class_detail": {"school_class": "pk"},
@@ -76,7 +78,7 @@ class AcademicsCreateContextMixin(PreserveReturnContextMixin):
     def get_initial(self):
         initial = super().get_initial()
 
-        # Explicit GET context is the highest-priority contextual input.
+        # Explicit GET context is the highest-priority input.
         for field_name in self.form_class.base_fields:
             value = self.request.GET.get(field_name)
             if value:
@@ -86,22 +88,25 @@ class AcademicsCreateContextMixin(PreserveReturnContextMixin):
         if not return_to:
             return initial
 
-        parsed = urlparse(return_to)
         try:
-            match = resolve(parsed.path)
+            match = resolve(return_to.split("?", 1)[0])
         except Exception:
             return initial
 
+        model = self.contextual_models.get(match.url_name)
         mapping = self.contextual_fields.get(match.url_name, {})
-        query = parse_qs(parsed.query)
+        if not model or not match.kwargs.get("pk"):
+            return initial
+
+        parent = model.objects.filter(pk=match.kwargs["pk"]).first()
+        if not parent:
+            return initial
+
         for field_name, source in mapping.items():
             if field_name in initial and initial[field_name]:
                 continue
-            if source == "pk":
-                value = match.kwargs.get("pk")
-            else:
-                value = query.get(source, [None])[0]
-            if value:
+            value = getattr(parent, source, None)
+            if value is not None:
                 initial[field_name] = value
         return initial
 
