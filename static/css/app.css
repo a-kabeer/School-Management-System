@@ -4,9 +4,6 @@
  * product's own voice: a slightly tighter radius, quieter borders, a calmer
  * surface behind the content, and the handful of structures Bootstrap has no
  * utility for.
- *
- * Everything is expressed through Bootstrap's own CSS variables, so light,
- * dark and system themes are handled once rather than per rule.
  */
 
 :root {
@@ -14,7 +11,6 @@
     --bs-border-radius-sm: .375rem;
     --bs-border-radius-lg: .75rem;
     --bs-body-font-size: .9375rem;
-
     --app-navbar-height: 56px;
     --app-sidebar-width: 16rem;
 }
@@ -24,416 +20,121 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
 }
 
-[data-bs-theme="light"] .app-main {
-    background-color: #f6f8fb;
-}
-
-[data-bs-theme="dark"] .app-main {
-    background-color: var(--bs-body-bg);
-}
-
-body {
-    -webkit-font-smoothing: antialiased;
-}
-
-.app-navbar {
-    min-height: var(--app-navbar-height);
-}
+[data-bs-theme="light"] .app-main { background-color: #f6f8fb; }
+[data-bs-theme="dark"] .app-main { background-color: var(--bs-body-bg); }
+body { -webkit-font-smoothing: antialiased; }
+.app-navbar { min-height: var(--app-navbar-height); }
 
 @media (min-width: 992px) {
-    .app-sidebar {
-        position: sticky;
-        top: var(--app-navbar-height);
-        height: calc(100vh - var(--app-navbar-height));
-        overflow-y: auto;
-    }
+    .app-sidebar { position: sticky; top: var(--app-navbar-height); height: calc(100vh - var(--app-navbar-height)); overflow-y: auto; }
 }
 
-.app-main {
-    min-width: 0;
-    min-height: calc(100vh - var(--app-navbar-height));
-    overflow-x: clip;
-}
+.app-main { min-width: 0; min-height: calc(100vh - var(--app-navbar-height)); overflow-x: clip; }
+.min-w-0 { min-width: 0; }
+.skip-link { position: absolute; z-index: 1080; margin: .5rem; }
+.brand-mark { width: 2rem; height: 2rem; }
+.app-nav-link { border-radius: var(--bs-border-radius); padding-block: .5rem; transition: background-color .12s ease-in-out; }
+.app-nav-link:hover { background-color: var(--bs-tertiary-bg); }
+.app-nav-icon { width: 1.25rem; flex: none; text-align: center; opacity: .85; }
+.app-nav-caret { transition: transform .15s ease-in-out; }
+.app-nav-link:not(.collapsed) > .app-nav-caret { transform: rotate(180deg); }
+.app-nav-sub { margin-inline-start: 1.4rem; padding-inline-start: .6rem; border-inline-start: 1px solid var(--bs-border-color); }
 
-.min-w-0 {
-    min-width: 0;
-}
+.app-table > thead > tr > th { background-color: var(--bs-tertiary-bg); color: var(--bs-secondary-color); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; border-bottom-width: 1px; }
+.app-table > tbody > tr > td { padding-block: .6rem; }
+.app-row { cursor: pointer; }
+.app-row > td[data-col="0"], .app-row:hover > td[data-col="0"], .app-row:focus-visible > td[data-col="0"] { text-decoration: none; font-weight: inherit; }
+.app-row:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: -2px; }
+.app-icon-btn { --bs-btn-padding-x: .5rem; --bs-btn-padding-y: .3rem; display: inline-flex; align-items: center; justify-content: center; min-width: 2rem; min-height: 2rem; }
+.table .font-monospace { white-space: nowrap; }
+.app-th-sort { cursor: pointer; }
+.app-th-hint { opacity: 0; transition: opacity .12s ease-in-out; }
+.app-th-sort:hover .app-th-hint, .app-th-sort:focus-visible .app-th-hint { opacity: .6; }
 
-.skip-link {
-    position: absolute;
-    z-index: 1080;
-    margin: .5rem;
-}
+.app-table-scroll { max-height: min(70vh, 44rem); overflow-y: auto; }
+.app-table-scroll > .app-table > thead > tr > th { position: sticky; top: 0; z-index: 2; }
+.app-table-check { width: 1%; white-space: nowrap; }
+.app-bulk-bar { position: sticky; top: calc(var(--app-navbar-height, 3.5rem) + .5rem); z-index: 3; }
+[data-table-card].is-loading { opacity: .55; pointer-events: none; transition: opacity .1s linear; }
+[dir="rtl"] .pagination .bi { transform: scaleX(-1); }
 
-.brand-mark {
-    width: 2rem;
-    height: 2rem;
-}
+/* Shared searchable-combobox menu: keep it inside the viewport on phones. */
+.app-combo { position: relative; min-width: 0; }
+.app-combo-menu { position: absolute; inset-inline: 0; top: calc(100% + .25rem); z-index: 1056; max-height: 16rem; overflow-y: auto; overflow-x: hidden; padding: .25rem; background-color: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); box-shadow: 0 .5rem 1rem rgb(0 0 0 / .15); }
+.app-combo-item, .app-combo-add { display: block; inline-size: 100%; min-height: 2.75rem; padding: .625rem .625rem; border: 0; border-radius: calc(var(--bs-border-radius) - .125rem); background: transparent; color: var(--bs-body-color); text-align: start; overflow-wrap: anywhere; }
+.app-combo-item:hover, .app-combo-item.is-active { background-color: var(--bs-tertiary-bg); }
+.app-combo-add { margin-block-start: .25rem; border-top: 1px solid var(--bs-border-color); border-radius: 0; color: var(--bs-primary); font-weight: 500; }
+.app-combo-empty { margin: 0; padding: .75rem; color: var(--bs-secondary-color); }
 
-.app-nav-link {
-    border-radius: var(--bs-border-radius);
-    padding-block: .5rem;
-    transition: background-color .12s ease-in-out;
-}
+/* Tables stay tables. On narrow screens the card becomes the intentional
+   horizontal scroll surface instead of forcing unreadable columns. */
+.app-table-card, .app-table-form { min-width: 0; }
+.app-table-scroll-x, .table-responsive { max-width: 100%; }
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.app-table { min-width: max-content; }
+.app-table .text-nowrap { white-space: nowrap; }
+.app-table td, .app-table th { overflow-wrap: anywhere; }
 
-.app-nav-link:hover {
-    background-color: var(--bs-tertiary-bg);
-}
+.timetable-grid { table-layout: fixed; min-inline-size: 56rem; width: 56rem; }
+.timetable-grid > thead > tr > th { background-color: var(--bs-tertiary-bg); font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.timetable-cell { inline-size: 14%; vertical-align: top; }
+.timetable-lesson { background-color: var(--bs-primary-bg-subtle); border: 1px solid var(--bs-primary-border-subtle); overflow-wrap: anywhere; }
+.timetable-lesson:hover { border-color: var(--bs-primary); }
+.timetable-lesson.is-conflicted { background-color: var(--bs-warning-bg-subtle); border-color: var(--bs-warning-border-subtle); }
+.timetable-empty { border: 1px dashed var(--bs-border-color); color: var(--bs-secondary-color); opacity: .55; min-height: 2.75rem; }
+.timetable-empty:hover, .timetable-empty:focus-visible { opacity: 1; border-style: solid; border-color: var(--bs-primary); color: var(--bs-primary); }
 
-.app-nav-icon {
-    width: 1.25rem;
-    flex: none;
-    text-align: center;
-    opacity: .85;
-}
+.detail-icon { width: 3rem; height: 3rem; }
+.nav-tabs.overflow-x-auto { scrollbar-width: thin; max-width: 100%; flex-wrap: nowrap; }
+.empty-state-icon { width: 3.5rem; height: 3.5rem; }
+.card-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); margin-bottom: 1rem; }
+.detail-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); align-items: start; }
+.two-column { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); align-items: start; }
+.detail-grid > .wide, .card-grid > .wide { grid-column: 1 / -1; }
+.definition-list { display: grid; grid-template-columns: minmax(7rem, auto) 1fr; gap: .35rem 1rem; margin-bottom: 0; }
+.definition-list.inline { grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); }
+.definition-list dt { color: var(--bs-secondary-color); font-size: .8125rem; font-weight: 500; }
+.definition-list dd { margin-bottom: 0; overflow-wrap: anywhere; }
+.definition-list.inline dt { grid-column: auto; }
+.avatar { width: 2rem; height: 2rem; font-size: .8125rem; flex: none; }
+.profile-photo { width: 4rem; height: 4rem; flex: none; }
+.bar-chart { height: 8.75rem; }
+.bar-chart .bar { min-height: 2px; transition: opacity .12s ease-in-out; }
+.bar-chart > div:hover .bar { opacity: .8; }
+:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 2px; }
 
-.app-nav-caret {
-    transition: transform .15s ease-in-out;
-}
-
-.app-nav-link:not(.collapsed) > .app-nav-caret {
-    transform: rotate(180deg);
-}
-
-.app-nav-sub {
-    margin-inline-start: 1.4rem;
-    padding-inline-start: .6rem;
-    border-inline-start: 1px solid var(--bs-border-color);
-}
-
-.app-table > thead > tr > th {
-    background-color: var(--bs-tertiary-bg);
-    color: var(--bs-secondary-color);
-    font-size: .75rem;
-    font-weight: 600;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    border-bottom-width: 1px;
-}
-
-.app-table > tbody > tr > td {
-    padding-block: .6rem;
-}
-
-/* A clickable row is one clear interaction surface. The record-name cell is
-   plain text and must never inherit link-like underline/bold hover styling. */
-.app-row {
-    cursor: pointer;
-}
-
-.app-row > td[data-col="0"],
-.app-row:hover > td[data-col="0"],
-.app-row:focus-visible > td[data-col="0"] {
-    text-decoration: none;
-    font-weight: inherit;
-}
-
-.app-row:focus-visible {
-    outline: 2px solid var(--bs-primary);
-    outline-offset: -2px;
-}
-
-.app-icon-btn {
-    --bs-btn-padding-x: .5rem;
-    --bs-btn-padding-y: .3rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 2rem;
-    min-height: 2rem;
-}
-
-.table .font-monospace {
-    white-space: nowrap;
-}
-
-.app-th-sort {
-    cursor: pointer;
-}
-
-.app-th-hint {
-    opacity: 0;
-    transition: opacity .12s ease-in-out;
-}
-
-.app-th-sort:hover .app-th-hint,
-.app-th-sort:focus-visible .app-th-hint {
-    opacity: .6;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .app-th-hint { transition: none; }
-}
-
-.app-table-scroll {
-    max-height: min(70vh, 44rem);
-    overflow-y: auto;
-}
-
-.app-table-scroll > .app-table > thead > tr > th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-}
-
-.app-table-check {
-    width: 1%;
-    white-space: nowrap;
-}
-
-.app-bulk-bar {
-    position: sticky;
-    top: calc(var(--app-navbar-height, 3.5rem) + .5rem);
-    z-index: 3;
-}
-
-[data-table-card].is-loading {
-    opacity: .55;
-    pointer-events: none;
-    transition: opacity .1s linear;
-}
-
-[dir="rtl"] .pagination .bi {
-    transform: scaleX(-1);
-}
-
-.app-combo {
-    position: relative;
-}
-
-.app-combo-menu {
-    position: absolute;
-    inset-inline: 0;
-    top: calc(100% + .25rem);
-    z-index: 1056;
-    max-height: 16rem;
-    overflow-y: auto;
-    padding: .25rem;
-    background-color: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius);
-    box-shadow: 0 .5rem 1rem rgb(0 0 0 / .15);
-}
-
-.app-combo-item,
-.app-combo-add {
-    display: block;
-    inline-size: 100%;
-    padding: .375rem .5rem;
-    border: 0;
-    border-radius: calc(var(--bs-border-radius) - .125rem);
-    background: transparent;
-    color: var(--bs-body-color);
-    text-align: start;
-}
-
-.app-combo-item:hover,
-.app-combo-item.is-active {
-    background-color: var(--bs-tertiary-bg);
-}
-
-.app-combo-add {
-    margin-block-start: .25rem;
-    border-top: 1px solid var(--bs-border-color);
-    border-radius: 0;
-    color: var(--bs-primary);
-    font-weight: 500;
-}
-
-.app-combo-empty {
-    margin: 0;
-    padding: .5rem;
-    color: var(--bs-secondary-color);
-}
-
-.timetable-grid {
-    table-layout: fixed;
-    min-inline-size: 56rem;
-}
-
-.timetable-grid > thead > tr > th {
-    background-color: var(--bs-tertiary-bg);
-    font-size: .75rem;
-    font-weight: 600;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-}
-
-.timetable-cell {
-    inline-size: 14%;
-    vertical-align: top;
-}
-
-.timetable-lesson {
-    background-color: var(--bs-primary-bg-subtle);
-    border: 1px solid var(--bs-primary-border-subtle);
-}
-
-.timetable-lesson:hover {
-    border-color: var(--bs-primary);
-}
-
-.timetable-lesson.is-conflicted {
-    background-color: var(--bs-warning-bg-subtle);
-    border-color: var(--bs-warning-border-subtle);
-}
-
-.timetable-empty {
-    border: 1px dashed var(--bs-border-color);
-    color: var(--bs-secondary-color);
-    opacity: .55;
-}
-
-.timetable-empty:hover,
-.timetable-empty:focus-visible {
-    opacity: 1;
-    border-style: solid;
-    border-color: var(--bs-primary);
-    color: var(--bs-primary);
-}
-
-.detail-icon {
-    width: 3rem;
-    height: 3rem;
-}
-
-.nav-tabs.overflow-x-auto {
-    scrollbar-width: thin;
-}
-
-.empty-state-icon {
-    width: 3.5rem;
-    height: 3.5rem;
-}
-
-.card-grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
-    margin-bottom: 1rem;
-}
-
-.detail-grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-    align-items: start;
-}
-
-.two-column {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-    align-items: start;
-}
-
-.detail-grid > .wide,
-.card-grid > .wide {
-    grid-column: 1 / -1;
-}
-
-.definition-list {
-    display: grid;
-    grid-template-columns: minmax(7rem, auto) 1fr;
-    gap: .35rem 1rem;
-    margin-bottom: 0;
-}
-
-.definition-list.inline {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
-}
-
-.definition-list dt {
-    color: var(--bs-secondary-color);
-    font-size: .8125rem;
-    font-weight: 500;
-}
-
-.definition-list dd {
-    margin-bottom: 0;
-    overflow-wrap: anywhere;
-}
-
-.definition-list.inline dt {
-    grid-column: auto;
-}
-
-.avatar {
-    width: 2rem;
-    height: 2rem;
-    font-size: .8125rem;
-    flex: none;
-}
-
-.profile-photo {
-    width: 4rem;
-    height: 4rem;
-    flex: none;
-}
-
-.bar-chart {
-    height: 8.75rem;
-}
-
-.bar-chart .bar {
-    min-height: 2px;
-    transition: opacity .12s ease-in-out;
-}
-
-.bar-chart > div:hover .bar {
-    opacity: .8;
-}
-
-:focus-visible {
-    outline: 2px solid var(--bs-primary);
-    outline-offset: 2px;
+/* Mobile: stack controls rather than compressing them into tiny tap targets. */
+@media (max-width: 575.98px) {
+    .app-main { overflow-x: clip; }
+    .app-main > header { gap: .75rem !important; }
+    .app-main > header .d-flex { width: 100%; }
+    .app-main > header .d-flex > .btn { flex: 1 1 auto; min-height: 2.75rem; }
+    .card-body { overflow-wrap: anywhere; }
+    .form-control, .form-select, .form-check-input, .btn { min-height: 2.75rem; }
+    .form-check-input { width: 1.25em; height: 1.25em; }
+    .app-icon-btn { min-width: 2.75rem; min-height: 2.75rem; }
+    .app-bulk-bar .d-flex { align-items: stretch !important; }
+    .app-bulk-bar .btn { min-height: 2.75rem; }
+    .app-bulk-bar .flex-grow-1 { display: none; }
+    .app-bulk-bar .btn-link { align-self: center; }
+    .breadcrumb { flex-wrap: wrap; row-gap: .15rem; overflow-wrap: anywhere; }
+    .breadcrumb-item { max-width: 100%; }
+    .breadcrumb-item a, .breadcrumb-item.active { overflow-wrap: anywhere; }
+    .table-responsive { border-radius: inherit; }
+    .app-table { min-width: 44rem; }
+    .timetable-grid { min-width: 56rem; width: 56rem; }
 }
 
 @media print {
-    .app-navbar,
-    .app-sidebar,
-    .breadcrumb,
-    .pagination,
-    .btn,
-    .toast-container,
-    form.card,
-    .alert-dismissible .btn-close {
-        display: none !important;
-    }
-
-    .app-main {
-        padding: 0 !important;
-        background: #fff !important;
-    }
-
-    .card {
-        border: 0 !important;
-        box-shadow: none !important;
-    }
+    .app-navbar, .app-sidebar, .breadcrumb, .pagination, .btn, .toast-container, form.card, .alert-dismissible .btn-close { display: none !important; }
+    .app-main { padding: 0 !important; background: #fff !important; }
+    .card { border: 0 !important; box-shadow: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .app-nav-caret,
-    .app-nav-link,
-    .bar-chart .bar {
-        transition: none;
-    }
+    .app-th-hint, .app-nav-caret, .app-nav-link, .bar-chart .bar { transition: none; }
 }
 
-.kpi-icon {
-    width: 2rem;
-    height: 2rem;
-    font-size: .9rem;
-}
-
-.status-dot {
-    width: .55rem;
-    height: .55rem;
-    display: inline-block;
-    flex: none;
-}
-
-.brand-mark-lg {
-    width: 3.5rem;
-    height: 3.5rem;
-}
+.kpi-icon { width: 2rem; height: 2rem; font-size: .9rem; }
+.status-dot { width: .55rem; height: .55rem; display: inline-block; flex: none; }
+.brand-mark-lg { width: 3.5rem; height: 3.5rem; }
