@@ -3,15 +3,17 @@
 <div class="modal-body">
     <div class="d-flex align-items-start gap-3 mb-4">
         <span class="d-inline-flex align-items-center justify-content-center rounded bg-primary-subtle text-primary p-3 flex-shrink-0" aria-hidden="true"><i class="bi bi-plus-circle fs-4"></i></span>
-        <div><h3 class="h6 mb-1">{% translate "Add academic record" %}</h3><p class="text-body-secondary mb-0 small">{% translate "Choose what you want to create. You can change the type without leaving this modal." %}</p></div>
+        <div><h3 class="h6 mb-1">{% translate "Add academic record" %}</h3><p class="text-body-secondary mb-0 small">{% translate "Choose what you want to create. Related records can also be added contextually from their parent." %}</p></div>
     </div>
     <div class="row g-2" role="list">
         {% for key, item in resources.items %}
+            {% if key != "class_subject" %}
             <div class="col-12 col-sm-6" role="listitem">
                 <a class="btn btn-outline-secondary w-100 text-start d-flex align-items-center gap-3 py-3" href="{% url 'academics:add' %}?resource={{ key }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}" data-modal-url="{% url 'academics:add' %}?resource={{ key }}{% if return_to %}&return_to={{ return_to|urlencode }}{% endif %}" data-modal-title="{% translate 'Add' %} {{ item.0 }}" data-modal-size="lg">
                     <i class="bi bi-plus-circle text-primary" aria-hidden="true"></i><span class="fw-medium">{{ item.0 }}</span><i class="bi bi-chevron-right ms-auto text-body-secondary" aria-hidden="true"></i>
                 </a>
             </div>
+            {% endif %}
         {% endfor %}
     </div>
 </div>
