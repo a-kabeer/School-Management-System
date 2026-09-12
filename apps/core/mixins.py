@@ -508,6 +508,62 @@ class TenantDeleteView(
         return response
 
 
+class TenantRestoreView(
+    PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, View
+):
+    """Restore a soft-deleted tenant record without weakening branch isolation."""
+
+    required_permission = "core.restore_record"
+    success_url_name = None
+
+    def get_base_queryset(self):
+        manager = getattr(self.model, "all_objects", None)
+        if manager is None:
+            raise Http404(_("This record type cannot be restored."))
+        return manager.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(is_deleted=True)
+        return self.apply_select_related(queryset)
+
+    def post(self, request, *args, **kwargs):
+        from django.shortcuts import redirect
+
+        obj = self.get_object()
+        previous = None
+        try:
+            from apps.audit.services import snapshot
+
+            previous = snapshot(obj)
+        except Exception:
+            previous = None
+
+        obj.restore()
+
+        try:
+            from apps.audit.services import log_activity
+
+            log_activity(
+                request=request,
+                action="restore",
+                instance=obj,
+                previous_values=previous,
+                metadata={"event": "restore"},
+            )
+        except Exception:
+            # Audit logging must never make a successful restore look like a
+            # failed data operation.
+            pass
+
+        messages.success(
+            request,
+            _("%(name)s was restored.") % {"name": str(obj)},
+        )
+        if self.success_url_name:
+            return redirect(self.success_url_name)
+        return redirect("/")
+
+
 class TenantDetailView(
     PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, DetailView
 ):
