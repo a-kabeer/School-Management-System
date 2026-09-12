@@ -1,11 +1,11 @@
 from django.urls import path
 
-from . import views
+from . import structure_views, views
 
 app_name = "students"
 
 urlpatterns = [
-    path("", views.StudentListView.as_view(), name="student_list"),
+    path("", structure_views.StudentListView.as_view(), name="student_list"),
     path("new/", views.StudentCreateView.as_view(), name="student_create"),
     path("search/", views.student_search_api, name="student_search"),
     path("archive/", views.StudentArchiveListView.as_view(), name="student_archive"),
