@@ -1,29 +1,8 @@
 {% extends "components/detail.html" %}
 {% load i18n core_extras %}
-
 {% block detail_actions %}
     {% has_perm "academics.change_term" as can_edit %}
-    {% if can_edit %}
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:term_update' object.pk %}"
-           data-modal-url="{% url 'academics:term_update' object.pk %}"
-           data-modal-title="{% translate 'Edit term' %}">
-            <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}
-        </a>
-    {% endif %}
-    <a class="btn btn-sm btn-primary" href="{% url 'academics:year_detail' object.academic_year_id %}">
-        <i class="bi bi-calendar-range me-1" aria-hidden="true"></i>{% translate "Academic Year" %}
-    </a>
+    {% if can_edit %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'academics:term_update' object.pk %}?return_to={{ request.get_full_path|urlencode }}" data-modal-url="{% url 'academics:term_update' object.pk %}?return_to={{ request.get_full_path|urlencode }}" data-modal-title="{% translate 'Edit term' %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% translate "Edit" %}</a>{% endif %}
+    <a class="btn btn-sm btn-primary" href="{% url 'academics:year_detail' object.academic_year_id %}"><i class="bi bi-calendar-range me-1" aria-hidden="true"></i>{% translate "Academic Year" %}</a>
 {% endblock %}
-
-{% block detail_body %}
-<div class="card mb-3"><div class="card-body">
-    <h3 class="h6 mb-3">{% translate "Overview" %}</h3>
-    <div class="row g-3 small">
-        <div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Academic Year" %}</div><div class="fw-medium">{{ object.academic_year.name }}</div></div>
-        <div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Sequence" %}</div><div class="fw-medium">{{ object.sequence }}</div></div>
-        <div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Starts" %}</div><div class="fw-medium">{{ object.start_date }}</div></div>
-        <div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Ends" %}</div><div class="fw-medium">{{ object.end_date }}</div></div>
-    </div>
-</div>
-{% include "components/related_card.html" with card=siblings_card %}
-{% endblock %}
+{% block detail_body %}<div class="card mb-3"><div class="card-body"><h3 class="h6 mb-3">{% translate "Overview" %}</h3><div class="row g-3 small"><div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Academic Year" %}</div><div class="fw-medium">{{ object.academic_year.name }}</div></div><div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Sequence" %}</div><div class="fw-medium">{{ object.sequence }}</div></div><div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Starts" %}</div><div class="fw-medium">{{ object.start_date }}</div></div><div class="col-6 col-md-3"><div class="text-body-secondary">{% translate "Ends" %}</div><div class="fw-medium">{{ object.end_date }}</div></div></div></div></div>{% include "components/related_card.html" with card=siblings_card %}{% endblock %}
