@@ -1,0 +1,8 @@
+/* Global overflow containment without creating a scroll container.
+   `overflow-x: clip` prevents horizontal spill while preserving sticky
+   positioning for the navbar and sidebar. */
+html, body,
+.app-shell {
+    max-width: 100%;
+    overflow-x: clip;
+}
