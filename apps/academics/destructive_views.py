@@ -85,7 +85,9 @@ class AcademicsSafeDeleteView(TenantDeleteView):
                 ),
             )
             return HttpResponseRedirect(self.get_success_url())
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        messages.success(self.request, _("Record deleted permanently."))
+        return response
 
 
 class AcademicYearSafeDeleteView(AcademicsSafeDeleteView):
