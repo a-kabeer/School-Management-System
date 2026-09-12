@@ -26,9 +26,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
 body { -webkit-font-smoothing: antialiased; }
 .app-navbar { min-height: var(--app-navbar-height); width: 100%; max-width: 100%; }
 
-/* Keep the authenticated shell inside the viewport. Bootstrap rows/columns
-   and navbar controls must be allowed to shrink instead of creating a page-
-   level horizontal scrollbar. */
+/* Keep the authenticated shell inside the viewport. */
 .app-shell { min-width: 0; max-width: 100%; overflow-x: hidden; }
 .app-shell > .container-fluid,
 .app-shell > .container-fluid > .row { min-width: 0; width: 100%; max-width: 100%; margin-inline: 0; }
@@ -65,8 +63,11 @@ body { -webkit-font-smoothing: antialiased; }
 .app-th-hint { opacity: 0; transition: opacity .12s ease-in-out; }
 .app-th-sort:hover .app-th-hint, .app-th-sort:focus-visible .app-th-hint { opacity: .6; }
 
-.app-table-scroll { max-height: min(70vh, 44rem); overflow-y: auto; }
-.app-table-scroll > .app-table > thead > tr > th { position: sticky; top: 0; z-index: 2; }
+/* Standard management tables use the page for vertical scrolling. The table
+   wrapper handles horizontal overflow only. Nested vertical scrolling makes
+   list pages awkward and creates a second scrollbar beside the page scrollbar. */
+.app-table-scroll { max-height: none; overflow-y: visible; }
+.app-table-scroll > .app-table > thead > tr > th { position: static; }
 .app-table-check { width: 1%; white-space: nowrap; }
 .app-bulk-bar { position: sticky; top: calc(var(--app-navbar-height, 3.5rem) + .5rem); z-index: 3; }
 [data-table-card].is-loading { opacity: .55; pointer-events: none; transition: opacity .1s linear; }
