@@ -58,15 +58,15 @@
 {% else %}
     <div class="alert alert-light border d-flex gap-2 py-2 mb-3" role="status">
         <i class="bi bi-calendar-week mt-1" aria-hidden="true"></i>
-        <span><strong>{% translate "Working days:" %}</strong> {{ working_day_schedule }} <span class="text-body-secondary">· {% translate "Saturday and Sunday are off days and are not shown." %}</span></span>
+        <span><strong>{% translate "Working days:" %}</strong> {{ working_day_schedule }} <span class="text-body-secondary">· {% translate "Only configured working days are shown." %}</span></span>
     </div>
 
     {% if weekend_slot_count %}
         <div class="alert alert-warning d-flex gap-2" role="alert">
             <i class="bi bi-exclamation-triangle mt-1" aria-hidden="true"></i>
             <div>
-                <p class="fw-medium mb-1">{% blocktranslate count counter=weekend_slot_count %}{{ counter }} existing weekend lesson needs review{% plural %}{{ counter }} existing weekend lessons need review{% endblocktranslate %}</p>
-                <p class="mb-0 small">{% translate "Weekend records were kept safely and are hidden from the working-week grid. Edit or remove them explicitly if they are no longer needed." %}</p>
+                <p class="fw-medium mb-1">{% blocktranslate count counter=weekend_slot_count %}{{ counter }} existing non-working-day lesson needs review{% plural %}{{ counter }} existing non-working-day lessons need review{% endblocktranslate %}</p>
+                <p class="mb-0 small">{% translate "These legacy records were kept safely and are hidden from the working-week grid. Edit or remove them explicitly if they are no longer needed." %}</p>
             </div>
         </div>
     {% endif %}
