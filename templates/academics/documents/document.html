@@ -1,0 +1,86 @@
+{% load i18n static %}<!doctype html>
+<html lang="{{ ui_language }}" dir="{{ ui_direction }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ definition.title }} · {{ site_name }}</title>
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+    <style>
+        @page { size: A4; margin: 14mm 12mm 16mm; }
+        :root { color-scheme: light; }
+        body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 12px; color: #111; background: #fff; }
+        .document { max-width: 210mm; margin: 0 auto; }
+        .document-header { border-bottom: 2px solid #111; padding-bottom: 10px; margin-bottom: 14px; }
+        .document-logo { max-height: 54px; max-width: 180px; object-fit: contain; }
+        .document-title { font-size: 20px; font-weight: 700; margin: 0; }
+        .document-subtitle { color: #555; margin: 2px 0 0; }
+        .document-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 18px; margin-bottom: 16px; }
+        .meta-item { break-inside: avoid; }
+        .meta-label { color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: .03em; }
+        .meta-value { font-weight: 600; }
+        .document-section { margin-top: 16px; break-inside: avoid; }
+        .document-section h2 { font-size: 14px; margin: 0 0 7px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        th, td { border: 1px solid #bbb; padding: 5px 6px; vertical-align: top; }
+        th { background: #f2f2f2; font-weight: 700; }
+        tr { break-inside: avoid; }
+        .document-footer { border-top: 1px solid #bbb; margin-top: 20px; padding-top: 6px; color: #666; font-size: 10px; display: flex; justify-content: space-between; }
+        .page-number:after { content: counter(page); }
+        .print-actions { position: sticky; top: 0; z-index: 10; padding: 8px; margin-bottom: 14px; background: #fff; border-bottom: 1px solid #ddd; text-align: end; }
+        @media print {
+            .print-actions { display: none !important; }
+            .document { max-width: none; }
+            a { color: inherit; text-decoration: none; }
+            .document-section { break-inside: auto; }
+        }
+        @media (max-width: 575.98px) {
+            .document-meta { grid-template-columns: 1fr 1fr; }
+            .document { padding: 8px; }
+        }
+        [dir="rtl"] { text-align: right; }
+        [dir="rtl"] th, [dir="rtl"] td { text-align: right; }
+    </style>
+</head>
+<body>
+<div class="print-actions" aria-label="{% translate 'Print controls' %}">
+    <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">{% translate "Print / Save as PDF" %}</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.close()">{% translate "Close" %}</button>
+</div>
+<main class="document" aria-labelledby="document-title">
+    <header class="document-header">
+        <div class="d-flex align-items-center gap-3">
+            {% if active_branch.organization.logo %}<img class="document-logo" src="{{ active_branch.organization.logo.url }}" alt="{{ active_branch.organization.name }}">{% endif %}
+            <div class="flex-grow-1">
+                <div class="small fw-semibold">{{ active_branch.organization.name }}</div>
+                <div class="document-subtitle">{{ active_branch.name }}</div>
+                <h1 id="document-title" class="document-title mt-1">{{ definition.title }}</h1>
+                <p class="document-subtitle">{{ definition.description }}</p>
+            </div>
+        </div>
+    </header>
+
+    {% if document.metadata %}
+    <section class="document-meta" aria-label="{% translate 'Document information' %}">
+        {% for item in document.metadata %}<div class="meta-item"><div class="meta-label">{{ item.cells.0 }}</div><div class="meta-value">{{ item.cells.1 }}</div></div>{% endfor %}
+    </section>
+    {% endif %}
+
+    {% for section in document.sections %}
+    <section class="document-section">
+        <h2>{{ section.title }}</h2>
+        <table>
+            <thead><tr>{% for column in section.columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for row in section.rows %}<tr>{% for cell in row.cells %}<td>{{ cell }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ section.columns|length }}">{% translate "No records found." %}</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </section>
+    {% endfor %}
+
+    <footer class="document-footer">
+        <span>{% translate "Generated" %}: {{ generated_at|date:"d M Y H:i" }}</span>
+        <span>{% translate "Page" %} <span class="page-number"></span></span>
+    </footer>
+</main>
+</body>
+</html>
