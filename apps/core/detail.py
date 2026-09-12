@@ -7,6 +7,8 @@ build the dictionaries the shared `detail.html`, `detail_header.html` and
 the same way instead of hand-rolling markup.
 """
 
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
 
 def badge(label, variant="secondary", icon=None):
     """A status pill for the header: Current, Closed, Active, Inactive."""
@@ -36,6 +38,27 @@ def tab(identifier, label, icon=None, count=None):
     return {"id": identifier, "label": label, "icon": icon, "count": count}
 
 
+def _inherit_create_context(add_url, all_url):
+    """Carry a related-card's known filter context into its Create action.
+
+    Detail pages already build ``all_url`` with the exact relationship that
+    the reader is looking at. Reusing that query string keeps contextual Add
+    actions consistent without requiring every detail view to duplicate URL
+    construction logic.
+    """
+    if not add_url or not all_url:
+        return add_url
+    source = urlsplit(str(all_url))
+    target = urlsplit(str(add_url))
+    source_params = parse_qsl(source.query, keep_blank_values=False)
+    if not source_params:
+        return add_url
+    target_params = parse_qsl(target.query, keep_blank_values=True)
+    existing = {key for key, _ in target_params}
+    target_params.extend((key, value) for key, value in source_params if key not in existing)
+    return urlunsplit((target.scheme, target.netloc, target.path, urlencode(target_params), target.fragment))
+
+
 def related_card(
     *,
     title,
@@ -55,9 +78,14 @@ def related_card(
 
     ``total`` is the real number of related records; ``rows`` may be a shorter
     preview, and the difference is reported rather than silently dropped.
+
+    When both list and Create URLs are supplied, known list context is carried
+    into Create automatically. This makes contextual Add actions reusable by
+    every module instead of implementing the same URL logic repeatedly.
     """
     rows = list(rows)
     total = len(rows) if total is None else total
+    add_url = _inherit_create_context(add_url, all_url)
     return {
         "title": title,
         "icon": icon,
