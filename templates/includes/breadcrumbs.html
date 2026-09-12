@@ -2,8 +2,8 @@
 {% if breadcrumbs or request.resolver_match.app_name == 'academics' %}
 <nav aria-label="{% translate 'Breadcrumb' %}">
     <ol class="breadcrumb small mb-3">
-        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% translate "Dashboard" %}</a></li>
         {% if request.resolver_match.app_name == 'academics' %}
+            <li class="breadcrumb-item"><a href="{% url 'academics:overview' %}">{% translate "Academics" %}</a></li>
             {% with view_name=request.resolver_match.url_name %}
                 {% if view_name == 'year_detail' %}
                     <li class="breadcrumb-item"><a href="{% url 'academics:year_list' %}">{% translate "Academic Years" %}</a></li>
@@ -49,6 +49,7 @@
                 {% endif %}
             {% endwith %}
         {% else %}
+            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% translate "Dashboard" %}</a></li>
             {% for crumb in breadcrumbs %}
                 {% if crumb.url and not forloop.last %}
                     <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.label }}</a></li>
