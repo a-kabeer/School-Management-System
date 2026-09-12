@@ -81,9 +81,10 @@
                 <tbody>
                 {% for object in objects %}
                     {% url_or_blank detail_url_name object.pk as open_url %}
-                    {% comment %}Clicking the row opens the record; the Actions
-                       column keeps its own behaviour.{% endcomment %}
-                    <tr {% if open_url %}class="app-row" data-row-url="{{ open_url }}"{% endif %}>
+                    {% comment %}Clicking or keyboard-activating the row opens the
+                       record; the Actions column keeps its own behaviour.{% endcomment %}
+                    <tr {% if open_url %}class="app-row" data-row-url="{{ open_url }}"
+                        tabindex="0" aria-label="{% translate 'View' %} {{ object }}"{% endif %}>
                         {% if selectable %}
                             <td class="app-table-check" data-label="{% translate 'Select' %}">
                                 <input class="form-check-input" type="checkbox" name="selected"
@@ -134,11 +135,6 @@
                             {% url_or_blank delete_url_name object.pk as delete_url %}
                             <td class="text-end text-nowrap">
                                 <div class="d-inline-flex align-items-center gap-1">
-                                    {% comment %}One slot for a verb this module
-                                       has and others do not - correcting a
-                                       clock-in, say. It sits before the
-                                       everyday actions so those stay where the
-                                       eye expects them.{% endcomment %}
                                     {% if row_actions_template %}
                                         {% include row_actions_template %}
                                     {% endif %}
