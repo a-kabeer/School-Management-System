@@ -1,41 +1,20 @@
 {% load i18n %}
 {# Shared confirmation dialog. Any element with data-confirm="message" opens it. #}
 <div class="modal fade" id="confirm-modal" tabindex="-1" aria-labelledby="confirm-modal-label" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title h5" id="confirm-modal-label">{% translate "Please confirm" %}</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        aria-label="{% translate 'Close' %}"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-0" data-confirm-message></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    {% translate "Cancel" %}
-                </button>
-                <button type="button" class="btn btn-danger" data-confirm-accept>
-                    {% translate "Confirm" %}
-                </button>
-            </div>
+            <div class="modal-header"><h2 class="modal-title h5" id="confirm-modal-label">{% translate "Please confirm" %}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div>
+            <div class="modal-body"><p class="mb-0" data-confirm-message></p></div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button><button type="button" class="btn btn-danger" data-confirm-accept>{% translate "Confirm" %}</button></div>
         </div>
     </div>
 </div>
 
-{% comment %}The application's one working dialog. Anything with
-   data-modal-url loads into it: a quick view, an add, an edit, an assignment.
-   The view behind the URL renders a fragment for the dialog and a full page
-   for a direct visit, so nothing here is a second implementation.{% endcomment %}
-<div class="modal fade" id="app-modal" tabindex="-1" aria-labelledby="app-modal-title"
-     aria-hidden="true" data-error-text="{% translate 'Could not load that. Please try again.' %}">
+{% comment %}The application's one working dialog. Anything with data-modal-url loads into it: a quick view, an add, an edit, an assignment. The view behind the URL renders a fragment for the dialog and a full page for a direct visit, so nothing here is a second implementation.{% endcomment %}
+<div class="modal fade" id="app-modal" tabindex="-1" aria-labelledby="app-modal-title" aria-hidden="true" data-error-text="{% translate 'Could not load that. Please try again.' %}">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title h6" id="app-modal-title" data-modal-title></h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        aria-label="{% translate 'Close' %}"></button>
-            </div>
+            <div class="modal-header"><h2 class="modal-title h6" id="app-modal-title" data-modal-title></h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div>
             <div data-modal-content></div>
         </div>
     </div>
