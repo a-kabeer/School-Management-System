@@ -6,6 +6,8 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import BranchOwnedModel
 
+from .timetable_config import is_working_day
+
 
 class AcademicYear(BranchOwnedModel):
     """A school year within one branch."""
@@ -21,17 +23,12 @@ class AcademicYear(BranchOwnedModel):
         verbose_name_plural = _("academic years")
         ordering = ["-start_date"]
         constraints = [
+            models.UniqueConstraint(fields=["branch", "name"], name="uq_academic_year_name"),
             models.UniqueConstraint(
-                fields=["branch", "name"], name="uq_academic_year_name"
-            ),
-            models.UniqueConstraint(
-                fields=["branch"],
-                condition=models.Q(is_current=True),
-                name="uq_single_current_academic_year",
+                fields=["branch"], condition=models.Q(is_current=True), name="uq_single_current_academic_year"
             ),
             models.CheckConstraint(
-                condition=models.Q(end_date__gt=models.F("start_date")),
-                name="ck_academic_year_dates",
+                condition=models.Q(end_date__gt=models.F("start_date")), name="ck_academic_year_dates"
             ),
         ]
         indexes = [models.Index(fields=["branch", "is_current"])]
@@ -48,12 +45,7 @@ class AcademicYear(BranchOwnedModel):
 class Term(BranchOwnedModel):
     """A term or session inside an academic year."""
 
-    academic_year = models.ForeignKey(
-        AcademicYear,
-        on_delete=models.CASCADE,
-        related_name="terms",
-        verbose_name=_("academic year"),
-    )
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, related_name="terms", verbose_name=_("academic year"))
     name = models.CharField(_("name"), max_length=100)
     sequence = models.PositiveSmallIntegerField(_("sequence"), default=1)
     start_date = models.DateField(_("start date"))
@@ -65,16 +57,9 @@ class Term(BranchOwnedModel):
         verbose_name_plural = _("terms")
         ordering = ["academic_year__start_date", "sequence"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["academic_year", "name"], name="uq_term_name"
-            ),
-            models.UniqueConstraint(
-                fields=["academic_year", "sequence"], name="uq_term_sequence"
-            ),
-            models.CheckConstraint(
-                condition=models.Q(end_date__gte=models.F("start_date")),
-                name="ck_term_dates",
-            ),
+            models.UniqueConstraint(fields=["academic_year", "name"], name="uq_term_name"),
+            models.UniqueConstraint(fields=["academic_year", "sequence"], name="uq_term_sequence"),
+            models.CheckConstraint(condition=models.Q(end_date__gte=models.F("start_date")), name="ck_term_dates"),
         ]
         indexes = [models.Index(fields=["branch", "is_current"])]
 
@@ -108,21 +93,11 @@ class SchoolClass(BranchOwnedModel):
 class Section(BranchOwnedModel):
     """A section of a class, optionally with a capacity and class teacher."""
 
-    school_class = models.ForeignKey(
-        SchoolClass,
-        on_delete=models.CASCADE,
-        related_name="sections",
-        verbose_name=_("class"),
-    )
+    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, related_name="sections", verbose_name=_("class"))
     name = models.CharField(_("name"), max_length=100)
     capacity = models.PositiveIntegerField(_("capacity"), null=True, blank=True)
     class_teacher = models.ForeignKey(
-        "staff.Staff",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="class_teacher_of",
-        verbose_name=_("class teacher"),
+        "staff.Staff", on_delete=models.SET_NULL, null=True, blank=True, related_name="class_teacher_of", verbose_name=_("class teacher")
     )
     is_active = models.BooleanField(_("active"), default=True)
 
@@ -130,11 +105,7 @@ class Section(BranchOwnedModel):
         verbose_name = _("section")
         verbose_name_plural = _("sections")
         ordering = ["school_class__level", "name"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["school_class", "name"], name="uq_section_name"
-            ),
-        ]
+        constraints = [models.UniqueConstraint(fields=["school_class", "name"], name="uq_section_name")]
         indexes = [models.Index(fields=["branch", "school_class"])]
 
     def __str__(self):
@@ -150,9 +121,7 @@ class Subject(BranchOwnedModel):
 
     name = models.CharField(_("name"), max_length=150)
     code = models.CharField(_("code"), max_length=50, blank=True)
-    kind = models.CharField(
-        _("kind"), max_length=20, choices=Kind.choices, default=Kind.ACADEMIC
-    )
+    kind = models.CharField(_("kind"), max_length=20, choices=Kind.choices, default=Kind.ACADEMIC)
     is_elective = models.BooleanField(_("elective"), default=False)
     is_active = models.BooleanField(_("active"), default=True)
 
@@ -160,9 +129,7 @@ class Subject(BranchOwnedModel):
         verbose_name = _("subject")
         verbose_name_plural = _("subjects")
         ordering = ["name"]
-        constraints = [
-            models.UniqueConstraint(fields=["branch", "name"], name="uq_subject_name"),
-        ]
+        constraints = [models.UniqueConstraint(fields=["branch", "name"], name="uq_subject_name")]
         indexes = [models.Index(fields=["branch", "is_active"])]
 
     def __str__(self):
@@ -172,24 +139,9 @@ class Subject(BranchOwnedModel):
 class ClassSubject(BranchOwnedModel):
     """A subject taught to a class in a given academic year."""
 
-    academic_year = models.ForeignKey(
-        AcademicYear,
-        on_delete=models.CASCADE,
-        related_name="class_subjects",
-        verbose_name=_("academic year"),
-    )
-    school_class = models.ForeignKey(
-        SchoolClass,
-        on_delete=models.CASCADE,
-        related_name="class_subjects",
-        verbose_name=_("class"),
-    )
-    subject = models.ForeignKey(
-        Subject,
-        on_delete=models.PROTECT,
-        related_name="class_subjects",
-        verbose_name=_("subject"),
-    )
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, related_name="class_subjects", verbose_name=_("academic year"))
+    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, related_name="class_subjects", verbose_name=_("class"))
+    subject = models.ForeignKey(Subject, on_delete=models.PROTECT, related_name="class_subjects", verbose_name=_("subject"))
     weekly_periods = models.PositiveSmallIntegerField(_("weekly periods"), default=0)
     is_active = models.BooleanField(_("active"), default=True)
 
@@ -197,12 +149,7 @@ class ClassSubject(BranchOwnedModel):
         verbose_name = _("class subject")
         verbose_name_plural = _("class subjects")
         ordering = ["school_class__level", "subject__name"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["academic_year", "school_class", "subject"],
-                name="uq_class_subject",
-            )
-        ]
+        constraints = [models.UniqueConstraint(fields=["academic_year", "school_class", "subject"], name="uq_class_subject")]
         indexes = [models.Index(fields=["branch", "academic_year", "school_class"])]
 
     def __str__(self):
@@ -212,62 +159,26 @@ class ClassSubject(BranchOwnedModel):
 class TeacherAssignment(BranchOwnedModel):
     """Which teacher teaches which class subject, optionally per section."""
 
-    academic_year = models.ForeignKey(
-        AcademicYear,
-        on_delete=models.CASCADE,
-        related_name="teacher_assignments",
-        verbose_name=_("academic year"),
-    )
-    teacher = models.ForeignKey(
-        "staff.Staff",
-        on_delete=models.CASCADE,
-        related_name="teaching_assignments",
-        verbose_name=_("teacher"),
-    )
-    class_subject = models.ForeignKey(
-        ClassSubject,
-        on_delete=models.CASCADE,
-        related_name="teacher_assignments",
-        verbose_name=_("class subject"),
-    )
-    section = models.ForeignKey(
-        Section,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="teacher_assignments",
-        verbose_name=_("section"),
-    )
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, related_name="teacher_assignments", verbose_name=_("academic year"))
+    teacher = models.ForeignKey("staff.Staff", on_delete=models.CASCADE, related_name="teaching_assignments", verbose_name=_("teacher"))
+    class_subject = models.ForeignKey(ClassSubject, on_delete=models.CASCADE, related_name="teacher_assignments", verbose_name=_("class subject"))
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True, related_name="teacher_assignments", verbose_name=_("section"))
     is_active = models.BooleanField(_("active"), default=True)
 
     class Meta:
         verbose_name = _("teacher assignment")
         verbose_name_plural = _("teacher assignments")
         ordering = ["teacher__full_name"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["class_subject", "section", "teacher"],
-                name="uq_teacher_assignment",
-            )
-        ]
-        indexes = [
-            models.Index(fields=["branch", "academic_year"]),
-            models.Index(fields=["teacher", "is_active"]),
-        ]
+        constraints = [models.UniqueConstraint(fields=["class_subject", "section", "teacher"], name="uq_teacher_assignment")]
+        indexes = [models.Index(fields=["branch", "academic_year"]), models.Index(fields=["teacher", "is_active"])]
 
     def __str__(self):
         return f"{self.teacher} — {self.class_subject}"
 
     def clean(self):
         super().clean()
-        if (
-            self.section_id
-            and self.class_subject_id
-            and self.section.school_class_id != self.class_subject.school_class_id
-        ):
-            raise ValidationError(
-                {"section": _("That section belongs to a different class.")}
-            )
+        if self.section_id and self.class_subject_id and self.section.school_class_id != self.class_subject.school_class_id:
+            raise ValidationError({"section": _("That section belongs to a different class.")})
 
 
 class Timetable(BranchOwnedModel):
@@ -282,32 +193,10 @@ class Timetable(BranchOwnedModel):
         SATURDAY = 5, _("Saturday")
         SUNDAY = 6, _("Sunday")
 
-    academic_year = models.ForeignKey(
-        AcademicYear,
-        on_delete=models.CASCADE,
-        related_name="timetable_slots",
-        verbose_name=_("academic year"),
-    )
-    section = models.ForeignKey(
-        Section,
-        on_delete=models.CASCADE,
-        related_name="timetable_slots",
-        verbose_name=_("section"),
-    )
-    class_subject = models.ForeignKey(
-        ClassSubject,
-        on_delete=models.CASCADE,
-        related_name="timetable_slots",
-        verbose_name=_("class subject"),
-    )
-    teacher = models.ForeignKey(
-        "staff.Staff",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="timetable_slots",
-        verbose_name=_("teacher"),
-    )
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, related_name="timetable_slots", verbose_name=_("academic year"))
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="timetable_slots", verbose_name=_("section"))
+    class_subject = models.ForeignKey(ClassSubject, on_delete=models.CASCADE, related_name="timetable_slots", verbose_name=_("class subject"))
+    teacher = models.ForeignKey("staff.Staff", on_delete=models.SET_NULL, null=True, blank=True, related_name="timetable_slots", verbose_name=_("teacher"))
     weekday = models.IntegerField(_("weekday"), choices=Weekday.choices)
     period = models.PositiveSmallIntegerField(_("period"), default=1)
     start_time = models.TimeField(_("start time"))
@@ -319,19 +208,21 @@ class Timetable(BranchOwnedModel):
         verbose_name_plural = _("timetable")
         ordering = ["weekday", "period"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["section", "weekday", "period", "academic_year"],
-                name="uq_timetable_slot",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(end_time__gt=models.F("start_time")),
-                name="ck_timetable_times",
-            ),
+            models.UniqueConstraint(fields=["section", "weekday", "period", "academic_year"], name="uq_timetable_slot"),
+            models.CheckConstraint(condition=models.Q(end_time__gt=models.F("start_time")), name="ck_timetable_times"),
         ]
-        indexes = [
-            models.Index(fields=["branch", "academic_year", "weekday"]),
-            models.Index(fields=["teacher", "weekday"]),
-        ]
+        indexes = [models.Index(fields=["branch", "academic_year", "weekday"]), models.Index(fields=["teacher", "weekday"])]
 
     def __str__(self):
         return f"{self.section} — {self.get_weekday_display()} P{self.period}"
+
+    def clean(self):
+        super().clean()
+        if self.weekday is not None and not is_working_day(self.weekday):
+            raise ValidationError({"weekday": _("Timetable lessons can only be scheduled on working days (Monday–Friday).")})
+
+    def save(self, *args, **kwargs):
+        """Guard all direct ORM writes while leaving legacy weekend rows readable."""
+        if self.weekday is not None and not is_working_day(self.weekday):
+            raise ValidationError(_("Timetable lessons can only be scheduled on working days (Monday–Friday)."))
+        return super().save(*args, **kwargs)
