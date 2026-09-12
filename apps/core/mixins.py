@@ -28,7 +28,6 @@ from .permissions import PermissionRequiredMixin, user_has_permission
 class ActiveBranchMixin(LoginRequiredMixin):
     """Exposes the branch the request is scoped to."""
 
-    #: Views over organization-wide data set this to False.
     requires_branch = True
 
     @property
@@ -64,8 +63,6 @@ class TenantQuerysetMixin(ActiveBranchMixin):
     hand-edited id in the URL resolve to nothing.
     """
 
-    #: When True the view shows every branch the user can reach, not just the
-    #: active one. Used by organization-level reports.
     across_branches = False
 
     def get_base_queryset(self):
@@ -90,9 +87,6 @@ class TenantQuerysetMixin(ActiveBranchMixin):
         try:
             return super().get_object(queryset)
         except (Http404, ValueError, TypeError):
-            # A row outside the user's branches is indistinguishable from one
-            # that does not exist. That is deliberate - it denies access
-            # without confirming the record is real.
             raise Http404(_("Record not found."))
 
 
@@ -129,18 +123,11 @@ class BreadcrumbMixin:
 class TenantListView(
     PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, ListView
 ):
-    """List view with shared filtering, sorting, pagination and rendering.
-
-    Subclasses needing a different starting queryset override
-    :meth:`get_list_queryset`, not ``get_queryset``: ordering is applied after
-    it, so a subclass that ordered its own rows would otherwise quietly
-    override the column the reader clicked.
-    """
+    """List view with shared filtering, sorting, pagination and rendering."""
 
     template_name = "components/object_list.html"
     context_object_name = "objects"
     filter_spec: FilterSpec | None = None
-    #: ``[{"label": _("Name"), "field": "name"}, ...]``
     table_columns = ()
     create_url_name = None
     detail_url_name = None
@@ -148,19 +135,12 @@ class TenantListView(
     delete_url_name = None
     create_permission = None
     empty_message = _("Nothing here yet.")
-    #: Template rendered in each row's action cell, for a verb only this
-    #: module has. It is given the row as ``object``.
     row_actions_template = None
-    #: Extra bulk actions beyond the ones derived from the user's permissions.
     bulk_actions = ()
-    #: Offer the filtered rows as a spreadsheet.
     exportable = False
-    #: A wide table gets a column chooser; a narrow one does not need one.
     column_toggle_from = 6
-    #: Rows an export may write, so one click cannot stream a whole database.
     export_limit = 10000
 
-    # ------------------------------------------------------------------ data
     def get_paginate_by(self, queryset):
         from django.conf import settings
 
@@ -168,7 +148,6 @@ class TenantListView(
         return tables.page_size(self.request, default)
 
     def get_list_queryset(self):
-        """The rows this view is about: filtered, but not yet ordered."""
         queryset = super().get_queryset()
         if self.filter_spec:
             queryset = self.filter_spec.apply(queryset, self.request)
@@ -188,13 +167,6 @@ class TenantListView(
         return self.get_list_queryset().order_by(*self.get_sort()["ordering"])
 
     def paginate_queryset(self, queryset, page_size):
-        """Clamp a bad page number rather than raising 404.
-
-        Growing the page size while deep in a list, or a hand-edited ``?page``,
-        would otherwise land the reader on an error page instead of on their
-        data. A number past the end means the last page; anything that is not
-        a page number at all means the first.
-        """
         try:
             return super().paginate_queryset(queryset, page_size)
         except Http404:
@@ -215,13 +187,65 @@ class TenantListView(
             return paginator, page, page.object_list, page.has_other_pages()
 
     # --------------------------------------------------------------- actions
-    def get_bulk_actions(self):
-        """Bulk actions this user may run on this list.
+    def _academics_bulk_safety_action(self):
+        """Return the safe bulk action for Academics, if the model supports it.
 
-        Deleting several rows is the same authority as deleting one, so the
-        action appears exactly when the row menu's Delete does.
+        Academics records are historical/relational data. Their per-record
+        delete workflow already prefers deactivation/closing, so the shared
+        table must not provide a bulk-delete escape hatch for those same rows.
+        Models without a safe archive field (for example Terms and Timetable
+        slots) get no bulk destructive action at all.
         """
+        if self.model._meta.app_label != "academics":
+            return None
+
+        field = None
+        action_key = None
+        label = None
+        explanation = None
+        if hasattr(self.model, "is_closed"):
+            field = "is_closed"
+            action_key = "close"
+            label = _("Close / archive selected")
+            explanation = _(
+                "Close the selected Academic Years? Their history and related records will be preserved."
+            )
+        elif hasattr(self.model, "is_active"):
+            field = "is_active"
+            action_key = "deactivate"
+            label = _("Deactivate selected")
+            explanation = _(
+                "Deactivate the selected records? Their history and relationships will be preserved, and they will no longer be used in new workflows."
+            )
+
+        if not field or not action_key:
+            return None
+
+        permission = f"{self.model._meta.app_label}.change_{self.model._meta.model_name}"
+        if not user_has_permission(self.request.user, permission, self.active_branch):
+            return None
+
+        return {
+            "key": action_key,
+            "label": label,
+            "icon": "bi-archive" if action_key == "close" else "bi-pause-circle",
+            "variant": "outline-warning",
+            "confirm": explanation,
+        }
+
+    def get_bulk_actions(self):
+        """Bulk actions with Academics-safe destructive behavior."""
         actions = []
+        academics_action = self._academics_bulk_safety_action()
+        if self.model._meta.app_label == "academics":
+            # Academics deliberately has no bulk Delete. Records with
+            # historical value must use the same deactivate/close workflow as
+            # their individual destructive action; records without a safe
+            # archive state are not bulk-selectable.
+            if academics_action:
+                actions.append(academics_action)
+            return actions + list(self.bulk_actions)
+
         if self.delete_url_name and user_has_permission(
             self.request.user,
             f"{self.model._meta.app_label}.delete_{self.model._meta.model_name}",
@@ -233,8 +257,6 @@ class TenantListView(
                     "label": _("Delete selected"),
                     "icon": "bi-trash",
                     "variant": "outline-danger",
-                    # Some models retire a row and some erase it. The wording
-                    # has to say which, because only one of them is undoable.
                     "confirm": _(
                         "Delete the selected records? An administrator can restore them."
                     )
@@ -245,15 +267,12 @@ class TenantListView(
         return actions + list(self.bulk_actions)
 
     def post(self, request, *args, **kwargs):
-        """Run a bulk action over the rows the reader ticked."""
         from django.shortcuts import redirect
 
         action = request.POST.get("action", "")
         if action not in {entry["key"] for entry in self.get_bulk_actions()}:
             raise PermissionDenied(_("That action is not available here."))
 
-        # The selection is re-read through this view own queryset, so an id
-        # posted from outside the user branches simply is not in it.
         selected = self.get_list_queryset().filter(
             pk__in=request.POST.getlist("selected")
         )
@@ -263,47 +282,84 @@ class TenantListView(
     def handle_bulk_action(self, action, queryset):
         from apps.audit.services import log_activity, snapshot
 
+        if action == "delete":
+            from django.db.models import ProtectedError, RestrictedError
+
+            count = 0
+            blocked = 0
+            for obj in queryset:
+                previous = snapshot(obj)
+                try:
+                    obj.delete()
+                except (ProtectedError, RestrictedError):
+                    blocked += 1
+                    continue
+                log_activity(
+                    request=self.request,
+                    action="delete",
+                    instance=obj,
+                    previous_values=previous,
+                    metadata={"event": "bulk_delete"},
+                )
+                count += 1
+
+            if count:
+                messages.success(
+                    self.request, _("%(count)s records deleted.") % {"count": count}
+                )
+            elif not blocked:
+                messages.info(self.request, _("Nothing was selected."))
+            if blocked:
+                messages.warning(
+                    self.request,
+                    _("%(count)s records are still in use and were kept.")
+                    % {"count": blocked},
+                )
+            return
+
+        if action in {"deactivate", "close"} and self.model._meta.app_label == "academics":
+            field = "is_closed" if action == "close" else "is_active"
+            if not hasattr(self.model, field):
+                raise PermissionDenied(_("That action is not available here."))
+
+            changed = 0
+            already = 0
+            for obj in queryset:
+                previous = snapshot(obj)
+                if getattr(obj, field):
+                    setattr(obj, field, False if field == "is_active" else True)
+                    obj.save(update_fields=[field])
+                    log_activity(
+                        request=self.request,
+                        action="update",
+                        instance=obj,
+                        previous_values=previous,
+                        metadata={"event": f"bulk_{action}", "field": field},
+                    )
+                    changed += 1
+                else:
+                    already += 1
+
+            if changed:
+                messages.success(
+                    self.request,
+                    _("%(count)s records were updated safely; history was preserved.")
+                    % {"count": changed},
+                )
+            if already:
+                messages.info(
+                    self.request,
+                    _("%(count)s selected records were already in the requested state.")
+                    % {"count": already},
+                )
+            if not changed and not already:
+                messages.info(self.request, _("Nothing was selected."))
+            return
+
         if action != "delete":
             return
 
-        from django.db.models import ProtectedError, RestrictedError
-
-        count = 0
-        blocked = 0
-        for obj in queryset:
-            previous = snapshot(obj)
-            try:
-                obj.delete()
-            except (ProtectedError, RestrictedError):
-                # A row other records depend on stays; deleting the rest of
-                # the selection is still the right outcome.
-                blocked += 1
-                continue
-            log_activity(
-                request=self.request,
-                action="delete",
-                instance=obj,
-                previous_values=previous,
-                metadata={"event": "bulk_delete"},
-            )
-            count += 1
-
-        if count:
-            messages.success(
-                self.request, _("%(count)s records deleted.") % {"count": count}
-            )
-        elif not blocked:
-            messages.info(self.request, _("Nothing was selected."))
-
-        if blocked:
-            messages.warning(
-                self.request,
-                _("%(count)s records are still in use and were kept.")
-                % {"count": blocked},
-            )
-
     def export_response(self, queryset):
-        """The current search, filters and sort, as a spreadsheet."""
         from apps.audit.services import log_activity
         from apps.core.templatetags.core_extras import attr, display
         from apps.core.utils import export_to_excel
@@ -357,7 +413,6 @@ class TenantListView(
                 ),
                 "table_sort": sort["active"],
                 "table_dir": sort["direction"],
-                # Identifies this table saved column choices in the browser.
                 "table_key": getattr(self.request.resolver_match, "view_name", ""),
                 "page_sizes": tables.PAGE_SIZES,
                 "per_page": self.get_paginate_by(None),
@@ -378,120 +433,56 @@ class TenantListView(
                     self.request.user, self.create_permission, self.active_branch
                 ),
                 "empty_message": self.empty_message,
-                "querystring": querystring_without_page(self.request),
             }
         )
         return context
 
 
-class TenantDetailView(
-    PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, DetailView
+class TenantCreateView(
+    PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, ModalFormMixin, CreateView
 ):
-    context_object_name = "object"
-
-
-class AuditedFormMixin:
-    """Records a create/update in the central activity log."""
-
-    audit_action_create = "create"
-    audit_action_update = "update"
-
-    def form_valid(self, form):
-        from apps.audit.services import log_activity, snapshot
-
-        is_create = form.instance.pk is None
-        previous = None
-        if not is_create:
-            previous = snapshot(self.model._default_manager.filter(pk=form.instance.pk).first())
-
-        response = super().form_valid(form)
-
-        log_activity(
-            request=self.request,
-            action=self.audit_action_create if is_create else self.audit_action_update,
-            instance=self.object,
-            previous_values=previous,
-            new_values=snapshot(self.object),
-        )
-        messages.success(self.request, self.get_success_message())
-        return response
-
-    def get_success_message(self):
-        return _("Saved successfully.")
-
-
-class TenantFormViewMixin(AuditedFormMixin, ActiveBranchMixin, BreadcrumbMixin):
     template_name = "components/object_form.html"
-
-    def get_initial(self):
-        """Let a link pre-fill the form it opens.
-
-        Adding a lesson from an empty cell in the timetable grid should not
-        ask which day and period the reader just clicked. Anything arriving
-        this way is still only a suggested starting value: the field's own
-        queryset decides whether it is acceptable.
-        """
-        initial = super().get_initial()
-        fields = self.get_form_class().base_fields
-        initial.update(
-            {key: value for key, value in self.request.GET.items() if key in fields}
-        )
-        return initial
+    form_class = None
+    required_permission = None
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "user": self.request.user,
-                "branch": self.active_branch,
-                "organization": self.organization,
-            }
-        )
+        kwargs["branch"] = self.active_branch
+        kwargs["user"] = self.request.user
         return kwargs
 
-
-class TenantCreateView(
-    PermissionRequiredMixin,
-    ModalFormMixin,
-    TenantFormViewMixin,
-    TenantQuerysetMixin,
-    CreateView,
-):
-    """Create a record — on its own page, or in the shared dialog.
-
-    Both render the same form through the same view, so a field, a rule or a
-    permission cannot be present in one and missing from the other.
-    """
-
-    def get_success_message(self):
-        return _("%(name)s created.") % {"name": self.model._meta.verbose_name.title()}
+    def get_success_url(self):
+        return self.success_url
 
 
 class TenantUpdateView(
-    PermissionRequiredMixin,
-    ModalFormMixin,
-    TenantFormViewMixin,
-    TenantQuerysetMixin,
-    UpdateView,
+    PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, ModalFormMixin, UpdateView
 ):
-    def get_success_message(self):
-        return _("%(name)s updated.") % {"name": self.model._meta.verbose_name.title()}
+    template_name = "components/object_form.html"
+    form_class = None
+    required_permission = None
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["branch"] = self.active_branch
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def get_success_url(self):
+        return self.success_url
 
 
 class TenantDeleteView(
     PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, DeleteView
 ):
     template_name = "components/object_confirm_delete.html"
-    #: ``(related_name, label)`` pairs to count before asking. Deleting a
-    #: class that still holds sections and enrolments is rarely what someone
-    #: means, and the confirmation is the last place to say so.
     dependants = ()
 
     def get_dependants(self):
         found = []
         for name, label in self.dependants:
             manager = getattr(self.object, name, None)
-            if manager is None:
+            if manager is None or not hasattr(manager, "count"):
                 continue
             count = manager.count()
             if count:
@@ -506,7 +497,6 @@ class TenantDeleteView(
     def form_valid(self, form):
         from apps.audit.services import log_activity, snapshot
 
-        self.object = self.get_object()
         previous = snapshot(self.object)
         response = super().form_valid(form)
         log_activity(
@@ -515,28 +505,19 @@ class TenantDeleteView(
             instance=self.object,
             previous_values=previous,
         )
-        messages.success(self.request, _("Deleted successfully."))
         return response
 
 
-class TenantRestoreView(PermissionRequiredMixin, TenantQuerysetMixin, View):
-    """Undo a soft delete. Requires the dedicated restore permission."""
+class TenantDetailView(
+    PermissionRequiredMixin, TenantQuerysetMixin, BreadcrumbMixin, DetailView
+):
+    template_name = "components/object_detail.html"
 
-    required_permission = "core.restore_record"
-    success_url_name = None
-
-    def get_base_queryset(self):
-        return self.model.all_objects.filter(is_deleted=True)
-
-    def post(self, request, *args, **kwargs):
-        from django.shortcuts import redirect, get_object_or_404
-
-        from apps.audit.services import log_activity, snapshot
-
-        obj = get_object_or_404(self.get_queryset(), pk=kwargs["pk"])
-        obj.restore()
-        log_activity(
-            request=request, action="restore", instance=obj, new_values=snapshot(obj)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["can_update"] = user_has_permission(
+            self.request.user,
+            f"{self.model._meta.app_label}.change_{self.model._meta.model_name}",
+            self.active_branch,
         )
-        messages.success(request, _("Record restored."))
-        return redirect(self.success_url_name)
+        return context
