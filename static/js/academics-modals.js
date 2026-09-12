@@ -1,4 +1,9 @@
-/* Academics modal UX: normalize CRUD around the existing global app modal. */
+/* Academics UX normalization.
+ *
+ * The application already has one shared modal implementation. This file only
+ * teaches Academics triggers to use it; it deliberately does not duplicate
+ * form submission, combo-box, focus or loading logic.
+ */
 (function () {
   "use strict";
 
@@ -13,17 +18,17 @@
     ["/academics/timetable/slots/", "timetable"],
   ];
 
-  function isAcademics(url) { return /\/academics\//.test(url.pathname); }
-  function modal() {
-    var el = document.getElementById("app-modal");
-    return el && window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(el) : null;
+  function isAcademics(url) {
+    return /\/academics\//.test(url.pathname);
   }
+
   function resourceForPath(path) {
     for (var i = 0; i < resourceByPath.length; i++) {
       if (path.indexOf(resourceByPath[i][0]) === 0) return resourceByPath[i][1];
     }
     return null;
   }
+
   function centralAddUrl(resource, returnTo, sourceUrl) {
     var url = new URL(sourceUrl || window.location.href, window.location.href);
     var marker = "/academics/";
@@ -35,27 +40,26 @@
     return url.href;
   }
 
-  function notifyModalContentLoaded() {
-    document.dispatchEvent(new CustomEvent("app:modal-content-loaded"));
+  function modal() {
+    var el = document.getElementById("app-modal");
+    return el && window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(el) : null;
   }
 
-  function load(url, title) {
+  function loadRowDetails(url) {
     var el = document.getElementById("app-modal");
     var content = el && el.querySelector("[data-modal-content]");
-    if (!el || !content) return false;
-    var m = modal();
-    if (!m) return false;
-    var heading = el.querySelector("[data-modal-title]");
-    if (heading) heading.textContent = title || "Academics";
+    var instance = modal();
+    if (!el || !content || !instance) return;
+
+    var title = el.querySelector("[data-modal-title]");
+    if (title) title.textContent = "View details";
     content.innerHTML = '<div class="modal-body text-center py-5 text-body-secondary"><div class="spinner-border" role="status" aria-label="Loading"></div></div>';
-    m.show();
+    instance.show();
 
     fetch(url, { headers: { "X-Modal": "1" }, credentials: "same-origin" })
       .then(function (response) {
-        return response.text().then(function (html) {
-          if (!response.ok && response.status !== 422) throw new Error("HTTP " + response.status);
-          return html;
-        });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return response.text();
       })
       .then(function (html) {
         if (/<!doctype|<html[\s>]/i.test(html)) {
@@ -73,53 +77,59 @@
           }
         }
         content.innerHTML = html;
-        notifyModalContentLoaded();
-        var first = content.querySelector("input:not([type=hidden]):not([readonly]), select, textarea, button, a");
+        var first = content.querySelector("button, a, input, select, textarea");
         if (first) first.focus();
       })
       .catch(function () {
-        content.innerHTML = '<div class="modal-body"><div class="alert alert-danger mb-0" role="alert">Could not load that. Please try again.</div></div>';
+        content.innerHTML = '<div class="modal-body"><div class="alert alert-danger mb-0" role="alert">Could not load that record. Please try again.</div></div>';
       });
-    return true;
-  }
-
-  function isCrudPath(path) {
-    return /\/academics\/(years|terms|classes|sections|subjects|class-subjects|assignments|timetable)(\/slots)?\/[^/]+\/(edit|delete)\/$/.test(path) ||
-           /\/academics\/(years|terms|classes|sections|subjects|class-subjects|assignments|timetable)\/[^/]+\/$/.test(path);
   }
 
   document.addEventListener("click", function (event) {
     var target = event.target.closest("a[href], tr[data-row-url]");
     if (!target) return;
+
     var href = target.matches("tr") ? target.getAttribute("data-row-url") : target.href;
     if (!href) return;
+
     var url;
     try { url = new URL(href, window.location.href); } catch (e) { return; }
     if (!isAcademics(url)) return;
 
+    /* Row clicks have no native modal trigger, so they are the only action
+       this file opens directly. Links are normalized and handed to the global
+       app-modal handler so all modal behavior remains centralized. */
+    if (target.matches("tr[data-row-url]")) {
+      if (event.target.closest("a, button, input, label, select, textarea, .dropdown-menu")) return;
+      if (window.getSelection && String(window.getSelection())) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      loadRowDetails(href);
+      return;
+    }
+
     var path = url.pathname;
-    var currentResource = resourceForPath(window.location.pathname);
     var isCreate = /\/new\/$/.test(path);
     var isEdit = /\/edit\/$/.test(path);
     var isDelete = /\/delete\/$/.test(path);
-    var isDetail = isCrudPath(path) && !isEdit && !isDelete;
-    var isRow = target.matches("tr[data-row-url]");
-    if (!(isCreate || isEdit || isDelete || isDetail || isRow)) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
+    var isDetail = !isCreate && !isEdit && !isDelete && resourceForPath(path) && /\/[^/]+\/$/.test(path);
+    if (!isCreate && !isEdit && !isDelete && !isDetail) return;
 
     var modalUrl = url.href;
-    var title = isEdit ? "Edit" : isDelete ? "Delete" : "View details";
+    var title = isCreate ? "Add New" : isEdit ? "Edit" : isDelete ? "Delete" : "View details";
 
     if (isCreate) {
-      var resource = resourceForPath(path) || currentResource;
+      var resource = resourceForPath(path) || resourceForPath(window.location.pathname);
       var returnTo = window.location.pathname + window.location.search;
       modalUrl = centralAddUrl(resource, returnTo, url.href);
       title = resource ? "Add " + resource.replace(/_/g, " ") : "Add New";
     }
 
-    load(modalUrl, title);
+    target.setAttribute("data-modal-url", modalUrl);
+    target.setAttribute("data-modal-title", title);
+    if (isCreate || isEdit || isDetail) target.setAttribute("data-modal-size", "lg");
+    /* Do not preventDefault: app.js receives the same click and owns the
+       actual modal lifecycle. */
   }, true);
 
   document.addEventListener("keydown", function (event) {
@@ -127,62 +137,12 @@
     var row = event.target.closest("tr[data-row-url]");
     if (!row || event.target !== row) return;
     var href = row.getAttribute("data-row-url");
+    if (!href) return;
     var url;
     try { url = new URL(href, window.location.href); } catch (e) { return; }
     if (!isAcademics(url)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    load(url.href, "View details");
-  }, true);
-
-  document.addEventListener("submit", function (event) {
-    var form = event.target.closest("#app-modal form");
-    if (!form) return;
-    var action;
-    try { action = new URL(form.getAttribute("action") || window.location.href, window.location.href); } catch (e) { return; }
-    if (!isAcademics(action)) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    var el = document.getElementById("app-modal");
-    var content = el && el.querySelector("[data-modal-content]");
-    var m = modal();
-    var submit = form.querySelector("[type=submit]");
-    if (submit) submit.disabled = true;
-
-    fetch(action.href, {
-      method: "POST",
-      body: new FormData(form),
-      headers: { "X-Modal": "1" },
-      credentials: "same-origin",
-    })
-      .then(function (response) {
-        if (/\/delete\/$/.test(action.pathname)) {
-          if (!response.ok) return response.text().then(function (html) { return { html: html, keepOpen: true }; });
-          if (m) m.hide();
-          window.location.reload();
-          return null;
-        }
-        if (response.headers.get("X-Modal-Success") === "1") {
-          if (m) m.hide();
-          window.location.reload();
-          return null;
-        }
-        return response.text().then(function (html) { return { html: html, keepOpen: true }; });
-      })
-      .then(function (result) {
-        if (!result || !result.keepOpen) return;
-        if (content) content.innerHTML = result.html;
-        notifyModalContentLoaded();
-        var first = content && content.querySelector(".is-invalid, input:not([type=hidden]):not([readonly]), select, textarea");
-        if (first) first.focus();
-        if (submit) submit.disabled = false;
-      })
-      .catch(function () {
-        if (submit) submit.disabled = false;
-        if (content) {
-          content.insertAdjacentHTML("afterbegin", '<div class="alert alert-danger m-3" role="alert">Could not save your changes. Please try again.</div>');
-        }
-      });
+    loadRowDetails(href);
   }, true);
 })();
