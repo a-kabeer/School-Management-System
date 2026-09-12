@@ -97,7 +97,7 @@
                                 class="{% if column.type == 'money' %}text-end font-monospace{% endif %}"
                                 data-label="{{ column.label }}">
                                 {% if forloop.first and open_url %}
-                                    <a href="{{ open_url }}" class="fw-medium text-decoration-none app-row-link">
+                                    <a href="{{ open_url }}" class="text-decoration-none app-row-link">
                                         {{ object|attr:column.field|default:"—" }}
                                     </a>
                                 {% elif column.type == 'bool' %}
