@@ -8,6 +8,7 @@ or closing instead of destructive deletion.
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.mixins import TenantDeleteView
@@ -26,6 +27,8 @@ class AcademicsSafeDeleteView(TenantDeleteView):
         "Deactivation keeps the record and its history while preventing it "
         "from being used in new workflows."
     )
+    success_url_name = None
+    _update_url_name = None
 
     def get_dependants(self):
         found = []
@@ -41,31 +44,41 @@ class AcademicsSafeDeleteView(TenantDeleteView):
     def deletion_blocked(self):
         return bool(self.get_dependants()) or self.prefer_deactivation
 
+    def get_return_url(self):
+        target = self.request.POST.get("return_to") or self.request.GET.get("return_to")
+        if target and url_has_allowed_host_and_scheme(
+            target,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return target
+        return None
+
+    def get_success_url(self):
+        return self.get_return_url() or reverse(self.success_url_name)
+
     def get_archive_url(self):
-        if not self.archive_field:
+        if not self.archive_field or not self._update_url_name:
             return None
         if not hasattr(self.object, self.archive_field):
             return None
         permission = f"{self.model._meta.app_label}.change_{self.model._meta.model_name}"
         if not user_has_permission(self.request.user, permission, self.active_branch):
             return None
-        update_name = self.update_url_name
-        if not update_name:
-            return None
-        return reverse(update_name, args=[self.object.pk])
+        return reverse(self._update_url_name, args=[self.object.pk])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         dependencies = self.get_dependants()
-        blocked = bool(dependencies) or self.prefer_deactivation
         context.update(
             {
                 "dependants": dependencies,
-                "deletion_blocked": blocked,
+                "deletion_blocked": bool(dependencies) or self.prefer_deactivation,
                 "archive_url": self.get_archive_url(),
                 "archive_action_label": self.archive_action_label,
                 "archive_explanation": self.archive_explanation,
                 "has_dependencies": bool(dependencies),
+                "return_to": self.get_return_url(),
             }
         )
         return context
@@ -85,10 +98,6 @@ class AcademicsSafeDeleteView(TenantDeleteView):
             return HttpResponseRedirect(self.get_success_url())
         return super().form_valid(form)
 
-    @property
-    def update_url_name(self):
-        return getattr(self, "_update_url_name", None)
-
 
 class AcademicYearSafeDeleteView(AcademicsSafeDeleteView):
     dependants = (
@@ -105,6 +114,7 @@ class AcademicYearSafeDeleteView(AcademicsSafeDeleteView):
         "Closing an Academic Year preserves all of its classes, assignments, "
         "timetable records and enrollment history."
     )
+    success_url_name = "academics:year_list"
     _update_url_name = "academics:year_update"
 
 
@@ -115,12 +125,14 @@ class SchoolClassSafeDeleteView(AcademicsSafeDeleteView):
         ("enrollments", _("Enrollments")),
     )
     prefer_deactivation = True
+    success_url_name = "academics:class_list"
     _update_url_name = "academics:class_update"
 
 
 class SubjectSafeDeleteView(AcademicsSafeDeleteView):
     dependants = (("class_subjects", _("Class Subjects")),)
     prefer_deactivation = True
+    success_url_name = "academics:subject_list"
     _update_url_name = "academics:subject_update"
 
 
@@ -130,11 +142,13 @@ class ClassSubjectSafeDeleteView(AcademicsSafeDeleteView):
         ("timetable_slots", _("Timetable Slots")),
     )
     prefer_deactivation = True
+    success_url_name = "academics:classsubject_list"
     _update_url_name = "academics:classsubject_update"
 
 
 class TeacherAssignmentSafeDeleteView(AcademicsSafeDeleteView):
     prefer_deactivation = True
+    success_url_name = "academics:assignment_list"
     _update_url_name = "academics:assignment_update"
 
 
@@ -145,4 +159,5 @@ class TimetableSafeDeleteView(AcademicsSafeDeleteView):
     # retaining a useful historical schedule.
     prefer_deactivation = False
     archive_field = None
+    success_url_name = "academics:timetable"
     _update_url_name = "academics:timetable_update"
