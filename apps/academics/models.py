@@ -89,6 +89,43 @@ class SchoolClass(BranchOwnedModel):
     def __str__(self):
         return self.name
 
+    @property
+    def section_count(self):
+        cache = getattr(self, "_prefetched_objects_cache", {})
+        sections = cache.get("sections")
+        return len(sections) if sections is not None else self.sections.count()
+
+    @property
+    def subject_count(self):
+        cache = getattr(self, "_prefetched_objects_cache", {})
+        subjects = cache.get("class_subjects")
+        return len(subjects) if subjects is not None else self.class_subjects.count()
+
+    @property
+    def teacher_count(self):
+        cache = getattr(self, "_prefetched_objects_cache", {})
+        subjects = cache.get("class_subjects")
+        if subjects is not None:
+            teacher_ids = {
+                assignment.teacher_id
+                for class_subject in subjects
+                for assignment in getattr(class_subject, "_prefetched_objects_cache", {}).get("teacher_assignments", [])
+                if assignment.is_active
+            }
+            return len(teacher_ids)
+        return TeacherAssignment.objects.filter(
+            class_subject__school_class=self,
+            is_active=True,
+        ).values("teacher_id").distinct().count()
+
+    @property
+    def student_count(self):
+        cache = getattr(self, "_prefetched_objects_cache", {})
+        enrollments = cache.get("enrollments")
+        if enrollments is not None:
+            return sum(1 for enrollment in enrollments if enrollment.is_current)
+        return self.enrollments.filter(is_current=True).values("student_id").distinct().count()
+
 
 class Section(BranchOwnedModel):
     """A section of a class, optionally with a capacity and class teacher."""
