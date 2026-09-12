@@ -47,12 +47,34 @@ def _initial_id(form, name):
     return value or None
 
 
+def _posted_or_initial_id(form, name):
+    """Return a selected FK from POST first, otherwise contextual initial data."""
+    if form.is_bound:
+        value = form.data.get(form.add_prefix(name))
+        if value:
+            return value
+    return _initial_id(form, name)
+
+
 def _contextual_related_queryset(form, queryset, *, context_field, related_field):
     """Narrow a related picker when a parent detail page supplied context."""
-    value = _initial_id(form, context_field)
+    value = _posted_or_initial_id(form, context_field)
     if value:
         return queryset.filter(**{related_field: value})
     return queryset
+
+
+def _preserve_selected(queryset, selected_id):
+    """Keep the current edit value even when a dependent filter excludes it."""
+    if not selected_id:
+        return queryset
+    selected = queryset.model.objects.filter(pk=selected_id)
+    if hasattr(queryset.model, "objects"):
+        try:
+            selected = selected.filter(branch=queryset.model.objects.get(pk=selected_id).branch)
+        except Exception:
+            pass
+    return queryset | selected
 
 
 class AcademicYearForm(TenantModelForm):
@@ -121,6 +143,7 @@ class SectionForm(TenantModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        class_id = _posted_or_initial_id(self, "school_class")
         self.fields["school_class"].queryset = _active_or_selected(
             self.fields["school_class"].queryset,
             selected_id=self.instance.school_class_id,
@@ -192,19 +215,29 @@ class TeacherAssignmentForm(TenantModelForm):
             self.fields["teacher"].queryset,
             selected_id=self.instance.teacher_id,
         ).order_by("full_name")
-        self.fields["class_subject"].queryset = _active_or_selected(
+        class_subject_qs = _active_or_selected(
             self.fields["class_subject"].queryset.select_related("school_class", "subject"),
             selected_id=self.instance.class_subject_id,
         )
-        section_id = _initial_id(self, "section")
-        if section_id and not self.instance.pk:
+        year_id = _posted_or_initial_id(self, "academic_year")
+        section_id = _posted_or_initial_id(self, "section")
+        if year_id:
+            class_subject_qs = class_subject_qs.filter(academic_year_id=year_id)
+        if section_id:
             section = Section.objects.for_user(self.user, self.branch).filter(pk=section_id).select_related("school_class").first()
             if section:
-                self.fields["class_subject"].queryset = self.fields["class_subject"].queryset.filter(school_class=section.school_class)
-        self.fields["section"].queryset = _active_or_selected(
+                class_subject_qs = class_subject_qs.filter(school_class_id=section.school_class_id)
+        self.fields["class_subject"].queryset = class_subject_qs
+        section_qs = _active_or_selected(
             self.fields["section"].queryset.select_related("school_class"),
             selected_id=self.instance.section_id,
         )
+        class_subject_id = _posted_or_initial_id(self, "class_subject")
+        if class_subject_id:
+            class_subject = ClassSubject.objects.for_user(self.user, self.branch).filter(pk=class_subject_id).select_related("school_class").first()
+            if class_subject:
+                section_qs = section_qs.filter(school_class_id=class_subject.school_class_id)
+        self.fields["section"].queryset = section_qs
         self.fields["section"].label = _("Section Scope")
         self.fields["section"].help_text = _("Choose a section for a section-specific Subject Teacher, or leave empty for All Sections.")
         self.allow_quick_add("class_subject", "academics:classsubject_create", _("Add class subject"), "academics.add_classsubject")
@@ -237,26 +270,39 @@ class TimetableForm(TenantModelForm):
             self.fields["academic_year"].queryset = self.fields["academic_year"].queryset | AcademicYear.objects.filter(pk=self.instance.academic_year_id)
         _set_current_year(self)
         self.fields["weekday"].choices = [(day, Timetable.Weekday(day).label) for day in working_weekdays(self.branch)]
-        self.fields["class_subject"].queryset = _active_or_selected(
+        class_subject_qs = _active_or_selected(
             self.fields["class_subject"].queryset.select_related("school_class", "subject"),
             selected_id=self.instance.class_subject_id,
         )
-        school_class_id = _initial_id(self, "school_class")
-        section_id = _initial_id(self, "section")
-        if not self.instance.pk and section_id:
+        section_id = _posted_or_initial_id(self, "section")
+        class_id = _posted_or_initial_id(self, "school_class")
+        if section_id:
             section = Section.objects.for_user(self.user, self.branch).filter(pk=section_id).select_related("school_class").first()
             if section:
-                school_class_id = section.school_class_id
-        if school_class_id:
-            self.fields["class_subject"].queryset = self.fields["class_subject"].queryset.filter(school_class_id=school_class_id)
-        self.fields["section"].queryset = _active_or_selected(
+                class_id = section.school_class_id
+        if class_id:
+            class_subject_qs = class_subject_qs.filter(school_class_id=class_id)
+        year_id = _posted_or_initial_id(self, "academic_year")
+        if year_id:
+            class_subject_qs = class_subject_qs.filter(academic_year_id=year_id)
+        self.fields["class_subject"].queryset = class_subject_qs
+        section_qs = _active_or_selected(
             self.fields["section"].queryset.select_related("school_class"),
             selected_id=self.instance.section_id,
         )
-        self.fields["teacher"].queryset = _active_staff_or_selected(
+        class_subject_id = _posted_or_initial_id(self, "class_subject")
+        if class_subject_id:
+            class_subject = ClassSubject.objects.for_user(self.user, self.branch).filter(pk=class_subject_id).select_related("school_class").first()
+            if class_subject:
+                section_qs = section_qs.filter(school_class_id=class_subject.school_class_id)
+        self.fields["section"].queryset = section_qs
+        teacher_qs = _active_staff_or_selected(
             self.fields["teacher"].queryset,
             selected_id=self.instance.teacher_id,
         ).order_by("full_name")
+        if class_subject_id:
+            teacher_qs = teacher_qs.filter(teaching_assignments__class_subject_id=class_subject_id, teaching_assignments__is_active=True).distinct()
+        self.fields["teacher"].queryset = teacher_qs
 
     def clean(self):
         cleaned = super().clean()
