@@ -108,7 +108,7 @@
                                 {% for slot in cell.slots %}
                                     <a class="timetable-lesson d-block text-decoration-none p-2 rounded {% if cell.conflicts %}is-conflicted{% endif %} mb-1"
                                        href="{% url 'academics:timetable_detail' slot.pk %}"
-                                       {% if can_edit %}data-modal-url="{{ slot.edit_url|default:slot.pk }}" data-modal-title="{% translate 'Edit lesson' %}"{% endif %}>
+                                       {% if can_edit %}data-modal-url="{% url 'academics:timetable_update' slot.pk %}" data-modal-title="{% translate 'Edit lesson' %}"{% endif %}>
                                         <span class="d-block small text-body-secondary">{{ slot.section.name }}</span>
                                         <span class="d-block fw-medium text-body text-truncate">{{ slot.class_subject.subject.name }}</span>
                                         <span class="d-block small text-body-secondary text-truncate">
@@ -120,7 +120,7 @@
                                     {% if can_edit and section %}
                                         <a class="timetable-empty d-block text-center text-decoration-none p-2 rounded" href="{{ cell.add_url }}" data-modal-url="{{ cell.add_url }}" data-modal-title="{{ cell.label }}" aria-label="{{ cell.label }}"><i class="bi bi-plus-lg" aria-hidden="true"></i></a>
                                     {% else %}
-                                        <span class="timetable-empty d-block text-center p-2 text-body-secondary">{% if all_sections %}—{% else %}—{% endif %}</span>
+                                        <span class="timetable-empty d-block text-center p-2 text-body-secondary">—</span>
                                     {% endif %}
                                 {% endfor %}
                             </td>
