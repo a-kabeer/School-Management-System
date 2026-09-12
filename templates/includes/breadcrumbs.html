@@ -28,11 +28,11 @@
                     <li class="breadcrumb-item active" aria-current="page">{{ object.subject.name }}</li>
                 {% elif view_name == 'assignment_detail' %}
                     <li class="breadcrumb-item"><a href="{% url 'academics:assignment_list' %}">{% translate "Teacher Assignments" %}</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'academics:class_detail' object.class_subject.school_class.pk %}">{{ object.class_subject.school_class.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'staff:staff_detail' object.teacher.pk %}">{{ object.teacher.full_name }}</a></li>
                     {% if object.section %}
                         <li class="breadcrumb-item"><a href="{% url 'academics:section_detail' object.section.pk %}">{{ object.section.name }}</a></li>
                     {% endif %}
-                    <li class="breadcrumb-item active" aria-current="page">{{ object.teacher.full_name }} · {{ object.class_subject.subject.name }}</li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ object.class_subject.subject.name }}</li>
                 {% elif view_name == 'timetable_detail' %}
                     <li class="breadcrumb-item"><a href="{% url 'academics:timetable' %}">{% translate "Timetable" %}</a></li>
                     <li class="breadcrumb-item"><a href="{% url 'academics:class_detail' object.section.school_class.pk %}">{{ object.section.school_class.name }}</a></li>
