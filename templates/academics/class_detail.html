@@ -18,7 +18,8 @@
        href="{% url 'students:student_list' %}?school_class={{ object.pk }}">
         <i class="bi bi-people me-1" aria-hidden="true"></i>{% translate "Students" %}
     </a>
-    <a class="btn btn-sm btn-outline-secondary" href="{{ timetable_url }}">
+    <a class="btn btn-sm btn-outline-secondary"
+       href="{% url 'academics:timetable' %}?school_class={{ object.pk }}">
         <i class="bi bi-calendar-week me-1" aria-hidden="true"></i>{% translate "Timetable" %}
     </a>
 {% endblock %}
