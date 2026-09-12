@@ -218,11 +218,11 @@ class Timetable(BranchOwnedModel):
 
     def clean(self):
         super().clean()
-        if self.weekday is not None and not is_working_day(self.weekday):
-            raise ValidationError({"weekday": _("Timetable lessons can only be scheduled on working days (Monday–Friday).")})
+        if self.weekday is not None and not is_working_day(self.weekday, self.branch):
+            raise ValidationError({"weekday": _("This day is not configured as a working day for the branch.")})
 
     def save(self, *args, **kwargs):
-        """Guard all direct ORM writes while leaving legacy weekend rows readable."""
-        if self.weekday is not None and not is_working_day(self.weekday):
-            raise ValidationError(_("Timetable lessons can only be scheduled on working days (Monday–Friday)."))
+        """Guard all direct ORM writes while leaving legacy non-working rows readable."""
+        if self.weekday is not None and not is_working_day(self.weekday, self.branch):
+            raise ValidationError(_("This day is not configured as a working day for the branch."))
         return super().save(*args, **kwargs)
