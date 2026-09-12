@@ -123,17 +123,15 @@ body {
     padding-block: .6rem;
 }
 
-/* The record name remains an intentional link, but row hover never adds an
-   underline or otherwise changes its typography. */
-.app-row-link {
-    color: var(--bs-body-color);
-    text-decoration: none !important;
+/* A clickable row is one clear interaction surface. The record-name cell is
+   plain text; only the row itself owns the View interaction. */
+.app-row {
+    cursor: pointer;
 }
 
-.app-row-link:hover,
-.app-row-link:focus-visible {
-    color: var(--bs-link-hover-color);
-    text-decoration: none !important;
+.app-row:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: -2px;
 }
 
 .app-icon-btn {
@@ -198,17 +196,6 @@ body {
 
 [dir="rtl"] .pagination .bi {
     transform: scaleX(-1);
-}
-
-/* Row navigation is available by click and keyboard focus, but the row uses
-   the normal cursor. Actual links and controls keep their own affordances. */
-.app-row {
-    cursor: default;
-}
-
-.app-row:focus-visible {
-    outline: 2px solid var(--bs-primary);
-    outline-offset: -2px;
 }
 
 /* ------------------------------------------------------- combo selects */
